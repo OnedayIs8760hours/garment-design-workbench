@@ -14,7 +14,7 @@ const design = {
   panels: Object.fromEntries(Object.entries(template.panels).map(([id, panel]) => [id, createPanelState(panel)])),
 };
 
-design.panels.front_body.elements.push({
+design.panels.front.elements.push({
   id: "element-1",
   type: "image",
   assetId: "asset-1",
@@ -31,8 +31,12 @@ design.panels.front_body.elements.push({
 assert.equal(validateDesign(design).passed, true);
 assert.equal(clampElement({ centerX: 2, centerY: -1, width: 0, height: 2, opacity: 3 }).centerX, 1);
 assert.equal(createExportJson(design).assets[0].dataUrl, undefined);
-assert.equal(createExportJson(design).panels.front_body.logicalSize.width, 3340);
-assert.equal(createExportJson(design).panels.front_body.clipPath.length, 29);
+assert.equal(createExportJson(design).panels.front.logicalSize.width, 2796);
+assert.equal(createExportJson(design).panels.front.bounds.left, 9);
+assert.equal(createExportJson(design).panels.front.maskImage, "/templates/M-2XL/masks/front-mask.png");
+assert.equal(createExportJson(design).panels.front.guides[0].id, "cutline");
+assert.equal(createExportJson(design).panels.front.guides[0].style.dash[0], 8);
+assert.equal(createExportJson(design).panels.front.guides[1].id, "center_line");
 
-design.panels.front_body.elements[0].centerX = 0.95;
+design.panels.front.elements[0].centerX = 0.95;
 assert.equal(validateDesign(design).passed, false);

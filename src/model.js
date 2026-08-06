@@ -1,46 +1,25 @@
+import exportedTemplate from "./templates/M-2XL.template.json" with { type: "json" };
+
 export function createTemplate() {
+  const panel = exportedTemplate.panels.front;
+  const basePath = `/templates/${exportedTemplate.templateId}`;
+  const assetUrl = (filePath) => (filePath ? `${basePath}/${filePath}` : null);
+
   return {
-    templateId: "FRONT-PANEL-DEMO-001",
-    templateVersion: 2,
-    name: "前片最小案例",
-    sizes: ["2XL"],
+    templateId: exportedTemplate.templateId,
+    templateVersion: exportedTemplate.templateVersion,
+    name: `${exportedTemplate.templateId} front panel`,
+    sizes: ["M-2XL"],
     panels: {
-      front_body: {
-        name: "前片",
-        logicalSize: { width: 3340, height: 3296 },
-        templateImage: "/templates/front-panel.png",
-        sourceFile: "templates/front-panel.png",
-        clipPath: [
-          [52, 3292],
-          [3288, 3292],
-          [3335, 1434],
-          [3156, 1426],
-          [2976, 1376],
-          [2868, 1268],
-          [2802, 1120],
-          [2778, 910],
-          [2798, 612],
-          [2904, 286],
-          [2134, 0],
-          [2102, 164],
-          [2040, 314],
-          [1936, 440],
-          [1804, 510],
-          [1668, 530],
-          [1532, 510],
-          [1400, 440],
-          [1296, 314],
-          [1234, 164],
-          [1202, 0],
-          [442, 286],
-          [548, 612],
-          [568, 910],
-          [544, 1120],
-          [478, 1268],
-          [370, 1376],
-          [190, 1426],
-          [4, 1434],
-        ],
+      front: {
+        name: panel.name,
+        layerName: panel.layerName,
+        bounds: panel.bounds,
+        logicalSize: panel.size,
+        templateImage: assetUrl(panel.panelImage),
+        maskImage: assetUrl(panel.maskImage),
+        sourceFile: `templates/${exportedTemplate.templateId}/${panel.panelImage}`,
+        guides: panel.guides ?? [],
         previewMapping: { type: "simple", target: "front" },
       },
     },
@@ -51,8 +30,10 @@ export function createPanelState(panel) {
   return {
     logicalSize: panel.logicalSize,
     templateImage: panel.templateImage,
+    maskImage: panel.maskImage,
     sourceFile: panel.sourceFile,
-    clipPath: panel.clipPath,
+    bounds: panel.bounds,
+    guides: panel.guides,
     status: "not_started",
     elements: [],
   };
@@ -125,8 +106,10 @@ export function createExportJson(design, validation = validateDesign(design)) {
         {
           logicalSize: panel.logicalSize,
           templateImage: template.panels[panelId]?.templateImage,
+          maskImage: template.panels[panelId]?.maskImage,
           sourceFile: template.panels[panelId]?.sourceFile,
-          clipPath: template.panels[panelId]?.clipPath,
+          bounds: template.panels[panelId]?.bounds,
+          guides: template.panels[panelId]?.guides,
           status: panel.elements.length ? "completed" : "not_started",
           elements: panel.elements.map((element) => clampElement(element)),
         },

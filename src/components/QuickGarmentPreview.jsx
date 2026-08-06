@@ -1,23 +1,63 @@
 import React from "react";
+import { template } from "../config.js";
 
 export function QuickGarmentPreview({ design, panelId }) {
   const panel = design.panels[panelId];
+  const panelTemplate = template.panels[panelId];
+  const maskStyle = {
+    WebkitMaskImage: `url(${panelTemplate.maskImage})`,
+    maskImage: `url(${panelTemplate.maskImage})`,
+    WebkitMaskSize: "100% 100%",
+    maskSize: "100% 100%",
+    WebkitMaskRepeat: "no-repeat",
+    maskRepeat: "no-repeat",
+  };
+
   return (
     <div className="garment-preview">
-      <div className="shirt-shape" style={{ backgroundColor: design.garmentColor }}>
-        <div className="shirt-art-target">
-          {panel.elements
-            .filter((element) => element.visible)
-            .sort((a, b) => a.zIndex - b.zIndex)
-            .map((element) => (
-              <GarmentElement key={element.id} element={element} asset={design.assets.find((asset) => asset.assetId === element.assetId)} />
-            ))}
-        </div>
-        <div className="shirt-neck" />
-        <div className="shirt-light side" />
-        <div className="shirt-light vertical" />
+      <img className="garment-preview-bg" src={panelTemplate.templateImage} alt="" />
+      <GuideOverlay panel={panelTemplate} />
+      <div className="garment-preview-elements" style={maskStyle}>
+        {panel.elements
+          .filter((element) => element.visible)
+          .sort((a, b) => a.zIndex - b.zIndex)
+          .map((element) => (
+            <GarmentElement key={element.id} element={element} asset={design.assets.find((asset) => asset.assetId === element.assetId)} />
+          ))}
       </div>
     </div>
+  );
+}
+
+function GuideOverlay({ panel }) {
+  return (
+    <svg className="garment-preview-guides" viewBox={`0 0 ${panel.logicalSize.width} ${panel.logicalSize.height}`} aria-hidden="true">
+      {panel.guides?.map((guide) => {
+        const style = guide.style ?? {};
+        const common = {
+          fill: "none",
+          stroke: style.stroke ?? "#0f766e",
+          strokeWidth: style.strokeWidth ?? 1,
+          strokeDasharray: (style.dash ?? []).join(" "),
+          vectorEffect: "non-scaling-stroke",
+        };
+
+        if (guide.type === "line") {
+          return <line key={guide.id} x1={guide.from[0]} y1={guide.from[1]} x2={guide.to[0]} y2={guide.to[1]} {...common} />;
+        }
+
+        if (guide.type === "path") {
+          const points = guide.points.map(([x, y]) => `${x},${y}`).join(" ");
+          return guide.closed ? (
+            <polygon key={guide.id} points={points} {...common} />
+          ) : (
+            <polyline key={guide.id} points={points} {...common} />
+          );
+        }
+
+        return null;
+      })}
+    </svg>
   );
 }
 

@@ -1,8 +1,8 @@
 import { createPanelState, createTemplate } from "./model.js";
 
 export const template = createTemplate();
-export const firstPanel = template.panels.front_body;
-export const draftKey = "sds-design-front-panel-demo-v3";
+export const firstPanel = template.panels.front;
+export const draftKey = "sds-design-M-2XL-front-v1";
 export const stageSize = {
   width: 620,
   height: Math.round((620 * firstPanel.logicalSize.height) / firstPanel.logicalSize.width),
@@ -28,12 +28,12 @@ export function createInitialDesign() {
   return {
     schemaVersion: 1,
     orderId: "ORDER-20260805-001",
-    productId: "PRODUCT-FRONT-PANEL-DEMO",
+    productId: "PRODUCT-M-2XL-FRONT",
     templateId: template.templateId,
     templateVersion: template.templateVersion,
-    size: "2XL",
+    size: "M-2XL",
     garmentColor: "#8DAED4",
-    currentPanelId: "front_body",
+    currentPanelId: "front",
     savedAt: null,
     assets: [sampleAsset],
     panels: Object.fromEntries(

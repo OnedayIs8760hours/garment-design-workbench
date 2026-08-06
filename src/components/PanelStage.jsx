@@ -3,7 +3,6 @@ import { Stage, Layer, Rect, Text, Image as KonvaImage, Transformer, Line } from
 import { clampElement } from "../model.js";
 import { stageSize, template } from "../config.js";
 import { currentElements } from "../designStore.js";
-import { drawClipPath, insetClipPoints, scaledClipPoints } from "../geometry.js";
 
 function useImage(src) {
   const [image, setImage] = React.useState(null);
@@ -22,6 +21,7 @@ export function PanelStage({ design, selectedId, onSelect, onChange }) {
   const elements = currentElements(design);
   const panel = template.panels[design.currentPanelId];
   const panelImage = useImage(panel.templateImage);
+  const maskImage = useImage(panel.maskImage);
 
   React.useEffect(() => {
     transformerRef.current?.nodes(selectedId ? [nodeRefs.current[selectedId]].filter(Boolean) : []);
@@ -39,12 +39,12 @@ export function PanelStage({ design, selectedId, onSelect, onChange }) {
       <Layer>
         <Rect width={stageSize.width} height={stageSize.height} fill="#ffffff" />
         <KonvaImage image={panelImage} width={stageSize.width} height={stageSize.height} listening={false} />
-        <Line points={scaledClipPoints(panel)} closed stroke="#0f766e" strokeWidth={2} dash={[8, 6]} listening={false} />
-        <Line points={insetClipPoints(panel)} closed stroke="#2563eb" strokeWidth={1.5} dash={[4, 8]} listening={false} />
-        <Line points={[stageSize.width / 2, 0, stageSize.width / 2, stageSize.height]} stroke="#94a3b8" dash={[5, 8]} />
+        {panel.guides?.map((guide) => (
+          <GuideLine key={guide.id} guide={guide} panel={panel} />
+        ))}
         <Text text={panel.name} x={14} y={12} fontSize={18} fill="#111827" />
       </Layer>
-      <Layer clipFunc={(context) => drawClipPath(context, panel)}>
+      <Layer>
         {elements.map((element) => (
           <CanvasElement
             key={element.id}
@@ -58,12 +58,45 @@ export function PanelStage({ design, selectedId, onSelect, onChange }) {
             onChange={(patch) => onChange(element.id, patch)}
           />
         ))}
+        {maskImage ? (
+          <KonvaImage
+            image={maskImage}
+            width={stageSize.width}
+            height={stageSize.height}
+            globalCompositeOperation="destination-in"
+            listening={false}
+          />
+        ) : null}
       </Layer>
       <Layer>
         <Transformer ref={transformerRef} rotateEnabled enabledAnchors={["top-left", "top-right", "bottom-left", "bottom-right"]} />
       </Layer>
     </Stage>
   );
+}
+
+function GuideLine({ guide, panel }) {
+  const style = guide.style ?? {};
+  const common = {
+    stroke: style.stroke ?? "#0f766e",
+    strokeWidth: style.strokeWidth ?? 1,
+    dash: style.dash ?? [],
+    listening: false,
+  };
+
+  if (guide.type === "line") {
+    return <Line {...common} points={[...scalePoint(guide.from, panel), ...scalePoint(guide.to, panel)]} />;
+  }
+
+  if (guide.type === "path") {
+    return <Line {...common} points={guide.points.flatMap((point) => scalePoint(point, panel))} closed={guide.closed} />;
+  }
+
+  return null;
+}
+
+function scalePoint([x, y], panel) {
+  return [(x / panel.logicalSize.width) * stageSize.width, (y / panel.logicalSize.height) * stageSize.height];
 }
 
 function CanvasElement({ element, asset, selected, setRef, onSelect, onChange }) {
