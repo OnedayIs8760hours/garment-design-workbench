@@ -1,0 +1,117 @@
+import React from "react";
+import { clampElement, createExportJson, validateDesign } from "./model.js";
+import { currentPanel, useDesignStore } from "./designStore.js";
+import { createImageElement, createTextElement } from "./elements.js";
+import { downloadBlob, downloadZip } from "./download.js";
+import { Header } from "./components/Header.jsx";
+import { ToolsSidebar } from "./components/ToolsSidebar.jsx";
+import { EditorRibbon, PanelTabs, BottomPanels } from "./components/EditorPanels.jsx";
+import { PanelStage } from "./components/PanelStage.jsx";
+import { PreviewPane } from "./components/PreviewPane.jsx";
+
+export function App() {
+  const { design, selectedId, status, commit, undo, redo, select, saveNow } = useDesignStore();
+  const validation = validateDesign(design);
+  const selected = currentPanel(design).elements.find((element) => element.id === selectedId);
+  const totalElements = Object.values(design.panels).reduce((sum, panel) => sum + panel.elements.length, 0);
+  const exportJson = createExportJson(design, validation);
+
+  const addElement = (element) => {
+    commit((draft) => {
+      const panel = currentPanel(draft);
+      panel.elements.push({ ...element, id: `element-${Date.now()}`, zIndex: panel.elements.length + 1 });
+    });
+  };
+
+  const addImage = (asset) => addElement(createImageElement(asset.assetId));
+  const addText = (role) => addElement(createTextElement(role));
+
+  const onUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const asset = createUploadedAsset(file, reader.result);
+      commit((draft) => draft.assets.push(asset));
+      addImage(asset);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const updateElement = (id, patch) => {
+    commit((draft) => {
+      const element = currentPanel(draft).elements.find((item) => item.id === id);
+      Object.assign(element, clampElement({ ...element, ...patch }));
+    });
+  };
+
+  const removeSelected = () => {
+    if (!selectedId) return;
+    commit((draft) => {
+      currentPanel(draft).elements = currentPanel(draft).elements
+        .filter((element) => element.id !== selectedId)
+        .map((element, index) => ({ ...element, zIndex: index + 1 }));
+    });
+    select(null);
+  };
+
+  const moveLayer = (id, direction) => {
+    commit((draft) => {
+      const panel = currentPanel(draft);
+      const elements = [...panel.elements].sort((a, b) => a.zIndex - b.zIndex);
+      const index = elements.findIndex((element) => element.id === id);
+      const nextIndex = index + direction;
+      if (nextIndex < 0 || nextIndex >= elements.length) return;
+      [elements[index], elements[nextIndex]] = [elements[nextIndex], elements[index]];
+      panel.elements = elements.map((element, zIndex) => ({ ...element, zIndex: zIndex + 1 }));
+    });
+  };
+
+  return (
+    <div className="app">
+      <Header
+        status={status}
+        totalElements={totalElements}
+        validation={validation}
+        onUndo={undo}
+        onRedo={redo}
+        onSave={saveNow}
+        onJson={() => downloadBlob("order-design.json", JSON.stringify(exportJson, null, 2), "application/json")}
+        onZip={() => downloadZip(design, exportJson)}
+      />
+
+      <main className="workspace">
+        <ToolsSidebar design={design} commit={commit} addImage={addImage} addText={addText} onUpload={onUpload} />
+        <section className="editor">
+          <EditorRibbon />
+          <PanelTabs design={design} commit={commit} />
+          <div className="canvas-shell">
+            <PanelStage design={design} selectedId={selectedId} onSelect={select} onChange={updateElement} />
+          </div>
+          <BottomPanels
+            design={design}
+            selected={selected}
+            selectedId={selectedId}
+            select={select}
+            updateElement={updateElement}
+            moveLayer={moveLayer}
+            removeSelected={removeSelected}
+          />
+        </section>
+        <PreviewPane design={design} validation={validation} />
+      </main>
+    </div>
+  );
+}
+
+function createUploadedAsset(file, dataUrl) {
+  return {
+    assetId: `asset-${Date.now()}`,
+    type: "image",
+    name: file.name,
+    previewFile: file.name,
+    sourceFile: file.name,
+    dataUrl,
+    uploadedAt: new Date().toISOString(),
+  };
+}
