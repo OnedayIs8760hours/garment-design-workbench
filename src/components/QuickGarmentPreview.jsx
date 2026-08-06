@@ -62,6 +62,8 @@ function GuideOverlay({ panel }) {
 }
 
 function GarmentElement({ element, asset }) {
+  const textRef = React.useRef(null);
+  const [textBox, setTextBox] = React.useState({ width: 0, height: 0 });
   const style = {
     left: `${element.centerX * 100}%`,
     top: `${element.centerY * 100}%`,
@@ -72,9 +74,34 @@ function GarmentElement({ element, asset }) {
     zIndex: element.zIndex,
   };
 
+  React.useEffect(() => {
+    if (!textRef.current || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(([entry]) => {
+      setTextBox({
+        width: entry.contentRect.width,
+        height: entry.contentRect.height,
+      });
+    });
+    observer.observe(textRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   if (element.type === "image") return <img className="preview-element" style={style} src={asset?.dataUrl} alt="" />;
+
+  const fontSize = Math.max(8, textBox.height * 0.72 || 20);
+  const strokeWidth = Math.max(1, (textBox.width || 0) * (element.strokeWidth ?? 0.01));
+
   return (
-    <div className="preview-element preview-text" style={{ ...style, color: element.fill, WebkitTextStroke: `1px ${element.stroke}` }}>
+    <div
+      ref={textRef}
+      className="preview-element preview-text"
+      style={{
+        ...style,
+        color: element.fill,
+        fontSize,
+        WebkitTextStroke: `${strokeWidth}px ${element.stroke}`,
+      }}
+    >
       {element.text}
     </div>
   );
