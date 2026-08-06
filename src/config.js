@@ -13,15 +13,11 @@ export const sampleAsset = {
   assetId: "asset-sample-mark",
   type: "image",
   name: "示例图案",
-  previewFile: "inline-sample.svg",
-  sourceFile: "sample-original.png",
-  dataUrl:
-    "data:image/svg+xml;utf8," +
-    encodeURIComponent(
-      '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="420" viewBox="0 0 600 420"><rect width="600" height="420" rx="42" fill="#111827"/><path d="M100 290 220 130l78 112 62-76 140 124" fill="none" stroke="#22c55e" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/><circle cx="410" cy="112" r="42" fill="#f59e0b"/></svg>',
-    ),
-  originalWidth: 600,
-  originalHeight: 420,
+  previewFile: "front-lower-panel-sample.png",
+  sourceFile: "front-lower-panel-sample.png",
+  dataUrl: "/samples/front-lower-panel-sample.png",
+  originalWidth: 435,
+  originalHeight: 466,
 };
 
 export function createInitialDesign() {

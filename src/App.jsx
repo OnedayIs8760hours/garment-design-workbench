@@ -2,7 +2,7 @@ import React from "react";
 import { clampElement, createExportJson, validateDesign } from "./model.js";
 import { currentPanel, useDesignStore } from "./designStore.js";
 import { createImageElement, createTextElement } from "./elements.js";
-import { downloadBlob, downloadZip } from "./download.js";
+import { downloadZip } from "./download.js";
 import { Header } from "./components/Header.jsx";
 import { ToolsSidebar } from "./components/ToolsSidebar.jsx";
 import { EditorRibbon, PanelTabs, BottomPanels } from "./components/EditorPanels.jsx";
@@ -76,8 +76,7 @@ export function App() {
         onUndo={undo}
         onRedo={redo}
         onSave={saveNow}
-        onJson={() => downloadBlob("order-design.json", JSON.stringify(exportJson, null, 2), "application/json")}
-        onZip={() => downloadZip(design, exportJson)}
+        onExportPackage={() => downloadZip(design, exportJson)}
       />
 
       <main className="workspace">

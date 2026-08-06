@@ -1,7 +1,7 @@
 import React from "react";
 import { firstPanel, template } from "../config.js";
 
-export function Header({ status, totalElements, validation, onUndo, onRedo, onSave, onJson, onZip }) {
+export function Header({ status, totalElements, validation, onUndo, onRedo, onSave, onExportPackage }) {
   return (
     <header className="topbar">
       <div className="brand-block">
@@ -18,8 +18,7 @@ export function Header({ status, totalElements, validation, onUndo, onRedo, onSa
         <button onClick={onUndo}>撤销</button>
         <button onClick={onRedo}>重做</button>
         <button onClick={onSave}>保存草稿</button>
-        <button onClick={onJson}>生成 JSON</button>
-        <button onClick={onZip}>导出 ZIP</button>
+        <button onClick={onExportPackage}>导出设计包</button>
       </div>
     </header>
   );
