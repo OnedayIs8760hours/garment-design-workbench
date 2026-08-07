@@ -17,14 +17,47 @@
  */
 
 (function () {
-    var CONFIG = {
+    var CONFIG = [{
         schemaVersion: 1,
         templateVersion: 1,
         panelId: "back",
         panelName: "后片",
         layerName: "后片",
         fileBaseName: "back"
-    };
+    },
+    {
+        schemaVersion: 1,
+        templateVersion: 1,
+        panelId: "front",
+        panelName: "前片",
+        layerName: "前片",
+        fileBaseName: "front"
+    },
+    {
+        schemaVersion: 1,
+        templateVersion: 1,
+        panelId: "left-sleeve",
+        panelName: "左袖",
+        layerName: "左袖",
+        fileBaseName: "left-sleeve"
+    },
+    {
+        schemaVersion: 1,
+        templateVersion: 1,
+        panelId: "right-sleeve",
+        panelName: "右袖",
+        layerName: "右袖",
+        fileBaseName: "right-sleeve"
+    },
+    {
+        schemaVersion: 1,
+        templateVersion: 1,
+        panelId: "collar",
+        panelName: "领条",
+        layerName: "领条",
+        fileBaseName: "collar"
+    }
+];
 
     main();
 
@@ -42,18 +75,18 @@
             app.preferences.rulerUnits = Units.PIXELS;
             app.displayDialogs = DialogModes.NO;
 
-            var matchedLayers = findLayersByExactName(sourceDoc, CONFIG.layerName);
+            var matchedLayers = findLayersByExactName(sourceDoc, CONFIG[0].layerName);
 
             if (matchedLayers.length === 0) {
                 throw new Error(
-                    "未找到名为“" + CONFIG.layerName + "”的图层。\n" +
+                    "未找到名为“" + CONFIG[0].layerName + "”的图层。\n" +
                     "请检查 PSD 图层命名是否完全一致。"
                 );
             }
 
             if (matchedLayers.length > 1) {
                 throw new Error(
-                    "找到 " + matchedLayers.length + " 个名为“" + CONFIG.layerName + "”的图层。\n" +
+                    "找到 " + matchedLayers.length + " 个名为“" + CONFIG[0].layerName + "”的图层。\n" +
                     "请保证裁片图层名称唯一后再导出。"
                 );
             }
@@ -74,16 +107,16 @@
             var masksFolder = ensureChildFolder(outputFolder, "masks");
 
             var panelFile = new File(
-                panelsFolder.fsName + "/" + CONFIG.fileBaseName + ".png"
+                panelsFolder.fsName + "/" + CONFIG[0].fileBaseName + ".png"
             );
             var maskFile = new File(
-                masksFolder.fsName + "/" + CONFIG.fileBaseName + "-mask.png"
+                masksFolder.fsName + "/" + CONFIG[0].fileBaseName + "-mask.png"
             );
             var jsonFile = new File(outputFolder.fsName + "/template.json");
 
             exportPanelAndMask(
                 sourceDoc,
-                CONFIG.layerName,
+                CONFIG[0].layerName,
                 panelBounds,
                 panelFile,
                 maskFile
@@ -210,7 +243,7 @@
             app.activeDocument = sourceDoc;
 
             panelDoc = sourceDoc.duplicate(
-                "__panel_export_" + CONFIG.fileBaseName + "__",
+                "__panel_export_" + CONFIG[0].fileBaseName + "__",
                 false
             );
 
@@ -242,12 +275,12 @@
 
             // 蒙版文档从已经裁切好的裁片文档复制，保证尺寸完全一致。
             maskDoc = panelDoc.duplicate(
-                "__panel_mask_" + CONFIG.fileBaseName + "__",
+                "__panel_mask_" + CONFIG[0].fileBaseName + "__",
                 false
             );
 
             app.activeDocument = maskDoc;
-            createWhiteSilhouetteMask(maskDoc, CONFIG.fileBaseName + "-mask");
+            createWhiteSilhouetteMask(maskDoc, CONFIG[0].fileBaseName + "-mask");
             exportPng24(maskDoc, maskFile);
         } finally {
             if (maskDoc) {
@@ -436,8 +469,8 @@
         var templateId = removeFileExtension(sourceDoc.name);
 
         var panelData = {
-            panelId: CONFIG.panelId,
-            name: CONFIG.panelName,
+            panelId: CONFIG[0].panelId,
+            name: CONFIG[0].panelName,
             layerName: sourceLayer.name,
             layerPath: getLayerPath(sourceLayer),
             bounds: {
@@ -454,18 +487,18 @@
                 x: bounds.left + panelWidth / 2,
                 y: bounds.top + panelHeight / 2
             },
-            panelImage: "panels/" + CONFIG.fileBaseName + ".png",
-            maskImage: "masks/" + CONFIG.fileBaseName + "-mask.png",
+            panelImage: "panels/" + CONFIG[0].fileBaseName + ".png",
+            maskImage: "masks/" + CONFIG[0].fileBaseName + "-mask.png",
             maskMode: "white-on-transparent"
         };
 
         var panels = {};
-        panels[CONFIG.panelId] = panelData;
+        panels[CONFIG[0].panelId] = panelData;
 
         return {
-            schemaVersion: CONFIG.schemaVersion,
+            schemaVersion: CONFIG[0].schemaVersion,
             templateId: templateId,
-            templateVersion: CONFIG.templateVersion,
+            templateVersion: CONFIG[0].templateVersion,
             generatedAt: createIsoDateString(new Date()),
             sourceDocument: {
                 fileName: sourceDoc.name,
@@ -475,7 +508,7 @@
                 unit: "px",
                 colorMode: getDocumentModeName(sourceDoc.mode)
             },
-            panelOrder: [CONFIG.panelId],
+            panelOrder: [CONFIG[0].panelId],
             panels: panels
         };
     }
