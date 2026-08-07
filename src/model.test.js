@@ -32,6 +32,8 @@ assert.equal(validateDesign(design).passed, true);
 assert.equal(clampElement({ centerX: 2, centerY: -1, width: 0, height: 2, opacity: 3 }).centerX, 1);
 assert.equal(createExportJson(design).assets[0].dataUrl, undefined);
 assert.equal(createExportJson(design).panels.front.logicalSize.width, 2796);
+assert.equal(createExportJson(design).panels.front.changed, true);
+assert.equal(createExportJson(design).panels.front.layerName, "前片");
 assert.equal(createExportJson(design).panels.front.bounds.left, 9);
 assert.equal(createExportJson(design).panels.front.maskImage, "/templates/M-2XL/masks/front-mask.png");
 assert.equal(createExportJson(design).panels.front.guides[0].id, "cutline");
@@ -40,6 +42,10 @@ assert.equal(createExportJson(design).panels.front.guides[1].id, "center_line");
 assert.equal(Object.keys(template.panels).length, 8);
 assert.equal(template.panels.back.templateImage, "/templates/M-2XL/panels/back.png");
 assert.equal(createExportJson(design).panels.shouder.logicalSize.width, 2980);
+
+design.panels.back.changed = true;
+assert.equal(createExportJson(design).panels.back.changed, true);
+assert.equal(createExportJson(design).panels.back.status, "not_started");
 
 design.panels.front.elements[0].centerX = 0.95;
 assert.equal(validateDesign(design).passed, false);

@@ -20,6 +20,7 @@ export function App() {
     commit((draft) => {
       const panel = currentPanel(draft);
       panel.elements.push({ ...element, id: `element-${Date.now()}`, zIndex: panel.elements.length + 1 });
+      panel.changed = true;
     });
   };
 
@@ -42,6 +43,7 @@ export function App() {
     commit((draft) => {
       const element = currentPanel(draft).elements.find((item) => item.id === id);
       Object.assign(element, clampElement({ ...element, ...patch }));
+      currentPanel(draft).changed = true;
     });
   };
 
@@ -51,6 +53,7 @@ export function App() {
       currentPanel(draft).elements = currentPanel(draft).elements
         .filter((element) => element.id !== selectedId)
         .map((element, index) => ({ ...element, zIndex: index + 1 }));
+      currentPanel(draft).changed = true;
     });
     select(null);
   };
@@ -64,6 +67,7 @@ export function App() {
       if (nextIndex < 0 || nextIndex >= elements.length) return;
       [elements[index], elements[nextIndex]] = [elements[nextIndex], elements[index]];
       panel.elements = elements.map((element, zIndex) => ({ ...element, zIndex: zIndex + 1 }));
+      panel.changed = true;
     });
   };
 

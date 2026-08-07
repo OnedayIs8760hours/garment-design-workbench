@@ -40,6 +40,7 @@ export function createPanelState(panel) {
     sourceFile: panel.sourceFile,
     bounds: panel.bounds,
     guides: panel.guides,
+    changed: false,
     status: "not_started",
     elements: [],
   };
@@ -111,11 +112,14 @@ export function createExportJson(design, validation = validateDesign(design)) {
         panelId,
         {
           logicalSize: panel.logicalSize,
+          name: template.panels[panelId]?.name,
+          layerName: template.panels[panelId]?.layerName,
           templateImage: template.panels[panelId]?.templateImage,
           maskImage: template.panels[panelId]?.maskImage,
           sourceFile: template.panels[panelId]?.sourceFile,
           bounds: template.panels[panelId]?.bounds,
           guides: template.panels[panelId]?.guides,
+          changed: Boolean(panel.changed || panel.elements.length),
           status: panel.elements.length ? "completed" : "not_started",
           elements: panel.elements.map((element) => clampElement(element)),
         },
