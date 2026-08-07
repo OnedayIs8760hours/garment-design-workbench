@@ -1,7 +1,7 @@
 import React from "react";
 import { Stage, Layer, Rect, Text, Image as KonvaImage, Transformer, Line } from "react-konva";
 import { clampElement } from "../model.js";
-import { stageSize, template } from "../config.js";
+import { getStageSize, template } from "../config.js";
 import { currentElements } from "../designStore.js";
 
 function useImage(src) {
@@ -20,6 +20,7 @@ export function PanelStage({ design, selectedId, onSelect, onChange }) {
   const nodeRefs = React.useRef({});
   const elements = currentElements(design);
   const panel = template.panels[design.currentPanelId];
+  const stageSize = getStageSize(panel);
   const panelImage = useImage(panel.templateImage);
   const maskImage = useImage(panel.maskImage);
 
@@ -40,7 +41,7 @@ export function PanelStage({ design, selectedId, onSelect, onChange }) {
         <Rect width={stageSize.width} height={stageSize.height} fill="#ffffff" />
         <KonvaImage image={panelImage} width={stageSize.width} height={stageSize.height} listening={false} />
         {panel.guides?.map((guide) => (
-          <GuideLine key={guide.id} guide={guide} panel={panel} />
+          <GuideLine key={guide.id} guide={guide} panel={panel} stageSize={stageSize} />
         ))}
         <Text text={panel.name} x={14} y={12} fontSize={18} fill="#111827" />
       </Layer>
@@ -51,6 +52,7 @@ export function PanelStage({ design, selectedId, onSelect, onChange }) {
             element={element}
             asset={design.assets.find((asset) => asset.assetId === element.assetId)}
             selected={element.id === selectedId}
+            stageSize={stageSize}
             setRef={(node) => {
               nodeRefs.current[element.id] = node;
             }}
@@ -75,7 +77,7 @@ export function PanelStage({ design, selectedId, onSelect, onChange }) {
   );
 }
 
-function GuideLine({ guide, panel }) {
+function GuideLine({ guide, panel, stageSize }) {
   const style = guide.style ?? {};
   const common = {
     stroke: style.stroke ?? "#0f766e",
@@ -85,21 +87,21 @@ function GuideLine({ guide, panel }) {
   };
 
   if (guide.type === "line") {
-    return <Line {...common} points={[...scalePoint(guide.from, panel), ...scalePoint(guide.to, panel)]} />;
+    return <Line {...common} points={[...scalePoint(guide.from, panel, stageSize), ...scalePoint(guide.to, panel, stageSize)]} />;
   }
 
   if (guide.type === "path") {
-    return <Line {...common} points={guide.points.flatMap((point) => scalePoint(point, panel))} closed={guide.closed} />;
+    return <Line {...common} points={guide.points.flatMap((point) => scalePoint(point, panel, stageSize))} closed={guide.closed} />;
   }
 
   return null;
 }
 
-function scalePoint([x, y], panel) {
+function scalePoint([x, y], panel, stageSize) {
   return [(x / panel.logicalSize.width) * stageSize.width, (y / panel.logicalSize.height) * stageSize.height];
 }
 
-function CanvasElement({ element, asset, selected, setRef, onSelect, onChange }) {
+function CanvasElement({ element, asset, selected, stageSize, setRef, onSelect, onChange }) {
   const image = useImage(asset?.dataUrl);
   const common = {
     ref: setRef,

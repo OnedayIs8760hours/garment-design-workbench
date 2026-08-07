@@ -14,7 +14,7 @@ export function QuickGarmentPreview({ design, panelId }) {
   };
 
   return (
-    <div className="garment-preview">
+    <div className="garment-preview" style={{ aspectRatio: `${panelTemplate.logicalSize.width} / ${panelTemplate.logicalSize.height}` }}>
       <img className="garment-preview-bg" src={panelTemplate.templateImage} alt="" />
       <GuideOverlay panel={panelTemplate} />
       <div className="garment-preview-elements" style={maskStyle}>

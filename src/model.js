@@ -1,28 +1,34 @@
 import exportedTemplate from "./templates/M-2XL.template.json" with { type: "json" };
 
 export function createTemplate() {
-  const panel = exportedTemplate.panels.front;
   const basePath = `/templates/${exportedTemplate.templateId}`;
   const assetUrl = (filePath) => (filePath ? `${basePath}/${filePath}` : null);
+  const panelIds = exportedTemplate.panelOrder ?? Object.keys(exportedTemplate.panels);
 
   return {
     templateId: exportedTemplate.templateId,
     templateVersion: exportedTemplate.templateVersion,
-    name: `${exportedTemplate.templateId} front panel`,
+    name: `${exportedTemplate.templateId} garment panels`,
     sizes: ["M-2XL"],
-    panels: {
-      front: {
-        name: panel.name,
-        layerName: panel.layerName,
-        bounds: panel.bounds,
-        logicalSize: panel.size,
-        templateImage: assetUrl(panel.panelImage),
-        maskImage: assetUrl(panel.maskImage),
-        sourceFile: `templates/${exportedTemplate.templateId}/${panel.panelImage}`,
-        guides: panel.guides ?? [],
-        previewMapping: { type: "simple", target: "front" },
-      },
-    },
+    panels: Object.fromEntries(
+      panelIds.map((panelId) => {
+        const panel = exportedTemplate.panels[panelId];
+        return [
+          panelId,
+          {
+            name: panel.name,
+            layerName: panel.layerName,
+            bounds: panel.bounds,
+            logicalSize: panel.size,
+            templateImage: assetUrl(panel.panelImage),
+            maskImage: assetUrl(panel.maskImage),
+            sourceFile: `templates/${exportedTemplate.templateId}/${panel.panelImage}`,
+            guides: panel.guides ?? [],
+            previewMapping: { type: "simple", target: panelId },
+          },
+        ];
+      }),
+    ),
   };
 }
 

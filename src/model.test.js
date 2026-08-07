@@ -37,6 +37,9 @@ assert.equal(createExportJson(design).panels.front.maskImage, "/templates/M-2XL/
 assert.equal(createExportJson(design).panels.front.guides[0].id, "cutline");
 assert.equal(createExportJson(design).panels.front.guides[0].style.dash[0], 8);
 assert.equal(createExportJson(design).panels.front.guides[1].id, "center_line");
+assert.equal(Object.keys(template.panels).length, 8);
+assert.equal(template.panels.back.templateImage, "/templates/M-2XL/panels/back.png");
+assert.equal(createExportJson(design).panels.shouder.logicalSize.width, 2980);
 
 design.panels.front.elements[0].centerX = 0.95;
 assert.equal(validateDesign(design).passed, false);
