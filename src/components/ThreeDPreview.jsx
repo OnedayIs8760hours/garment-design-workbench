@@ -102,7 +102,7 @@ export function ThreeDPreview({ design }) {
         const nextRects = getPanelRects(gltf.scene);
         setPanelRects(Object.keys(nextRects).length ? nextRects : defaultPanelRects);
         applyTextureRef.current(textureRef.current);
-        setMessage("实时 3D 预览");
+        setMessage("实时预览");
       },
       undefined,
       () => setMessage("模型加载失败，请确认文件是 .glb/.gltf"),
