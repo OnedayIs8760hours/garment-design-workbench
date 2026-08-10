@@ -164,7 +164,7 @@ async function createDesignTexture(design, panelRects) {
     const [uMin, vMin, uMax, vMax] = uvRect;
     const rect = {
       x: Math.round(uMin * size),
-      y: Math.round(vMin * size),
+      y: Math.round((1 - vMax) * size),
       width: Math.max(1, Math.round((uMax - uMin) * size)),
       height: Math.max(1, Math.round((vMax - vMin) * size)),
     };
@@ -188,7 +188,7 @@ async function createDesignTexture(design, panelRects) {
   }
 
   const texture = new THREE.CanvasTexture(atlas);
-  texture.flipY = false;
+  texture.flipY = true;
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.needsUpdate = true;
   return texture;
