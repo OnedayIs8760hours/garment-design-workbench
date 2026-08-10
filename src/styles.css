@@ -373,6 +373,54 @@ h3 {
   gap: 8px;
 }
 
+.model-preview {
+  display: grid;
+  gap: 10px;
+}
+
+.model-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.model-toolbar strong {
+  min-width: 0;
+  font-size: 13px;
+}
+
+.model-upload {
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.model-canvas {
+  width: 100%;
+  aspect-ratio: 1;
+  min-height: 260px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f7f7f5;
+  border: 1px solid rgb(30 41 59 / 10%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 80%), 0 18px 38px rgb(68 76 90 / 12%);
+}
+
+.model-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.model-empty {
+  margin-top: -2px;
+  color: #5b6470;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .panel-preview-canvas {
   position: relative;
   aspect-ratio: 3340 / 3296;
