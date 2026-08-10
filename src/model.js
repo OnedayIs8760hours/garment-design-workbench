@@ -1,6 +1,7 @@
-import exportedTemplate from "./templates/M-2XL.template.json" with { type: "json" };
+import { activeTemplateDefinition } from "./templates/index.js";
 
-export function createTemplate() {
+export function createTemplate(definition = activeTemplateDefinition) {
+  const exportedTemplate = definition.template;
   const basePath = `/templates/${exportedTemplate.templateId}`;
   const assetUrl = (filePath) => (filePath ? `${basePath}/${filePath}` : null);
   const panelIds = exportedTemplate.panelOrder ?? Object.keys(exportedTemplate.panels);
@@ -9,7 +10,15 @@ export function createTemplate() {
     templateId: exportedTemplate.templateId,
     templateVersion: exportedTemplate.templateVersion,
     name: `${exportedTemplate.templateId} garment panels`,
-    sizes: ["M-2XL"],
+    sizes: definition.sizes ?? [exportedTemplate.templateId],
+    productId: definition.productId ?? `PRODUCT-${exportedTemplate.templateId}`,
+    draftKey: definition.draftKey ?? `sds-design-${exportedTemplate.templateId}-panels-v${exportedTemplate.templateVersion}`,
+    threeD: {
+      defaultModelUrl: definition.defaultModelUrl ?? null,
+      uvRects: Object.fromEntries(
+        Object.entries(definition.uvMapping?.parts ?? {}).map(([panelId, part]) => [panelId, part.uv_rect]),
+      ),
+    },
     panels: Object.fromEntries(
       panelIds.map((panelId) => {
         const panel = exportedTemplate.panels[panelId];

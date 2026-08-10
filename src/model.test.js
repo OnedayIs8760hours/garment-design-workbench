@@ -39,6 +39,10 @@ assert.equal(createExportJson(design).panels.front.maskImage, "/templates/M-2XL/
 assert.equal(createExportJson(design).panels.front.guides[0].id, "cutline");
 assert.equal(createExportJson(design).panels.front.guides[0].style.dash[0], 8);
 assert.equal(createExportJson(design).panels.front.guides[1].id, "center_line");
+assert.equal(template.productId, "PRODUCT-M-2XL");
+assert.equal(template.draftKey, "sds-design-M-2XL-panels-v1");
+assert.equal(template.threeD.defaultModelUrl, "/models/soccer-new-rename.glb");
+assert.deepEqual(template.threeD.uvRects.front, [0.450439453125, 0.5546875, 0.88720703125, 0.9921875]);
 assert.equal(Object.keys(template.panels).length, 8);
 assert.equal(template.panels.back.templateImage, "/templates/M-2XL/panels/back.png");
 assert.equal(createExportJson(design).panels.shouder.logicalSize.width, 2980);

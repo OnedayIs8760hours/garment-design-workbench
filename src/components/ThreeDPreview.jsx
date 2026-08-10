@@ -2,11 +2,10 @@ import React from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import uvMapping from "../templates/M-2XL.uv_mapping.json";
 import { template } from "../config.js";
 
 const imageCache = new Map();
-const defaultPanelRects = Object.fromEntries(Object.entries(uvMapping.parts).map(([panelId, part]) => [panelId, part.uv_rect]));
+const defaultPanelRects = template.threeD?.uvRects ?? {};
 
 export function ThreeDPreview({ design }) {
   const hostRef = React.useRef(null);
@@ -14,7 +13,7 @@ export function ThreeDPreview({ design }) {
   const modelRef = React.useRef(null);
   const textureRef = React.useRef(null);
   const applyTextureRef = React.useRef(() => {});
-  const [modelUrl, setModelUrl] = React.useState("/models/soccer-new-rename.glb");
+  const [modelUrl, setModelUrl] = React.useState(template.threeD?.defaultModelUrl ?? "");
   const [panelRects, setPanelRects] = React.useState(defaultPanelRects);
   const [message, setMessage] = React.useState("选择 CLO 导出的 .glb/.gltf 模型");
 
