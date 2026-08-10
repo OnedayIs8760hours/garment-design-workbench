@@ -180,10 +180,6 @@ async function createDesignTexture(design, panelRects) {
       await drawElement(panelCtx, element, design.assets, rect);
     }
 
-    const mask = await loadImage(panel.maskImage);
-    panelCtx.globalCompositeOperation = "destination-in";
-    panelCtx.drawImage(mask, 0, 0, rect.width, rect.height);
-    panelCtx.globalCompositeOperation = "source-over";
     ctx.drawImage(panelCanvas, rect.x, rect.y);
   }
 
