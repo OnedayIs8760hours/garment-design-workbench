@@ -3,6 +3,7 @@ import { Stage, Layer, Rect, Text, Image as KonvaImage, Transformer, Line } from
 import { clampElement } from "../model.js";
 import { getStageSize, template } from "../config.js";
 import { currentElements } from "../designStore.js";
+import { textFontFor } from "../fontMap.js";
 
 // 加载图片资源并返回浏览器 Image 对象。
 function useImage(src) {
@@ -166,6 +167,7 @@ function CanvasElement({ element, asset, selected, stageSize, setRef, onSelect, 
   if (element.type === "image") {
     return <KonvaImage {...common} image={image} stroke={selected ? "#111827" : undefined} strokeWidth={selected ? 1 : 0} />;
   }
+  const font = textFontFor(element);
   return (
     <Text
       {...common}
@@ -173,8 +175,9 @@ function CanvasElement({ element, asset, selected, stageSize, setRef, onSelect, 
       fill={element.fill}
       stroke={element.stroke}
       strokeWidth={element.strokeWidth * stageSize.width}
+      fontFamily={font.cssFamily}
       fontSize={Math.max(18, element.height * stageSize.height * 0.72)}
-      fontStyle="bold"
+      fontStyle={font.cssStyle}
       align="center"
       verticalAlign="middle"
     />

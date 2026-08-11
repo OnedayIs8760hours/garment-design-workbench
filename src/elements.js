@@ -1,3 +1,5 @@
+import { defaultTextFontId, textFontFields } from "./fontMap.js";
+
 // 创建图片元素，并在有原始宽高比时按比例计算默认尺寸。
 export function createImageElement(assetId, imageAspectRatio, panelAspectRatio = 1) {
   // 图片元素默认占裁片宽度的比例。
@@ -44,7 +46,7 @@ export function createImageElement(assetId, imageAspectRatio, panelAspectRatio =
 
 // 创建文字元素，role 决定是姓名还是号码。
 export function createTextElement(role) {
-  return {
+  const element = {
     // 元素类型。
     type: "text",
     // 文字用途：姓名或号码。
@@ -52,7 +54,7 @@ export function createTextElement(role) {
     // 默认显示文本。
     text: role === "number" ? "00" : "YOUR NAME",
     // 字体配置 ID。
-    fontId: role === "number" ? "font-number-01" : "font-college-01",
+    fontId: defaultTextFontId,
     // 元素中心点 X。
     centerX: 0.5,
     // 元素中心点 Y。
@@ -76,6 +78,7 @@ export function createTextElement(role) {
     // 是否锁定编辑。
     locked: false,
   };
+  return { ...element, ...textFontFields(element) };
 }
 
 // 返回图层列表里展示的元素名称。

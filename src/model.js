@@ -1,4 +1,5 @@
 import { activeTemplateDefinition } from "./templates/index.js";
+import { textFontFor } from "./fontMap.js";
 
 // 将模板 JSON 转成应用内部统一使用的模板结构。
 export function createTemplate(definition = activeTemplateDefinition) {
@@ -159,10 +160,23 @@ export function createExportJson(design, validation = validateDesign(design)) {
           guides: template.panels[panelId]?.guides,
           changed: Boolean(panel.changed || panel.elements.length),
           status: panel.elements.length ? "completed" : "not_started",
-          elements: panel.elements.map((element) => clampElement(element)),
+          elements: panel.elements.map((element) => exportElement(element)),
         },
       ]),
     ),
     validation,
+  };
+}
+
+function exportElement(element) {
+  const normalized = clampElement(element);
+  if (normalized.type !== "text") return normalized;
+
+  const font = textFontFor(normalized);
+  return {
+    ...normalized,
+    fontFamily: font.cssFamily,
+    fontWeight: font.cssWeight,
+    photoshopFont: font.photoshopFont,
   };
 }

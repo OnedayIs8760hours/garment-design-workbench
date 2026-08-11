@@ -24,7 +24,6 @@ E:\download\design-package-ORDER-20260805-001
 
 ```text
 manifest.json
-order-design.json
 assets\
 ```
 

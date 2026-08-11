@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { createImageElement } from "./elements.js";
+import { createImageElement, createTextElement } from "./elements.js";
 import { createInitialDesign, garmentColors, normalizeColor } from "./config.js";
+import { textFonts } from "./fontMap.js";
 import { clampElement, createExportJson, createPanelState, createTemplate, validateDesign } from "./model.js";
 
 // 测试使用的模板结构。
@@ -40,6 +41,7 @@ design.panels.front.elements.push({
   zIndex: 1,
   visible: true,
 });
+design.panels.front.elements.push(createTextElement("name"));
 
 assert.equal(validateDesign(design).passed, true);
 assert.equal(clampElement({ centerX: 2, centerY: -1, width: 0, height: 2, opacity: 3 }).centerX, 1);
@@ -51,6 +53,9 @@ assert.equal(createExportJson(design).panels.front.bounds.left, 9);
 assert.equal(createExportJson(design).panels.front.maskImage, "/templates/M-2XL/masks/front-mask.png");
 assert.equal(createExportJson(design).panels.front.guides[0].id, "cutline");
 assert.equal(createExportJson(design).panels.front.guides[0].style.dash[0], 8);
+assert.equal(createExportJson(design).panels.front.elements[1].photoshopFont, "NFLSeattleSeahawksFlat");
+assert.equal(createExportJson(design).panels.front.elements[1].fontFamily, "\"NFL Seattle Seahawks Flat\", Arial, sans-serif");
+assert.equal(textFonts["font-nfl-seahawks-flat"].label, "NFL Seattle Seahawks Flat");
 assert.equal(createExportJson(design).panels.front.guides[1].id, "center_line");
 assert.equal(template.productId, "PRODUCT-M-2XL");
 assert.equal(template.draftKey, "sds-design-M-2XL-panels-v1");

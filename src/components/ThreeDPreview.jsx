@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { template } from "../config.js";
+import { textFontFor } from "../fontMap.js";
 
 // 图片加载缓存，避免 3D 贴图生成时重复解码同一素材。
 const imageCache = new Map();
@@ -247,7 +248,8 @@ async function drawElement(ctx, element, assets, rect) {
     const image = await loadImage(asset?.dataUrl);
     if (image) ctx.drawImage(image, -width / 2, -height / 2, width, height);
   } else {
-    ctx.font = `900 ${Math.max(10, height * 0.72)}px Microsoft YaHei, Arial, sans-serif`;
+    const font = textFontFor(element);
+    ctx.font = `${font.cssWeight} ${Math.max(10, height * 0.72)}px ${font.cssFamily}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.lineJoin = "round";

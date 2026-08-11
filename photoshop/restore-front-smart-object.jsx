@@ -131,7 +131,7 @@
         text.justification = Justification.CENTER;
 
         try {
-            text.font = element.role === "number" ? "Arial-BoldMT" : "Arial-BoldMT";
+            text.font = element.photoshopFont || "Arial-BoldMT";
         } catch (ignoreFontError) {}
 
         text.color = solidColorFromHex(element.fill || "#000000");

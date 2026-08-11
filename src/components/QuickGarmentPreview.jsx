@@ -1,5 +1,6 @@
 import React from "react";
 import { template } from "../config.js";
+import { textFontFor } from "../fontMap.js";
 
 // 快速 2D 裁片预览，使用 mask 把元素限制在裁片内。
 export function QuickGarmentPreview({ design, panelId }) {
@@ -105,6 +106,7 @@ function GarmentElement({ element, asset }) {
   const fontSize = Math.max(8, textBox.height * 0.72 || 20);
   // 根据盒子宽度计算文字描边宽度。
   const strokeWidth = Math.max(1, (textBox.width || 0) * (element.strokeWidth ?? 0.01));
+  const font = textFontFor(element);
 
   return (
     <div
@@ -113,6 +115,8 @@ function GarmentElement({ element, asset }) {
       style={{
         ...style,
         color: element.fill,
+        fontFamily: font.cssFamily,
+        fontWeight: font.cssWeight,
         fontSize,
         WebkitTextStroke: `${strokeWidth}px ${element.stroke}`,
       }}

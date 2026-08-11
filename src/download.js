@@ -8,7 +8,6 @@ export async function downloadZip(design, exportJson) {
   const packageJson = rewriteAssetPathsForPackage(exportJson);
 
   zip.file("manifest.json", JSON.stringify(packageJson, null, 2));
-  zip.file("order-design.json", JSON.stringify(packageJson, null, 2));
 
   for (const asset of design.assets) {
     if (!asset.dataUrl) continue;
