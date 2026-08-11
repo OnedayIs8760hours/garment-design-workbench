@@ -45,11 +45,17 @@ export function App() {
 
   const addImage = (asset) => {
     const panel = currentPanel(design);
-    addElement(createImageElement(
+    const element = createImageElement(
       asset.assetId,
       asset.originalWidth / asset.originalHeight,
       panel.logicalSize.width / panel.logicalSize.height,
-    ));
+    );
+    commit((draft) => {
+      if (!draft.assets.some((item) => item.assetId === asset.assetId)) draft.assets.push(asset);
+      const panel = currentPanel(draft);
+      panel.elements.push({ ...element, id: `element-${Date.now()}`, zIndex: panel.elements.length + 1 });
+      panel.changed = true;
+    });
   };
   const addText = (role) => addElement(createTextElement(role));
 
@@ -61,12 +67,10 @@ export function App() {
       const image = new Image();
       image.onload = () => {
         const asset = createUploadedAsset(file, reader.result, image);
-        commit((draft) => draft.assets.push(asset));
         addImage(asset);
       };
       image.onerror = () => {
         const asset = createUploadedAsset(file, reader.result);
-        commit((draft) => draft.assets.push(asset));
         addImage(asset);
       };
       image.src = reader.result;
@@ -104,6 +108,20 @@ export function App() {
     select(null);
   };
 
+  const clearAssets = () => {
+    if (!design.assets.length) return;
+    commit((draft) => {
+      draft.assets = [];
+      Object.values(draft.panels).forEach((panel) => {
+        panel.elements = panel.elements
+          .filter((element) => element.type !== "image")
+          .map((element, zIndex) => ({ ...element, zIndex: zIndex + 1 }));
+        panel.changed = true;
+      });
+    });
+    select(null);
+  };
+
   const moveLayer = (id, direction) => {
     commit((draft) => {
       const panel = currentPanel(draft);
@@ -132,7 +150,7 @@ export function App() {
       />
 
       <main className="workspace">
-        <ToolsSidebar design={design} commit={commit} addImage={addImage} addText={addText} onUpload={onUpload} />
+        <ToolsSidebar design={design} commit={commit} addImage={addImage} addText={addText} onUpload={onUpload} clearAssets={clearAssets} />
         <section className="editor">
           <EditorRibbon />
           <PanelTabs design={design} commit={commit} />

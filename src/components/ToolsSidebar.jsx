@@ -1,7 +1,7 @@
 import React from "react";
 import { garmentColors, sampleAsset } from "../config.js";
 
-export function ToolsSidebar({ design, commit, addImage, addText, onUpload }) {
+export function ToolsSidebar({ design, commit, addImage, addText, onUpload, clearAssets }) {
   return (
     <aside className="sidebar">
       <section className="tool-panel">
@@ -36,6 +36,7 @@ export function ToolsSidebar({ design, commit, addImage, addText, onUpload }) {
 
       <section className="tool-panel">
         <h2>素材清单</h2>
+        <button onClick={clearAssets} disabled={!design.assets.length}>清空素材清单</button>
         <div className="asset-list">
           {design.assets.map((asset) => (
             <button key={asset.assetId} onClick={() => addImage(asset)}>{asset.name}</button>
