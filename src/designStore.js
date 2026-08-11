@@ -27,13 +27,12 @@ export const useDesignStore = create((set, get) => ({
   design: restoredDraft ?? createInitialDesign(),
   selectedId: null,
   past: [],
-  future: [],
   status: restoredDraft ? "已恢复草稿" : "未保存",
   commit(mutator) {
     const before = clone(get().design);
     const next = clone(before);
     mutator(next);
-    set({ design: next, past: [...get().past, before].slice(-40), future: [], status: "未保存" });
+    set({ design: next, past: [...get().past, before].slice(-40), status: "未保存" });
     scheduleSave();
   },
   undo() {
@@ -42,19 +41,6 @@ export const useDesignStore = create((set, get) => ({
     set({
       design: past[past.length - 1],
       past: past.slice(0, -1),
-      future: [clone(get().design), ...get().future],
-      selectedId: null,
-      status: "未保存",
-    });
-    scheduleSave();
-  },
-  redo() {
-    const future = get().future;
-    if (!future.length) return;
-    set({
-      design: future[0],
-      past: [...get().past, clone(get().design)],
-      future: future.slice(1),
       selectedId: null,
       status: "未保存",
     });
