@@ -80,6 +80,7 @@ export function createTextElement(role) {
 
 // 返回图层列表里展示的元素名称。
 export function elementLabel(element) {
+  if (element.role === "panel-color") return "裁片底色";
   if (element.type === "image") return "图片素材";
   return element.role === "number" ? `号码 ${element.text}` : `文字 ${element.text}`;
 }

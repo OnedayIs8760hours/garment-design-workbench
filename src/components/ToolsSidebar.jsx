@@ -2,7 +2,11 @@ import React from "react";
 import { garmentColors } from "../config.js";
 
 // 左侧工具栏，负责上传素材、添加文字、切换颜色和复用素材。
-export function ToolsSidebar({ design, commit, addImage, addText, onUpload, clearAssets }) {
+export function ToolsSidebar({ design, addImage, addText, onUpload, clearAssets, applyPanelColor }) {
+  const visibleAssets = design.assets.filter((asset) => !asset.internal);
+  const panelColorElement = design.panels[design.currentPanelId].elements.find((element) => element.role === "panel-color");
+  const activeColor = design.assets.find((asset) => asset.assetId === panelColorElement?.assetId)?.color ?? design.garmentColor;
+
   return (
     <aside className="sidebar">
       <section className="tool-panel">
@@ -25,9 +29,9 @@ export function ToolsSidebar({ design, commit, addImage, addText, onUpload, clea
           {garmentColors.map((color) => (
             <button
               key={color}
-              className={color === design.garmentColor ? "swatch active" : "swatch"}
+              className={color === activeColor ? "swatch active" : "swatch"}
               style={{ backgroundColor: color }}
-              onClick={() => commit((draft) => { draft.garmentColor = color; })}
+              onClick={() => applyPanelColor(color)}
               aria-label={`选择颜色 ${color}`}
             />
           ))}
@@ -36,9 +40,9 @@ export function ToolsSidebar({ design, commit, addImage, addText, onUpload, clea
 
       <section className="tool-panel">
         <h2>素材清单</h2>
-        <button className="danger-button" onClick={clearAssets} disabled={!design.assets.length}>清空素材清单</button>
+        <button className="danger-button" onClick={clearAssets} disabled={!visibleAssets.length}>清空素材清单</button>
         <div className="asset-list">
-          {design.assets.map((asset) => (
+          {visibleAssets.map((asset) => (
             <button key={asset.assetId} onClick={() => addImage(asset)}>{asset.name}</button>
           ))}
         </div>

@@ -78,6 +78,52 @@ export function App() {
   // 添加姓名或号码文字元素。
   const addText = (role) => addElement(createTextElement(role));
 
+  const applyPanelColor = (color) => {
+    const panelId = design.currentPanelId;
+    const panel = currentPanel(design);
+    const assetId = `asset-panel-color-${panelId}`;
+    const dataUrl = createColorCanvasDataUrl(color, panel.logicalSize.width, panel.logicalSize.height);
+    commit((draft) => {
+      const draftPanel = currentPanel(draft);
+      const asset = {
+        assetId,
+        type: "image",
+        name: `${draftPanel.name ?? panelId}底色`,
+        previewFile: `${panelId}-color.png`,
+        sourceFile: `${panelId}-color.png`,
+        dataUrl,
+        color,
+        originalWidth: panel.logicalSize.width,
+        originalHeight: panel.logicalSize.height,
+        internal: true,
+      };
+      const assetIndex = draft.assets.findIndex((item) => item.assetId === assetId);
+      if (assetIndex >= 0) draft.assets[assetIndex] = asset;
+      else draft.assets.push(asset);
+
+      const colorElement = {
+        id: `element-panel-color-${panelId}`,
+        type: "image",
+        role: "panel-color",
+        assetId,
+        centerX: 0.5,
+        centerY: 0.5,
+        width: 1,
+        height: 1,
+        rotation: 0,
+        opacity: 1,
+        flipX: false,
+        flipY: false,
+        visible: true,
+        locked: true,
+        zIndex: 1,
+      };
+      draftPanel.elements = [colorElement, ...draftPanel.elements.filter((element) => element.id !== colorElement.id)]
+        .map((element, index) => ({ ...element, zIndex: index + 1 }));
+      draftPanel.changed = true;
+    });
+  };
+
   // 处理图片上传，将文件读成 dataUrl 后加入素材清单。
   const onUpload = (event) => {
     // 上传控件选中的第一个文件。
@@ -139,12 +185,12 @@ export function App() {
 
   // 清空素材清单，并删除画布上所有图片元素。
   const clearAssets = () => {
-    if (!design.assets.length) return;
+    if (!design.assets.some((asset) => !asset.internal)) return;
     commit((draft) => {
-      draft.assets = [];
+      draft.assets = draft.assets.filter((asset) => asset.internal);
       Object.values(draft.panels).forEach((panel) => {
         panel.elements = panel.elements
-          .filter((element) => element.type !== "image")
+          .filter((element) => element.type !== "image" || element.role === "panel-color")
           .map((element, zIndex) => ({ ...element, zIndex: zIndex + 1 }));
         panel.changed = true;
       });
@@ -185,7 +231,7 @@ export function App() {
       />
 
       <main className="workspace">
-        <ToolsSidebar design={design} commit={commit} addImage={addImage} addText={addText} onUpload={onUpload} clearAssets={clearAssets} />
+        <ToolsSidebar design={design} addImage={addImage} addText={addText} onUpload={onUpload} clearAssets={clearAssets} applyPanelColor={applyPanelColor} />
         <section className="editor">
           <PanelTabs design={design} commit={commit} />
           <div className="canvas-shell">
@@ -229,4 +275,14 @@ function createUploadedAsset(file, dataUrl, image) {
     // 上传时间。
     uploadedAt: new Date().toISOString(),
   };
+}
+
+function createColorCanvasDataUrl(color, width, height) {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, width, height);
+  return canvas.toDataURL("image/png");
 }
