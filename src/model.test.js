@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createImageElement } from "./elements.js";
-import { createInitialDesign } from "./config.js";
+import { createInitialDesign, garmentColors, normalizeColor } from "./config.js";
 import { clampElement, createExportJson, createPanelState, createTemplate, validateDesign } from "./model.js";
 
 // 测试使用的模板结构。
@@ -20,7 +20,7 @@ const design = {
   // 当前尺码。
   size: "2XL",
   // 当前服装颜色。
-  garmentColor: "#8DAED4",
+  garmentColor: "rgb(141, 174, 212)",
   // 测试素材清单。
   assets: [{ assetId: "asset-1", dataUrl: "data:image/png;base64,abc", sourceFile: "a.png" }],
   // 每个裁片的初始状态。
@@ -60,6 +60,10 @@ assert.equal(Object.keys(template.panels).length, 8);
 assert.equal(template.panels.back.templateImage, "/templates/M-2XL/panels/back.png");
 assert.equal(createExportJson(design).panels.shouder.logicalSize.width, 2980);
 assert.equal(createInitialDesign().assets.length, 0);
+assert.equal(createInitialDesign().garmentColor, "rgb(141, 174, 212)");
+assert.ok(garmentColors.every((color) => color.startsWith("rgb(")));
+assert.match(createInitialDesign().garmentColor, /^rgb\(\d+, \d+, \d+\)$/);
+assert.equal(normalizeColor("#F7D56F"), "rgb(247, 213, 111)");
 
 design.panels.back.changed = true;
 assert.equal(createExportJson(design).panels.back.changed, true);

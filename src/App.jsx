@@ -13,6 +13,7 @@ import { PreviewPane } from "./components/PreviewPane.jsx";
 export function App() {
   // 从全局 store 读取设计数据、选择状态和操作方法。
   const { design, selectedId, status, past, commit, undo, select, saveNow } = useDesignStore();
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   // 当前设计的校验结果。
   const validation = validateDesign(design);
   // 当前选中的元素对象。
@@ -78,51 +79,61 @@ export function App() {
   // 添加姓名或号码文字元素。
   const addText = (role) => addElement(createTextElement(role));
 
-  const applyPanelColor = (color) => {
-    const panelId = design.currentPanelId;
-    const panel = currentPanel(design);
-    const assetId = `asset-panel-color-${panelId}`;
-    const dataUrl = createColorCanvasDataUrl(color, panel.logicalSize.width, panel.logicalSize.height);
+  const applyPanelColor = (color, panelIds = [design.currentPanelId]) => {
+    const panelColors = panelIds.map((panelId) => {
+      const panel = design.panels[panelId];
+      return {
+        panelId,
+        assetId: `asset-panel-color-${panelId}`,
+        dataUrl: createColorCanvasDataUrl(color, panel.logicalSize.width, panel.logicalSize.height),
+        width: panel.logicalSize.width,
+        height: panel.logicalSize.height,
+      };
+    });
     commit((draft) => {
-      const draftPanel = currentPanel(draft);
-      const asset = {
-        assetId,
-        type: "image",
-        name: `${draftPanel.name ?? panelId}底色`,
-        previewFile: `${panelId}-color.png`,
-        sourceFile: `${panelId}-color.png`,
-        dataUrl,
-        color,
-        originalWidth: panel.logicalSize.width,
-        originalHeight: panel.logicalSize.height,
-        internal: true,
-      };
-      const assetIndex = draft.assets.findIndex((item) => item.assetId === assetId);
-      if (assetIndex >= 0) draft.assets[assetIndex] = asset;
-      else draft.assets.push(asset);
+      panelColors.forEach(({ panelId, assetId, dataUrl, width, height }) => {
+        const draftPanel = draft.panels[panelId];
+        const asset = {
+          assetId,
+          type: "image",
+          name: `${panelId}底色`,
+          previewFile: `${panelId}-color.png`,
+          sourceFile: `${panelId}-color.png`,
+          dataUrl,
+          color,
+          originalWidth: width,
+          originalHeight: height,
+          internal: true,
+        };
+        const assetIndex = draft.assets.findIndex((item) => item.assetId === assetId);
+        if (assetIndex >= 0) draft.assets[assetIndex] = asset;
+        else draft.assets.push(asset);
 
-      const colorElement = {
-        id: `element-panel-color-${panelId}`,
-        type: "image",
-        role: "panel-color",
-        assetId,
-        centerX: 0.5,
-        centerY: 0.5,
-        width: 1,
-        height: 1,
-        rotation: 0,
-        opacity: 1,
-        flipX: false,
-        flipY: false,
-        visible: true,
-        locked: true,
-        zIndex: 1,
-      };
-      draftPanel.elements = [colorElement, ...draftPanel.elements.filter((element) => element.id !== colorElement.id)]
-        .map((element, index) => ({ ...element, zIndex: index + 1 }));
-      draftPanel.changed = true;
+        const colorElement = {
+          id: `element-panel-color-${panelId}`,
+          type: "image",
+          role: "panel-color",
+          assetId,
+          centerX: 0.5,
+          centerY: 0.5,
+          width: 1,
+          height: 1,
+          rotation: 0,
+          opacity: 1,
+          flipX: false,
+          flipY: false,
+          visible: true,
+          locked: true,
+          zIndex: 1,
+        };
+        draftPanel.elements = [colorElement, ...draftPanel.elements.filter((element) => element.id !== colorElement.id)]
+          .map((element, index) => ({ ...element, zIndex: index + 1 }));
+        draftPanel.changed = true;
+      });
     });
   };
+
+  const applyAllPanelColors = (color) => applyPanelColor(color, Object.keys(design.panels));
 
   // 处理图片上传，将文件读成 dataUrl 后加入素材清单。
   const onUpload = (event) => {
@@ -230,8 +241,29 @@ export function App() {
         onExportPackage={() => downloadZip(design, exportJson)}
       />
 
-      <main className="workspace">
-        <ToolsSidebar design={design} addImage={addImage} addText={addText} onUpload={onUpload} clearAssets={clearAssets} applyPanelColor={applyPanelColor} />
+      <main className={sidebarCollapsed ? "workspace sidebar-collapsed" : "workspace"}>
+        <ToolsSidebar
+          design={design}
+          addImage={addImage}
+          addText={addText}
+          onUpload={onUpload}
+          clearAssets={clearAssets}
+          applyPanelColor={applyPanelColor}
+          applyAllPanelColors={applyAllPanelColors}
+          collapsed={sidebarCollapsed}
+          onExpandSidebar={() => setSidebarCollapsed(false)}
+        />
+        {!sidebarCollapsed && (
+          <button
+            className="sidebar-collapse-button"
+            type="button"
+            onClick={() => setSidebarCollapsed(true)}
+            aria-label="收起素材面板"
+            title="收起素材面板"
+          >
+            {"‹"}
+          </button>
+        )}
         <section className="editor">
           <PanelTabs design={design} commit={commit} />
           <div className="canvas-shell">

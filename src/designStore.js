@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { createInitialDesign, draftKey, template } from "./config.js";
+import { createInitialDesign, draftKey, normalizeDesignColors, template } from "./config.js";
 
 const removedSampleAssetId = "asset-sample-mark";
 
@@ -20,7 +20,7 @@ function readDraft() {
         .filter((element) => element.assetId !== removedSampleAssetId)
         .map((element, index) => ({ ...element, zIndex: index + 1 }));
     });
-    return draft;
+    return normalizeDesignColors(draft);
   } catch {
     return null;
   }
