@@ -9,7 +9,7 @@
  */
 (function () {
     var CONFIG = {
-        psdPath: "C:/Users/Woda/Desktop/M-4XL.psd",
+        psdPath: "C:/Users/Woda/Desktop/M-2XL.psd",
         packageFolderPath: "E:/download/design-package-ORDER-20260805-001",
         packageJsonPath: "",
         pickPackageFolder: false,
