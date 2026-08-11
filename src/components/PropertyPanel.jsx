@@ -1,5 +1,6 @@
 import React from "react";
 
+// 属性面板组件，用于编辑当前选中元素的通用属性。
 export function PropertyPanel({ element, updateElement }) {
   return (
     <div className="props">
@@ -34,6 +35,7 @@ export function PropertyPanel({ element, updateElement }) {
   );
 }
 
+// 数字输入控件，统一处理属性面板里的数值字段。
 function NumberInput({ label, value, step = "0.01", onChange }) {
   return (
     <label>

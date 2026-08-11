@@ -2,16 +2,27 @@ import assert from "node:assert/strict";
 import { createImageElement } from "./elements.js";
 import { clampElement, createExportJson, createPanelState, createTemplate, validateDesign } from "./model.js";
 
+// 测试使用的模板结构。
 const template = createTemplate();
+// 测试使用的最小设计草稿。
 const design = {
+  // JSON schema 版本。
   schemaVersion: 1,
+  // 测试订单号。
   orderId: "ORDER-1",
+  // 测试产品 ID。
   productId: "PRODUCT-1",
+  // 模板 ID。
   templateId: template.templateId,
+  // 模板版本。
   templateVersion: template.templateVersion,
+  // 当前尺码。
   size: "2XL",
+  // 当前服装颜色。
   garmentColor: "#8DAED4",
+  // 测试素材清单。
   assets: [{ assetId: "asset-1", dataUrl: "data:image/png;base64,abc", sourceFile: "a.png" }],
+  // 每个裁片的初始状态。
   panels: Object.fromEntries(Object.entries(template.panels).map(([id, panel]) => [id, createPanelState(panel)])),
 };
 
@@ -55,6 +66,7 @@ assert.equal(createExportJson(design).panels.back.status, "not_started");
 design.panels.front.elements[0].centerX = 0.95;
 assert.equal(validateDesign(design).passed, false);
 
+// 验证上传图片默认尺寸会按原图比例计算。
 const uploadedImage = createImageElement("asset-wide", 2, 1);
 assert.equal(uploadedImage.width, 0.42);
 assert.equal(uploadedImage.height, 0.21);

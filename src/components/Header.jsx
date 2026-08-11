@@ -1,6 +1,7 @@
 import React from "react";
 import { firstPanel, template } from "../config.js";
 
+// 顶部栏组件，显示项目状态和全局操作按钮。
 export function Header({ status, totalElements, validation, canUndo, canReset, onUndo, onReset, onSave, onExportPackage }) {
   return (
     <header className="topbar">

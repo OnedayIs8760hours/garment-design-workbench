@@ -5,6 +5,7 @@ import { currentElements } from "../designStore.js";
 import { elementLabel } from "../elements.js";
 import { PropertyPanel } from "./PropertyPanel.jsx";
 
+// 裁片切换按钮组。
 export function PanelTabs({ design, commit }) {
   return (
     <div className="panel-tabs">
@@ -22,6 +23,7 @@ export function PanelTabs({ design, commit }) {
   );
 }
 
+// 底部面板，包含属性编辑和图层列表。
 export function BottomPanels({ design, selected, selectedId, select, updateElement, moveLayer, removeSelected }) {
   return (
     <div className="bottom-panels">

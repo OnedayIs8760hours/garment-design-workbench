@@ -229,32 +229,6 @@ h3 {
   gap: 14px;
 }
 
-.editor-ribbon {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: center;
-  padding: 14px 16px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, rgb(255 255 255 / 72%), rgb(232 247 241 / 70%));
-  border: 1px solid rgb(255 255 255 / 68%);
-  box-shadow: 0 18px 42px rgb(55 65 81 / 8%);
-}
-
-.editor-ribbon div:first-child {
-  display: grid;
-  gap: 3px;
-}
-
-.editor-ribbon strong {
-  font-size: 15px;
-}
-
-.editor-ribbon span {
-  color: #53616c;
-  font-size: 12px;
-}
-
 .panel-tabs {
   display: flex;
   gap: 8px;
@@ -554,11 +528,6 @@ h3 {
 
   .editor {
     grid-template-rows: auto auto minmax(560px, auto) auto;
-  }
-
-  .editor-ribbon {
-    align-items: flex-start;
-    flex-direction: column;
   }
 
   .canvas-shell {

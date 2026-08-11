@@ -1,9 +1,14 @@
 import { activeTemplateDefinition } from "./templates/index.js";
 
+// 将模板 JSON 转成应用内部统一使用的模板结构。
 export function createTemplate(definition = activeTemplateDefinition) {
+  // 从定义中取出原始导出模板。
   const exportedTemplate = definition.template;
+  // 浏览器访问模板静态资源的基础路径。
   const basePath = `/templates/${exportedTemplate.templateId}`;
+  // 把模板内的相对资源路径转换成浏览器路径。
   const assetUrl = (filePath) => (filePath ? `${basePath}/${filePath}` : null);
+  // 裁片显示顺序，未配置时使用对象键顺序。
   const panelIds = exportedTemplate.panelOrder ?? Object.keys(exportedTemplate.panels);
 
   return {
@@ -14,13 +19,17 @@ export function createTemplate(definition = activeTemplateDefinition) {
     productId: definition.productId ?? `PRODUCT-${exportedTemplate.templateId}`,
     draftKey: definition.draftKey ?? `sds-design-${exportedTemplate.templateId}-panels-v${exportedTemplate.templateVersion}`,
     threeD: {
+      // 3D 预览默认模型地址。
       defaultModelUrl: definition.defaultModelUrl ?? null,
+      // 每个裁片在 UV 图集中的矩形区域。
       uvRects: Object.fromEntries(
         Object.entries(definition.uvMapping?.parts ?? {}).map(([panelId, part]) => [panelId, part.uv_rect]),
       ),
     },
+    // 编辑器使用的裁片元数据。
     panels: Object.fromEntries(
       panelIds.map((panelId) => {
+        // 原始模板里的单个裁片定义。
         const panel = exportedTemplate.panels[panelId];
         return [
           panelId,
@@ -41,25 +50,37 @@ export function createTemplate(definition = activeTemplateDefinition) {
   };
 }
 
+// 创建单个裁片的初始编辑状态。
 export function createPanelState(panel) {
   return {
+    // 裁片原始逻辑尺寸。
     logicalSize: panel.logicalSize,
+    // 裁片底图路径。
     templateImage: panel.templateImage,
+    // 裁片遮罩路径。
     maskImage: panel.maskImage,
+    // 导出时记录的模板源文件。
     sourceFile: panel.sourceFile,
+    // 裁片在原始模板里的边界。
     bounds: panel.bounds,
+    // 裁片辅助线。
     guides: panel.guides,
+    // 当前裁片是否被编辑过。
     changed: false,
+    // 当前裁片业务状态。
     status: "not_started",
+    // 当前裁片上的图片和文字元素。
     elements: [],
   };
 }
 
+// 把数值限制到 0 到 1 之间。
 export function clamp01(value) {
   if (!Number.isFinite(value)) return 0;
   return Math.min(1, Math.max(0, value));
 }
 
+// 修正元素的坐标、尺寸和透明度，避免写入非法值。
 export function clampElement(element) {
   return {
     ...element,
@@ -71,13 +92,17 @@ export function clampElement(element) {
   };
 }
 
+// 根据裁片是否有元素返回标签状态。
 export function getPanelStatus(panel) {
   if (panel.elements.length) return "编辑中";
   return "未开始";
 }
 
+// 校验设计是否存在越界、素材丢失或空文字。
 export function validateDesign(design) {
+  // 阻止导出的硬错误。
   const errors = [];
+  // 可提示但不阻止导出的警告。
   const warnings = [];
 
   Object.entries(design.panels).forEach(([panelId, panel]) => {
@@ -104,7 +129,9 @@ export function validateDesign(design) {
   };
 }
 
+// 生成交给 Photoshop 和导出包使用的订单 JSON。
 export function createExportJson(design, validation = validateDesign(design)) {
+  // 最新模板结构，用于补齐导出里的模板元数据。
   const template = createTemplate();
   return {
     schemaVersion: design.schemaVersion,
@@ -115,7 +142,9 @@ export function createExportJson(design, validation = validateDesign(design)) {
     size: design.size,
     garmentColor: design.garmentColor,
     updatedAt: new Date().toISOString(),
+    // 导出 JSON 不内嵌 dataUrl，素材文件由 zip assets 目录承载。
     assets: design.assets.map(({ dataUrl, ...asset }) => asset),
+    // 每个裁片的导出数据。
     panels: Object.fromEntries(
       Object.entries(design.panels).map(([panelId, panel]) => [
         panelId,

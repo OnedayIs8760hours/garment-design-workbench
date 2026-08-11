@@ -1,9 +1,13 @@
 import React from "react";
 import { template } from "../config.js";
 
+// 快速 2D 裁片预览，使用 mask 把元素限制在裁片内。
 export function QuickGarmentPreview({ design, panelId }) {
+  // 当前裁片的设计状态。
   const panel = design.panels[panelId];
+  // 当前裁片的模板数据。
   const panelTemplate = template.panels[panelId];
+  // CSS mask 样式，让素材只显示在裁片区域。
   const maskStyle = {
     WebkitMaskImage: `url(${panelTemplate.maskImage})`,
     maskImage: `url(${panelTemplate.maskImage})`,
@@ -29,11 +33,14 @@ export function QuickGarmentPreview({ design, panelId }) {
   );
 }
 
+// 在预览中绘制裁片辅助线。
 function GuideOverlay({ panel }) {
   return (
     <svg className="garment-preview-guides" viewBox={`0 0 ${panel.logicalSize.width} ${panel.logicalSize.height}`} aria-hidden="true">
       {panel.guides?.map((guide) => {
+        // 当前辅助线样式。
         const style = guide.style ?? {};
+        // SVG 辅助线通用属性。
         const common = {
           fill: "none",
           stroke: style.stroke ?? "#0f766e",
@@ -47,6 +54,7 @@ function GuideOverlay({ panel }) {
         }
 
         if (guide.type === "path") {
+          // path 辅助线转换后的 SVG points 字符串。
           const points = guide.points.map(([x, y]) => `${x},${y}`).join(" ");
           return guide.closed ? (
             <polygon key={guide.id} points={points} {...common} />
@@ -61,9 +69,13 @@ function GuideOverlay({ panel }) {
   );
 }
 
+// 快速预览里的单个图片或文字元素。
 function GarmentElement({ element, asset }) {
+  // 文字元素 DOM 引用，用于测量实际显示尺寸。
   const textRef = React.useRef(null);
+  // 文字元素当前显示盒子尺寸。
   const [textBox, setTextBox] = React.useState({ width: 0, height: 0 });
+  // 元素相对坐标转换后的 CSS 定位样式。
   const style = {
     left: `${element.centerX * 100}%`,
     top: `${element.centerY * 100}%`,
@@ -76,6 +88,7 @@ function GarmentElement({ element, asset }) {
 
   React.useEffect(() => {
     if (!textRef.current || typeof ResizeObserver === "undefined") return;
+    // 监听文字盒子尺寸变化以同步字体大小和描边。
     const observer = new ResizeObserver(([entry]) => {
       setTextBox({
         width: entry.contentRect.width,
@@ -88,7 +101,9 @@ function GarmentElement({ element, asset }) {
 
   if (element.type === "image") return <img className="preview-element" style={style} src={asset?.dataUrl} alt="" />;
 
+  // 根据盒子高度计算文字大小。
   const fontSize = Math.max(8, textBox.height * 0.72 || 20);
+  // 根据盒子宽度计算文字描边宽度。
   const strokeWidth = Math.max(1, (textBox.width || 0) * (element.strokeWidth ?? 0.01));
 
   return (

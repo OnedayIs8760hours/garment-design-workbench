@@ -1,6 +1,7 @@
 import React from "react";
 import { garmentColors, sampleAsset } from "../config.js";
 
+// 左侧工具栏，负责上传素材、添加文字、切换颜色和复用素材。
 export function ToolsSidebar({ design, commit, addImage, addText, onUpload, clearAssets }) {
   return (
     <aside className="sidebar">

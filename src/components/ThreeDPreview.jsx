@@ -4,45 +4,63 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { template } from "../config.js";
 
+// 图片加载缓存，避免 3D 贴图生成时重复解码同一素材。
 const imageCache = new Map();
+// 模板自带的裁片 UV 区域。
 const defaultPanelRects = template.threeD?.uvRects ?? {};
 
+// 3D 服装预览组件，负责加载模型并把当前设计绘制成贴图。
 export function ThreeDPreview({ design }) {
+  // 3D 画布容器 DOM 引用。
   const hostRef = React.useRef(null);
+  // Three.js 场景引用。
   const sceneRef = React.useRef(null);
+  // 当前加载的模型引用。
   const modelRef = React.useRef(null);
+  // 当前应用到模型上的贴图引用。
   const textureRef = React.useRef(null);
+  // 将贴图应用到模型材质的函数引用。
   const applyTextureRef = React.useRef(() => {});
+  // 当前模型 URL，默认使用模板配置。
   const [modelUrl, setModelUrl] = React.useState(template.threeD?.defaultModelUrl ?? "");
+  // 当前模型各裁片对应的 UV 区域。
   const [panelRects, setPanelRects] = React.useState(defaultPanelRects);
+  // 预览区提示文案。
   const [message, setMessage] = React.useState("选择 CLO 导出的 .glb/.gltf 模型");
 
   React.useEffect(() => {
+    // 3D 容器 DOM。
     const host = hostRef.current;
     if (!host) return;
 
+    // Three.js 场景对象。
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xf7f7f5);
     sceneRef.current = scene;
 
+    // 透视相机。
     const camera = new THREE.PerspectiveCamera(35, host.clientWidth / host.clientHeight, 0.01, 100);
     camera.position.set(0, 1.4, 4.2);
 
+    // WebGL 渲染器。
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(host.clientWidth, host.clientHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     host.appendChild(renderer.domElement);
 
+    // 鼠标旋转缩放控制器。
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.target.set(0, 1, 0);
 
     scene.add(new THREE.HemisphereLight(0xffffff, 0xd7d7d7, 2.2));
+    // 主方向光。
     const key = new THREE.DirectionalLight(0xffffff, 2.4);
     key.position.set(2.5, 4, 3);
     scene.add(key);
 
+    // 将生成的设计贴图写入模型所有 mesh 材质。
     applyTextureRef.current = (texture) => {
       modelRef.current?.traverse((object) => {
         if (!object.isMesh) return;
@@ -58,15 +76,20 @@ export function ThreeDPreview({ design }) {
       });
     };
 
+    // 根据容器大小同步相机比例和渲染器尺寸。
     const resize = () => {
+      // 容器宽度。
       const width = host.clientWidth || 1;
+      // 容器高度。
       const height = host.clientHeight || 1;
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);
     };
 
+    // 控制动画循环是否继续运行。
     let active = true;
+    // 每帧刷新控制器并渲染场景。
     const tick = () => {
       if (!active) return;
       controls.update();
@@ -88,6 +111,7 @@ export function ThreeDPreview({ design }) {
 
   React.useEffect(() => {
     if (!modelUrl || !sceneRef.current) return;
+    // GLTF/GLB 模型加载器。
     const loader = new GLTFLoader();
     setMessage("模型加载中");
 
@@ -99,6 +123,7 @@ export function ThreeDPreview({ design }) {
         normalizeModelUvs(gltf.scene);
         fitModel(gltf.scene);
         sceneRef.current.add(gltf.scene);
+        // 从模型材质和 UV 中反推裁片区域。
         const nextRects = getPanelRects(gltf.scene);
         setPanelRects(Object.keys(nextRects).length ? nextRects : defaultPanelRects);
         applyTextureRef.current(textureRef.current);
@@ -110,6 +135,7 @@ export function ThreeDPreview({ design }) {
   }, [modelUrl]);
 
   React.useEffect(() => {
+    // 防止异步贴图生成完成后写入已卸载组件。
     let cancelled = false;
     createDesignTexture(design, panelRects).then((texture) => {
       if (cancelled) {
@@ -125,7 +151,9 @@ export function ThreeDPreview({ design }) {
     };
   }, [design, panelRects]);
 
+  // 处理用户导入本地 3D 模型。
   const chooseModel = (event) => {
+    // 用户选择的模型文件。
     const file = event.target.files?.[0];
     if (!file) return;
     if (modelUrl?.startsWith("blob:")) URL.revokeObjectURL(modelUrl);
@@ -147,20 +175,28 @@ export function ThreeDPreview({ design }) {
   );
 }
 
+// 把所有裁片设计绘制到一张 UV 图集贴图上。
 async function createDesignTexture(design, panelRects) {
+  // 贴图画布尺寸。
   const size = 2048;
+  // UV 图集画布。
   const atlas = document.createElement("canvas");
   atlas.width = size;
   atlas.height = size;
+  // UV 图集绘图上下文。
   const ctx = atlas.getContext("2d");
   ctx.clearRect(0, 0, size, size);
 
   for (const [panelId, uvRect] of Object.entries(panelRects)) {
+    // 当前裁片模板。
     const panel = template.panels[panelId];
+    // 当前裁片设计状态。
     const panelDesign = design.panels[panelId];
     if (!panel || !panelDesign) continue;
 
+    // 当前裁片 UV 边界。
     const [uMin, vMin, uMax, vMax] = uvRect;
+    // 当前裁片在图集画布上的像素矩形。
     const rect = {
       x: Math.round(uMin * size),
       y: Math.round((1 - vMax) * size),
@@ -168,9 +204,11 @@ async function createDesignTexture(design, panelRects) {
       height: Math.max(1, Math.round((vMax - vMin) * size)),
     };
 
+    // 单裁片离屏画布。
     const panelCanvas = document.createElement("canvas");
     panelCanvas.width = rect.width;
     panelCanvas.height = rect.height;
+    // 单裁片绘图上下文。
     const panelCtx = panelCanvas.getContext("2d");
     panelCtx.fillStyle = design.garmentColor;
     panelCtx.fillRect(0, 0, rect.width, rect.height);
@@ -182,6 +220,7 @@ async function createDesignTexture(design, panelRects) {
     ctx.drawImage(panelCanvas, rect.x, rect.y);
   }
 
+  // 由图集画布生成的 Three.js 贴图。
   const texture = new THREE.CanvasTexture(atlas);
   texture.flipY = true;
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -189,16 +228,21 @@ async function createDesignTexture(design, panelRects) {
   return texture;
 }
 
+// 将一个设计元素绘制到裁片画布上。
 async function drawElement(ctx, element, assets, rect) {
   ctx.save();
   ctx.globalAlpha = element.opacity;
   ctx.translate(element.centerX * rect.width, element.centerY * rect.height);
   ctx.rotate((element.rotation * Math.PI) / 180);
+  // 元素在裁片画布上的像素宽度。
   const width = element.width * rect.width;
+  // 元素在裁片画布上的像素高度。
   const height = element.height * rect.height;
 
   if (element.type === "image") {
+    // 图片元素引用的素材。
     const asset = assets.find((item) => item.assetId === element.assetId);
+    // 已加载的图片对象。
     const image = await loadImage(asset?.dataUrl);
     if (image) ctx.drawImage(image, -width / 2, -height / 2, width, height);
   } else {
@@ -215,10 +259,13 @@ async function drawElement(ctx, element, assets, rect) {
   ctx.restore();
 }
 
+// 加载图片并缓存 Promise。
 function loadImage(src) {
   if (!src) return Promise.resolve(null);
   if (imageCache.has(src)) return imageCache.get(src);
+  // 当前图片加载任务。
   const promise = new Promise((resolve) => {
+    // 浏览器图片对象。
     const image = new Image();
     image.crossOrigin = "anonymous";
     image.onload = () => resolve(image);
@@ -229,34 +276,51 @@ function loadImage(src) {
   return promise;
 }
 
+// 将模型缩放并移动到预览视野中心。
 function fitModel(model) {
+  // 模型包围盒。
   const box = new THREE.Box3().setFromObject(model);
+  // 模型尺寸。
   const size = box.getSize(new THREE.Vector3());
+  // 模型中心点。
   const center = box.getCenter(new THREE.Vector3());
+  // 让模型适配预览框的缩放比例。
   const scale = 2.4 / Math.max(size.x, size.y, size.z, 0.01);
   model.scale.setScalar(scale);
   model.position.set(-center.x * scale, -center.y * scale + 1, -center.z * scale);
 }
 
+// 根据模型材质名和 UV 坐标推导每个裁片的 UV 矩形。
 function getPanelRects(model) {
+  // 裁片 ID 到 UV 矩形的映射。
   const rects = {};
   model.traverse((object) => {
     if (!object.isMesh || !object.geometry?.attributes?.uv) return;
+    // 当前 mesh 的几何体。
     const geometry = object.geometry;
+    // 当前 mesh 的 UV 属性。
     const uv = geometry.attributes.uv;
+    // 当前 mesh 的索引数据。
     const index = geometry.index;
+    // 当前 mesh 的材质列表。
     const materials = Array.isArray(object.material) ? object.material : [object.material];
+    // 当前 mesh 的材质分组。
     const groups = geometry.groups.length
       ? geometry.groups
       : [{ start: 0, count: index ? index.count : uv.count, materialIndex: 0 }];
 
     groups.forEach((group) => {
+      // 当前 group 对应的裁片 ID。
       const panelId = normalizePanelId(materials[group.materialIndex]?.name);
       if (!panelId || !template.panels[panelId]) return;
+      // 当前裁片累计的 UV 矩形。
       const rect = rects[panelId] ?? [Infinity, Infinity, -Infinity, -Infinity];
       for (let i = group.start; i < group.start + group.count; i += 1) {
+        // 当前三角索引对应的顶点索引。
         const vertexIndex = index ? index.getX(i) : i;
+        // 当前顶点 U 坐标。
         const u = uv.getX(vertexIndex);
+        // 当前顶点 V 坐标。
         const v = uv.getY(vertexIndex);
         rect[0] = Math.min(rect[0], u);
         rect[1] = Math.min(rect[1], v);
@@ -269,15 +333,20 @@ function getPanelRects(model) {
   return rects;
 }
 
+// 从材质名中取出能匹配模板裁片的 ID。
 function normalizePanelId(name = "") {
   return name.replace(/_FRONT.*$/i, "").trim();
 }
 
+// 修正部分模型导出时整体为负的 V 坐标。
 function normalizeModelUvs(model) {
   model.traverse((object) => {
+    // 当前 mesh 的 UV 属性。
     const uv = object.isMesh ? object.geometry?.attributes?.uv : null;
     if (!uv) return;
+    // 当前 UV 集合的最小 V 值。
     let minV = Infinity;
+    // 当前 UV 集合的最大 V 值。
     let maxV = -Infinity;
     for (let i = 0; i < uv.count; i += 1) {
       minV = Math.min(minV, uv.getY(i));
