@@ -1,11 +1,22 @@
-export function createImageElement(assetId) {
+export function createImageElement(assetId, imageAspectRatio, panelAspectRatio = 1) {
+  let width = 0.42;
+  let height = 0.3;
+
+  if (imageAspectRatio > 0 && panelAspectRatio > 0) {
+    height = width * panelAspectRatio / imageAspectRatio;
+    if (height > 0.3) {
+      height = 0.3;
+      width = height * imageAspectRatio / panelAspectRatio;
+    }
+  }
+
   return {
     type: "image",
     assetId,
     centerX: 0.5,
     centerY: 0.42,
-    width: 0.42,
-    height: 0.3,
+    width,
+    height,
     rotation: 0,
     opacity: 1,
     flipX: false,

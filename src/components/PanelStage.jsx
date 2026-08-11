@@ -71,7 +71,12 @@ export function PanelStage({ design, selectedId, onSelect, onChange }) {
         ) : null}
       </Layer>
       <Layer>
-        <Transformer ref={transformerRef} rotateEnabled enabledAnchors={["top-left", "top-right", "bottom-left", "bottom-right"]} />
+        <Transformer
+          ref={transformerRef}
+          rotateEnabled
+          keepRatio={false}
+          enabledAnchors={["top-left", "top-center", "top-right", "middle-left", "middle-right", "bottom-left", "bottom-center", "bottom-right"]}
+        />
       </Layer>
     </Stage>
   );

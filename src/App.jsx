@@ -24,7 +24,14 @@ export function App() {
     });
   };
 
-  const addImage = (asset) => addElement(createImageElement(asset.assetId));
+  const addImage = (asset) => {
+    const panel = currentPanel(design);
+    addElement(createImageElement(
+      asset.assetId,
+      asset.originalWidth / asset.originalHeight,
+      panel.logicalSize.width / panel.logicalSize.height,
+    ));
+  };
   const addText = (role) => addElement(createTextElement(role));
 
   const onUpload = (event) => {
@@ -32,9 +39,18 @@ export function App() {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      const asset = createUploadedAsset(file, reader.result);
-      commit((draft) => draft.assets.push(asset));
-      addImage(asset);
+      const image = new Image();
+      image.onload = () => {
+        const asset = createUploadedAsset(file, reader.result, image);
+        commit((draft) => draft.assets.push(asset));
+        addImage(asset);
+      };
+      image.onerror = () => {
+        const asset = createUploadedAsset(file, reader.result);
+        commit((draft) => draft.assets.push(asset));
+        addImage(asset);
+      };
+      image.src = reader.result;
     };
     reader.readAsDataURL(file);
   };
@@ -107,7 +123,7 @@ export function App() {
   );
 }
 
-function createUploadedAsset(file, dataUrl) {
+function createUploadedAsset(file, dataUrl, image) {
   return {
     assetId: `asset-${Date.now()}`,
     type: "image",
@@ -115,6 +131,8 @@ function createUploadedAsset(file, dataUrl) {
     previewFile: file.name,
     sourceFile: file.name,
     dataUrl,
+    originalWidth: image?.naturalWidth,
+    originalHeight: image?.naturalHeight,
     uploadedAt: new Date().toISOString(),
   };
 }

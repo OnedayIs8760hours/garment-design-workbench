@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createImageElement } from "./elements.js";
 import { clampElement, createExportJson, createPanelState, createTemplate, validateDesign } from "./model.js";
 
 const template = createTemplate();
@@ -53,3 +54,7 @@ assert.equal(createExportJson(design).panels.back.status, "not_started");
 
 design.panels.front.elements[0].centerX = 0.95;
 assert.equal(validateDesign(design).passed, false);
+
+const uploadedImage = createImageElement("asset-wide", 2, 1);
+assert.equal(uploadedImage.width, 0.42);
+assert.equal(uploadedImage.height, 0.21);
