@@ -5,7 +5,7 @@ import { createImageElement, createTextElement } from "./elements.js";
 import { downloadZip } from "./download.js";
 import { Header } from "./components/Header.jsx";
 import { ToolsSidebar } from "./components/ToolsSidebar.jsx";
-import { EditorRibbon, PanelTabs, BottomPanels } from "./components/EditorPanels.jsx";
+import { PanelTabs, BottomPanels } from "./components/EditorPanels.jsx";
 import { PanelStage } from "./components/PanelStage.jsx";
 import { PreviewPane } from "./components/PreviewPane.jsx";
 
@@ -152,7 +152,6 @@ export function App() {
       <main className="workspace">
         <ToolsSidebar design={design} commit={commit} addImage={addImage} addText={addText} onUpload={onUpload} clearAssets={clearAssets} />
         <section className="editor">
-          <EditorRibbon />
           <PanelTabs design={design} commit={commit} />
           <div className="canvas-shell">
             <PanelStage design={design} selectedId={selectedId} onSelect={select} onChange={updateElement} />

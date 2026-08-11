@@ -5,22 +5,6 @@ import { currentElements } from "../designStore.js";
 import { elementLabel } from "../elements.js";
 import { PropertyPanel } from "./PropertyPanel.jsx";
 
-export function EditorRibbon() {
-  return (
-    <div className="editor-ribbon">
-      <div>
-        <strong>真实前片模板已加载</strong>
-        <span>素材会裁切在绿色前片区域内，导出 JSON 记录相对坐标和原始模板尺寸。</span>
-      </div>
-      <div className="ribbon-stats">
-        <span>相对坐标</span>
-        <span>本地草稿</span>
-        <span>Konva</span>
-      </div>
-    </div>
-  );
-}
-
 export function PanelTabs({ design, commit }) {
   return (
     <div className="panel-tabs">
