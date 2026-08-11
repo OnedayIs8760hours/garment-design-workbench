@@ -368,11 +368,25 @@ h3 {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .model-toolbar strong {
+  flex: 1 1 120px;
   min-width: 0;
   font-size: 13px;
+}
+
+.model-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.model-expand {
+  padding: 6px 9px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .model-upload {
@@ -397,6 +411,43 @@ h3 {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+.model-preview.large {
+  min-height: 0;
+}
+
+.model-preview.large .model-canvas {
+  aspect-ratio: auto;
+  height: min(72vh, 760px);
+  min-height: 420px;
+}
+
+.model-modal {
+  position: fixed;
+  inset: 18px;
+  z-index: 50;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+  padding: 16px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgb(250 250 248 / 96%);
+  border: 1px solid rgb(30 41 59 / 14%);
+  box-shadow: 0 28px 90px rgb(15 23 42 / 28%);
+}
+
+.model-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.model-modal-head h2 {
+  margin: 0;
+  font-size: 16px;
 }
 
 .model-empty {
@@ -542,6 +593,16 @@ h3 {
 
   .props {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .model-modal {
+    inset: 8px;
+    padding: 10px;
+  }
+
+  .model-preview.large .model-canvas {
+    height: 68vh;
+    min-height: 320px;
   }
 }
 

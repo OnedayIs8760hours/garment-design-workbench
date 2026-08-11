@@ -27,7 +27,7 @@ $photoshop = New-Object -ComObject Photoshop.Application
 if ($PackageFolder) {
   $jsxPath = $scriptPath.Replace("\", "/")
   $jsxFolder = $PackageFolder.Replace("\", "/").Replace("'", "\'")
-  $photoshop.DoJavaScript("$.global.CODEX_PACKAGE_FOLDER = '$jsxFolder'; $.evalFile(new File('$jsxPath'));")
+  $null = $photoshop.DoJavaScript("$.global.CODEX_PACKAGE_FOLDER = '$jsxFolder'; $.evalFile(new File('$jsxPath'));")
 } else {
-  $photoshop.DoJavaScriptFile($scriptPath)
+  $null = $photoshop.DoJavaScriptFile($scriptPath)
 }

@@ -10,7 +10,7 @@ const imageCache = new Map();
 const defaultPanelRects = template.threeD?.uvRects ?? {};
 
 // 3D 服装预览组件，负责加载模型并把当前设计绘制成贴图。
-export function ThreeDPreview({ design }) {
+export function ThreeDPreview({ design, modelUrl, setModelUrl, onExpand, large = false }) {
   // 3D 画布容器 DOM 引用。
   const hostRef = React.useRef(null);
   // Three.js 场景引用。
@@ -21,8 +21,6 @@ export function ThreeDPreview({ design }) {
   const textureRef = React.useRef(null);
   // 将贴图应用到模型材质的函数引用。
   const applyTextureRef = React.useRef(() => {});
-  // 当前模型 URL，默认使用模板配置。
-  const [modelUrl, setModelUrl] = React.useState(template.threeD?.defaultModelUrl ?? "");
   // 当前模型各裁片对应的 UV 区域。
   const [panelRects, setPanelRects] = React.useState(defaultPanelRects);
   // 预览区提示文案。
@@ -161,13 +159,16 @@ export function ThreeDPreview({ design }) {
   };
 
   return (
-    <section className="model-preview">
+    <section className={`model-preview${large ? " large" : ""}`}>
       <div className="model-toolbar">
         <strong>{message}</strong>
-        <label className="upload model-upload">
-          导入模型
-          <input type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" onChange={chooseModel} />
-        </label>
+        <div className="model-actions">
+          {onExpand && <button type="button" className="model-expand" onClick={onExpand}>放大查看</button>}
+          <label className="upload model-upload">
+            导入模型
+            <input type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" onChange={chooseModel} />
+          </label>
+        </div>
       </div>
       <div ref={hostRef} className="model-canvas" />
       <p className="model-empty">材质名前缀需对应裁片 ID，例如 front、back、left-sleeve。</p>
