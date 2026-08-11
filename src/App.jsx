@@ -10,11 +10,36 @@ import { PanelStage } from "./components/PanelStage.jsx";
 import { PreviewPane } from "./components/PreviewPane.jsx";
 
 export function App() {
-  const { design, selectedId, status, commit, undo, redo, select, saveNow } = useDesignStore();
+  const { design, selectedId, status, past, future, commit, undo, redo, select, saveNow } = useDesignStore();
   const validation = validateDesign(design);
   const selected = currentPanel(design).elements.find((element) => element.id === selectedId);
   const totalElements = Object.values(design.panels).reduce((sum, panel) => sum + panel.elements.length, 0);
   const exportJson = createExportJson(design, validation);
+  const canUndo = past.length > 0;
+  const canRedo = future.length > 0;
+
+  React.useEffect(() => {
+    const onKeyDown = (event) => {
+      const target = event.target;
+      if (target instanceof HTMLElement && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) return;
+      if (!(event.ctrlKey || event.metaKey)) return;
+
+      const key = event.key.toLowerCase();
+      if (key === "z" && event.shiftKey && canRedo) {
+        event.preventDefault();
+        redo();
+      } else if (key === "y" && canRedo) {
+        event.preventDefault();
+        redo();
+      } else if (key === "z" && canUndo) {
+        event.preventDefault();
+        undo();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [canRedo, canUndo, redo, undo]);
 
   const addElement = (element) => {
     commit((draft) => {
@@ -93,6 +118,8 @@ export function App() {
         status={status}
         totalElements={totalElements}
         validation={validation}
+        canUndo={canUndo}
+        canRedo={canRedo}
         onUndo={undo}
         onRedo={redo}
         onSave={saveNow}

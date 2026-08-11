@@ -1,7 +1,7 @@
 import React from "react";
 import { firstPanel, template } from "../config.js";
 
-export function Header({ status, totalElements, validation, onUndo, onRedo, onSave, onExportPackage }) {
+export function Header({ status, totalElements, validation, canUndo, canRedo, onUndo, onRedo, onSave, onExportPackage }) {
   return (
     <header className="topbar">
       <div className="brand-block">
@@ -15,8 +15,8 @@ export function Header({ status, totalElements, validation, onUndo, onRedo, onSa
         <span className={validation.passed ? "metric-ok" : "metric-error"}>{validation.passed ? "可导出" : "需修正"}</span>
       </div>
       <div className="actions">
-        <button onClick={onUndo}>撤销</button>
-        <button onClick={onRedo}>重做</button>
+        <button onClick={onUndo} disabled={!canUndo}>撤销</button>
+        <button onClick={onRedo} disabled={!canRedo}>重做</button>
         <button onClick={onSave}>保存草稿</button>
         <button onClick={onExportPackage}>导出设计包</button>
       </div>
