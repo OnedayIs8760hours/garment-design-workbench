@@ -1,5 +1,5 @@
 import React from "react";
-import { garmentColors, sampleAsset } from "../config.js";
+import { garmentColors } from "../config.js";
 
 // 左侧工具栏，负责上传素材、添加文字、切换颜色和复用素材。
 export function ToolsSidebar({ design, commit, addImage, addText, onUpload, clearAssets }) {
@@ -11,7 +11,6 @@ export function ToolsSidebar({ design, commit, addImage, addText, onUpload, clea
           上传图片
           <input type="file" accept="image/*" onChange={onUpload} />
         </label>
-        <button onClick={() => addImage(sampleAsset)}>添加示例图案</button>
       </section>
 
       <section className="tool-panel accent-panel">

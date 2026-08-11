@@ -20,18 +20,6 @@ export const stageSize = getStageSize();
 // 侧栏可选的服装颜色。
 export const garmentColors = ["#8DAED4", "#F3B7A7", "#B8D8C4", "#E8D7FF", "#F7D56F"];
 
-// 内置示例图片素材。
-export const sampleAsset = {
-  assetId: "asset-sample-mark",
-  type: "image",
-  name: "示例图案",
-  previewFile: "front-lower-panel-sample.png",
-  sourceFile: "front-lower-panel-sample.png",
-  dataUrl: "/samples/front-lower-panel-sample.png",
-  originalWidth: 435,
-  originalHeight: 466,
-};
-
 // 创建一份新的空白设计草稿。
 export function createInitialDesign() {
   return {
@@ -54,7 +42,7 @@ export function createInitialDesign() {
     // 上次保存时间。
     savedAt: null,
     // 设计里可复用的素材清单。
-    assets: [sampleAsset],
+    assets: [],
     // 每个裁片的编辑状态。
     panels: Object.fromEntries(
       Object.entries(template.panels).map(([panelId, panel]) => [panelId, createPanelState(panel)]),

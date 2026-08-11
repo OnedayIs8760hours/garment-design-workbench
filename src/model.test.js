@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createImageElement } from "./elements.js";
+import { createInitialDesign } from "./config.js";
 import { clampElement, createExportJson, createPanelState, createTemplate, validateDesign } from "./model.js";
 
 // 测试使用的模板结构。
@@ -58,6 +59,7 @@ assert.deepEqual(template.threeD.uvRects.front, [0.450439453125, 0.5546875, 0.88
 assert.equal(Object.keys(template.panels).length, 8);
 assert.equal(template.panels.back.templateImage, "/templates/M-2XL/panels/back.png");
 assert.equal(createExportJson(design).panels.shouder.logicalSize.width, 2980);
+assert.equal(createInitialDesign().assets.length, 0);
 
 design.panels.back.changed = true;
 assert.equal(createExportJson(design).panels.back.changed, true);

@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { createInitialDesign, draftKey, template } from "./config.js";
 
+const removedSampleAssetId = "asset-sample-mark";
+
 // 深拷贝设计状态，保证 undo 历史不会被后续修改污染。
 function clone(value) {
   return structuredClone(value);
@@ -12,6 +14,12 @@ function readDraft() {
     // localStorage 中保存的上一次草稿。
     const draft = JSON.parse(localStorage.getItem(draftKey));
     if (!draft || draft.templateId !== template.templateId || !template.panels[draft.currentPanelId]) return null;
+    draft.assets = (draft.assets ?? []).filter((asset) => asset.assetId !== removedSampleAssetId);
+    Object.values(draft.panels).forEach((panel) => {
+      panel.elements = (panel.elements ?? [])
+        .filter((element) => element.assetId !== removedSampleAssetId)
+        .map((element, index) => ({ ...element, zIndex: index + 1 }));
+    });
     return draft;
   } catch {
     return null;
