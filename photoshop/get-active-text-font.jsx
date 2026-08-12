@@ -1,5 +1,9 @@
 #target photoshop
 
+/**
+ * 读取当前选中文字图层的 Photoshop textItem.font 值并弹窗显示。
+ * @returns {void}
+ */
 (function () {
     if (!app.documents.length) {
         alert("请先打开 PSD，并选中一个文字图层。");

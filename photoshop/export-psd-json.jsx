@@ -61,6 +61,10 @@
 
     main();
 
+    /**
+     * 从当前 PSD 导出裁片 PNG、遮罩 PNG 和 template.json。
+     * @returns {void}
+     */
     function main() {
         if (app.documents.length === 0) {
             alert("没有打开的 Photoshop 文档。\n请先打开生产 PSD，再运行本脚本。");
@@ -160,8 +164,10 @@
     }
 
     /**
-     * 在文档中递归查找名称完全一致的图层。
-     * ArtLayer 和 LayerSet 都可被找到。
+     * 在文档或图层组中查找名称完全一致的图层。
+     * @param {Document|LayerSet} container 搜索容器
+     * @param {String} targetName 目标图层名称
+     * @returns {Array} 匹配的图层列表
      */
     function findLayersByExactName(container, targetName) {
         var result = [];
@@ -169,6 +175,13 @@
         return result;
     }
 
+    /**
+     * 递归收集指定名称的图层。
+     * @param {Document|LayerSet} container 搜索容器
+     * @param {String} targetName 目标图层名称
+     * @param {Array} result 收集结果数组
+     * @returns {void}
+     */
     function collectLayers(container, targetName, result) {
         var layers = container.layers;
 
@@ -186,8 +199,9 @@
     }
 
     /**
-     * 读取图层 bounds，并向外取整。
-     * 向外取整可以保证导出的 PNG 不裁掉半透明边缘。
+     * 读取图层 bounds 并向外取整为整数像素。
+     * @param {ArtLayer|LayerSet} layer Photoshop 图层或图层组
+     * @returns {Object} 整数像素边界 {left, top, right, bottom}
      */
     function readIntegerLayerBounds(layer) {
         var bounds = layer.bounds;
@@ -200,6 +214,11 @@
         };
     }
 
+    /**
+     * 将 Photoshop UnitValue 转换为像素数字。
+     * @param {UnitValue|Object|Number} unitValue Photoshop 单位值
+     * @returns {Number} 像素值
+     */
     function toPixels(unitValue) {
         try {
             return Number(unitValue.as("px"));
@@ -208,6 +227,11 @@
         }
     }
 
+    /**
+     * 校验图层 bounds 是否为有效矩形。
+     * @param {Object} bounds 图层边界 {left, top, right, bottom}
+     * @returns {void}
+     */
     function validateBounds(bounds) {
         if (
             isNaN(bounds.left) ||
@@ -226,8 +250,13 @@
     }
 
     /**
-     * 导出透明裁片 PNG 和白色轮廓蒙版 PNG。
-     * 全过程在临时文档中执行，不修改原始 PSD。
+     * 导出透明裁片 PNG 和白色轮廓遮罩 PNG。
+     * @param {Document} sourceDoc 源 PSD 文档
+     * @param {String} targetLayerName 目标裁片图层名称
+     * @param {Object} bounds 裁片像素边界
+     * @param {File} panelFile 裁片 PNG 输出文件
+     * @param {File} maskFile 遮罩 PNG 输出文件
+     * @returns {void}
      */
     function exportPanelAndMask(
         sourceDoc,
@@ -303,7 +332,9 @@
 
     /**
      * 隐藏所有与目标图层无关的分支。
-     * 若目标本身是图层组，则保留其内部原有可见状态。
+     * @param {Document|LayerSet} container 需要处理的文档或图层组
+     * @param {ArtLayer|LayerSet} targetLayer 需要保留可见的目标图层
+     * @returns {void}
      */
     function isolateTargetLayer(container, targetLayer) {
         var layers = container.layers;
@@ -328,6 +359,12 @@
         }
     }
 
+    /**
+     * 判断图层组内部是否包含目标图层。
+     * @param {LayerSet} layerSet 待检查的图层组
+     * @param {ArtLayer|LayerSet} targetLayer 目标图层
+     * @returns {Boolean} 包含目标图层时返回 true
+     */
     function layerContainsTarget(layerSet, targetLayer) {
         var layers = layerSet.layers;
 
@@ -351,6 +388,8 @@
 
     /**
      * 将临时文档转换为适合导出 PNG-24 的 RGB / 8 位文档。
+     * @param {Document} doc 需要准备的临时文档
+     * @returns {void}
      */
     function prepareDocumentForPng(doc) {
         app.activeDocument = doc;
@@ -365,7 +404,10 @@
     }
 
     /**
-     * 生成白色轮廓、外部透明的蒙版图。
+     * 生成白色轮廓、外部透明的遮罩图。
+     * @param {Document} doc 裁剪后的临时文档
+     * @param {String} maskLayerName 遮罩图层名称
+     * @returns {void}
      */
     function createWhiteSilhouetteMask(doc, maskLayerName) {
         app.activeDocument = doc;
@@ -401,6 +443,7 @@
 
     /**
      * 载入当前活动图层的不透明区域到选区。
+     * @returns {void}
      */
     function selectActiveLayerTransparency() {
         var descriptor = new ActionDescriptor();
@@ -435,6 +478,9 @@
 
     /**
      * 通过“存储为 Web 所用格式”导出 24 位透明 PNG。
+     * @param {Document} doc 需要导出的文档
+     * @param {File} outputFile PNG 输出文件
+     * @returns {void}
      */
     function exportPng24(doc, outputFile) {
         app.activeDocument = doc;
@@ -461,6 +507,13 @@
         }
     }
 
+    /**
+     * 根据源文档和裁片 bounds 生成 template.json 数据结构。
+     * @param {Document} sourceDoc 源 PSD 文档
+     * @param {ArtLayer|LayerSet} sourceLayer 源裁片图层
+     * @param {Object} bounds 裁片像素边界
+     * @returns {Object} template.json 数据对象
+     */
     function buildTemplateData(sourceDoc, sourceLayer, bounds) {
         var documentWidth = Math.round(toPixels(sourceDoc.width));
         var documentHeight = Math.round(toPixels(sourceDoc.height));
@@ -513,6 +566,11 @@
         };
     }
 
+    /**
+     * 读取图层在 PSD 图层树中的路径。
+     * @param {ArtLayer|LayerSet} layer Photoshop 图层或图层组
+     * @returns {String} 以 / 分隔的图层路径
+     */
     function getLayerPath(layer) {
         var names = [layer.name];
         var parent = layer.parent;
@@ -525,6 +583,11 @@
         return names.join("/");
     }
 
+    /**
+     * 将 Photoshop 文档颜色模式枚举转换为可读文本。
+     * @param {DocumentMode} mode Photoshop 文档模式
+     * @returns {String} 文档模式名称
+     */
     function getDocumentModeName(mode) {
         if (mode === DocumentMode.RGB) {
             return "RGB";
@@ -554,6 +617,12 @@
         return String(mode);
     }
 
+    /**
+     * 确保父目录下存在指定子目录。
+     * @param {Folder} parentFolder 父目录
+     * @param {String} childName 子目录名
+     * @returns {Folder} 子目录对象
+     */
     function ensureChildFolder(parentFolder, childName) {
         var childFolder = new Folder(parentFolder.fsName + "/" + childName);
 
@@ -564,6 +633,12 @@
         return childFolder;
     }
 
+    /**
+     * 以 UTF-8 写入文本文件，存在时先覆盖。
+     * @param {File} file 输出文件
+     * @param {String} text 文件内容
+     * @returns {void}
+     */
     function writeUtf8TextFile(file, text) {
         if (file.exists) {
             file.remove();
@@ -587,6 +662,11 @@
         }
     }
 
+    /**
+     * 移除文件名最后一个扩展名。
+     * @param {String} fileName 文件名
+     * @returns {String} 不含扩展名的文件名
+     */
     function removeFileExtension(fileName) {
         var dotIndex = fileName.lastIndexOf(".");
 
@@ -597,6 +677,11 @@
         return fileName.substring(0, dotIndex);
     }
 
+    /**
+     * 创建 UTC ISO 时间字符串，兼容旧版 ExtendScript。
+     * @param {Date} date 日期对象
+     * @returns {String} ISO 时间字符串
+     */
     function createIsoDateString(date) {
         return (
             date.getUTCFullYear() + "-" +
@@ -608,6 +693,12 @@
         );
     }
 
+    /**
+     * 将数字左侧补零到指定长度。
+     * @param {Number|String} value 数字或文本
+     * @param {Number} length 目标长度
+     * @returns {String} 补零后的文本
+     */
     function padNumber(value, length) {
         var text = String(value);
 
@@ -619,14 +710,23 @@
     }
 
     /**
-     * ExtendScript 兼容的 JSON 序列化函数。
-     * 避免依赖部分 Photoshop 版本中可能不存在的 JSON.stringify。
+     * 序列化 JSON 值，兼容旧版 ExtendScript。
+     * @param {*} value 需要序列化的值
+     * @param {Number} indentSize 缩进空格数量
+     * @returns {String} JSON 文本
      */
     function stringifyJSON(value, indentSize) {
         var indentUnit = repeatText(" ", indentSize || 0);
         return serializeValue(value, indentUnit, "");
     }
 
+    /**
+     * 序列化任意 JSON 值。
+     * @param {*} value 需要序列化的值
+     * @param {String} indentUnit 单级缩进文本
+     * @param {String} currentIndent 当前缩进文本
+     * @returns {String} JSON 片段
+     */
     function serializeValue(value, indentUnit, currentIndent) {
         if (value === null) {
             return "null";
@@ -657,6 +757,13 @@
         return "null";
     }
 
+    /**
+     * 序列化 JSON 数组。
+     * @param {Array} arrayValue 数组值
+     * @param {String} indentUnit 单级缩进文本
+     * @param {String} currentIndent 当前缩进文本
+     * @returns {String} JSON 数组片段
+     */
     function serializeArray(arrayValue, indentUnit, currentIndent) {
         if (arrayValue.length === 0) {
             return "[]";
@@ -678,6 +785,13 @@
         return "[\n" + items.join(",\n") + "\n" + currentIndent + "]";
     }
 
+    /**
+     * 序列化 JSON 对象。
+     * @param {Object} objectValue 对象值
+     * @param {String} indentUnit 单级缩进文本
+     * @param {String} currentIndent 当前缩进文本
+     * @returns {String} JSON 对象片段
+     */
     function serializeObject(objectValue, indentUnit, currentIndent) {
         var childIndent = currentIndent + indentUnit;
         var items = [];
@@ -704,6 +818,11 @@
         return "{\n" + items.join(",\n") + "\n" + currentIndent + "}";
     }
 
+    /**
+     * 将文本转义为 JSON 字符串字面量。
+     * @param {String} text 原始文本
+     * @returns {String} 带双引号的 JSON 字符串
+     */
     function quoteJSONString(text) {
         var result = '"';
 
@@ -735,10 +854,21 @@
         return result + '"';
     }
 
+    /**
+     * 判断值是否为数组，兼容旧版 ExtendScript。
+     * @param {*} value 待检查的值
+     * @returns {Boolean} 是数组时返回 true
+     */
     function isArray(value) {
         return Object.prototype.toString.call(value) === "[object Array]";
     }
 
+    /**
+     * 重复拼接文本。
+     * @param {String} text 要重复的文本
+     * @param {Number} count 重复次数
+     * @returns {String} 拼接后的文本
+     */
     function repeatText(text, count) {
         var result = "";
 
@@ -749,6 +879,11 @@
         return result;
     }
 
+    /**
+     * 将异常对象格式化为带脚本行号的提示文本。
+     * @param {Error|Object|String} error 异常对象或文本
+     * @returns {String} 错误提示文本
+     */
     function getErrorMessage(error) {
         var message = error && error.message ? error.message : String(error);
 

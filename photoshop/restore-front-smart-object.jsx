@@ -24,6 +24,10 @@
 
     main();
 
+    /**
+     * 打开订单 JSON 和目标 PSD，将前片智能对象内容替换为订单元素。
+     * @returns {void}
+     */
     function main() {
         var oldUnits = app.preferences.rulerUnits;
         var oldDialogs = app.displayDialogs;
@@ -74,6 +78,14 @@
         }
     }
 
+    /**
+     * 按 zIndex 顺序把面板元素还原到智能对象文档中。
+     * @param {Document} doc 智能对象内部文档
+     * @param {Object} order 订单 JSON 对象
+     * @param {Object} panel 当前面板数据
+     * @param {Folder} jsonFolder 订单 JSON 所在目录
+     * @returns {void}
+     */
     function restorePanelElements(doc, order, panel, jsonFolder) {
         app.activeDocument = doc;
 
@@ -116,6 +128,13 @@
         }
     }
 
+    /**
+     * 根据订单文字元素创建 Photoshop 文字图层。
+     * @param {Document} doc 目标文档
+     * @param {LayerSet} group 承载还原图层的图层组
+     * @param {Object} element 订单中的文字元素
+     * @returns {void}
+     */
     function createTextLayer(doc, group, element) {
         app.activeDocument = doc;
 
@@ -147,6 +166,14 @@
         moveIntoGroup(layer, group);
     }
 
+    /**
+     * 打开图片素材并复制为目标文档中的图像图层。
+     * @param {Document} doc 目标文档
+     * @param {LayerSet} group 承载还原图层的图层组
+     * @param {Object} element 订单中的图片元素
+     * @param {File} assetFile 已解析到的图片素材文件
+     * @returns {void}
+     */
     function createImageLayer(doc, group, element, assetFile) {
         var imageDoc = null;
         app.activeDocument = doc;
@@ -174,6 +201,12 @@
         moveIntoGroup(layer, group);
     }
 
+    /**
+     * 将订单中的相对坐标换算为文档像素坐标矩形。
+     * @param {Document} doc 目标文档
+     * @param {Object} element 订单元素，包含 centerX、centerY、width、height
+     * @returns {Object} 像素矩形 {left, top, right, bottom, width, height, centerX, centerY}
+     */
     function elementTargetRect(doc, element) {
         var docWidth = toPixels(doc.width);
         var docHeight = toPixels(doc.height);
@@ -194,6 +227,12 @@
         };
     }
 
+    /**
+     * 将图层缩放并移动到目标矩形。
+     * @param {ArtLayer|LayerSet} layer 需要调整的图层或图层组
+     * @param {Object} target 目标像素矩形
+     * @returns {void}
+     */
     function fitLayerToRect(layer, target) {
         var bounds = readBounds(layer);
         var currentWidth = bounds.right - bounds.left;
@@ -218,6 +257,12 @@
         );
     }
 
+    /**
+     * 在文档或图层组中递归查找指定名称的智能对象图层。
+     * @param {Document|LayerSet} container 搜索容器
+     * @param {String} name 智能对象图层名称
+     * @returns {ArtLayer|null} 匹配的智能对象图层
+     */
     function findSmartObjectLayer(container, name) {
         var layers = container.layers;
 
@@ -237,10 +282,19 @@
         return null;
     }
 
+    /**
+     * 打开当前活动智能对象图层的内容文档。
+     * @returns {void}
+     */
     function editSmartObjectContents() {
         executeAction(stringIDToTypeID("placedLayerEditContents"), undefined, DialogModes.NO);
     }
 
+    /**
+     * 如果 PSD 已经打开则激活它，否则从磁盘打开。
+     * @param {File} file PSD 文件
+     * @returns {Document} 已激活的 Photoshop 文档
+     */
     function openOrActivateDocument(file) {
         for (var i = 0; i < app.documents.length; i++) {
             var doc = app.documents[i];
@@ -255,6 +309,11 @@
         return app.open(file);
     }
 
+    /**
+     * 读取并解析 UTF-8 JSON 文件。
+     * @param {File} file JSON 文件
+     * @returns {Object} 解析后的 JSON 对象
+     */
     function parseJsonFile(file) {
         ensureJsonSupport();
 
@@ -277,6 +336,10 @@
         return eval("(" + text + ")");
     }
 
+    /**
+     * 在旧版 ExtendScript 没有 JSON 对象时加载 JSON shim。
+     * @returns {void}
+     */
     function ensureJsonSupport() {
         if (typeof JSON !== "undefined" && JSON.parse) {
             return;
@@ -288,6 +351,10 @@
         }
     }
 
+    /**
+     * 按运行时变量、选择目录、配置路径顺序解析订单 JSON。
+     * @returns {File} 订单 JSON 文件
+     */
     function resolveOrderFile() {
         var runtimeFolderPath = runtimePackageFolder();
         if (runtimeFolderPath) {
@@ -308,6 +375,11 @@
         return orderFileInFolder(CONFIG.packageFolderPath);
     }
 
+    /**
+     * 在设计包目录中优先查找 manifest.json，其次查找 order-design.json。
+     * @param {String} folderPath 设计包目录路径
+     * @returns {File} 找到的订单文件，或默认候选文件
+     */
     function orderFileInFolder(folderPath) {
         if (!folderPath) {
             return new File("");
@@ -319,6 +391,10 @@
         ]);
     }
 
+    /**
+     * 读取 PowerShell runner 注入的设计包目录。
+     * @returns {String} 设计包目录路径，未注入时为空字符串
+     */
     function runtimePackageFolder() {
         try {
             return $.global.CODEX_PACKAGE_FOLDER || "";
@@ -327,6 +403,11 @@
         }
     }
 
+    /**
+     * 返回路径列表中第一个存在的文件。
+     * @param {String[]} paths 候选文件路径
+     * @returns {File} 第一个存在的文件，或首个候选路径对应的文件
+     */
     function firstExistingFile(paths) {
         for (var i = 0; i < paths.length; i++) {
             var file = new File(paths[i]);
@@ -338,6 +419,12 @@
         return new File(paths[0]);
     }
 
+    /**
+     * 从设计包目录和常用下载目录中解析素材文件。
+     * @param {Folder} jsonFolder 订单 JSON 所在目录
+     * @param {String} sourceFile 素材文件名
+     * @returns {File|null} 找到的素材文件
+     */
     function resolveAssetFile(jsonFolder, sourceFile) {
         if (!sourceFile) {
             return null;
@@ -361,6 +448,12 @@
         return null;
     }
 
+    /**
+     * 根据 assetId 在订单素材列表中查找素材记录。
+     * @param {Object[]} assets 订单素材列表
+     * @param {String} assetId 素材 ID
+     * @returns {Object|null} 匹配的素材记录
+     */
     function findAsset(assets, assetId) {
         for (var i = 0; i < assets.length; i++) {
             if (assets[i].assetId === assetId) {
@@ -371,6 +464,12 @@
         return null;
     }
 
+    /**
+     * 删除文档根级指定名称的图层组。
+     * @param {Document} doc 目标文档
+     * @param {String} name 图层组名称
+     * @returns {void}
+     */
     function removeLayerSetByName(doc, name) {
         for (var i = doc.layerSets.length - 1; i >= 0; i--) {
             if (doc.layerSets[i].name === name) {
@@ -379,12 +478,23 @@
         }
     }
 
+    /**
+     * 将图层移入指定图层组，忽略 Photoshop 偶发移动失败。
+     * @param {ArtLayer|LayerSet} layer 需要移动的图层
+     * @param {LayerSet} group 目标图层组
+     * @returns {void}
+     */
     function moveIntoGroup(layer, group) {
         try {
             layer.move(group, ElementPlacement.INSIDE);
         } catch (ignoreMoveError) {}
     }
 
+    /**
+     * 读取 Photoshop 图层 bounds 并转换为像素数字。
+     * @param {ArtLayer|LayerSet} layer Photoshop 图层或图层组
+     * @returns {Object} 像素边界 {left, top, right, bottom}
+     */
     function readBounds(layer) {
         var b = layer.bounds;
         return {
@@ -395,6 +505,11 @@
         };
     }
 
+    /**
+     * 将 Photoshop UnitValue 转换为像素数字。
+     * @param {UnitValue|Object|Number} value Photoshop 单位值
+     * @returns {Number} 像素值
+     */
     function toPixels(value) {
         try {
             return Number(value.as("px"));
@@ -403,10 +518,20 @@
         }
     }
 
+    /**
+     * 将 0-1 小数透明度转换为 Photoshop 使用的 0-100 百分比。
+     * @param {Number} value 小数值
+     * @returns {Number} 限制在 0-100 的百分比
+     */
     function percent(value) {
         return Math.max(0, Math.min(100, Number(value) * 100));
     }
 
+    /**
+     * 将十六进制颜色转换为 Photoshop SolidColor。
+     * @param {String} hex 十六进制颜色，如 #000000 或 #000
+     * @returns {SolidColor} Photoshop 颜色对象
+     */
     function solidColorFromHex(hex) {
         var text = String(hex || "#000000").replace("#", "");
         if (text.length === 3) {
@@ -420,6 +545,13 @@
         return color;
     }
 
+    /**
+     * 给图层应用外描边图层样式。
+     * @param {ArtLayer} layer 目标图层
+     * @param {String} hex 描边颜色
+     * @param {Number} sizePx 描边宽度，单位像素
+     * @returns {void}
+     */
     function applyStroke(layer, hex, sizePx) {
         app.activeDocument.activeLayer = layer;
 
@@ -452,6 +584,11 @@
         executeAction(charIDToTypeID("setd"), desc, DialogModes.NO);
     }
 
+    /**
+     * 返回去重后的字符串数组。
+     * @param {Array} items 原始列表
+     * @returns {Array} 去重后的列表
+     */
     function unique(items) {
         var result = [];
         for (var i = 0; i < items.length; i++) {
@@ -462,6 +599,11 @@
         return result;
     }
 
+    /**
+     * 将异常对象格式化为带脚本行号的提示文本。
+     * @param {Error|Object|String} error 异常对象或文本
+     * @returns {String} 错误提示文本
+     */
     function getErrorMessage(error) {
         var message = error && error.message ? error.message : String(error);
         if (error && error.line) {

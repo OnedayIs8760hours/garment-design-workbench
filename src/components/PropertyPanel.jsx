@@ -1,9 +1,22 @@
 import React from "react";
+import { fillPanelSize } from "../elements.js";
 
 // 属性面板组件，用于编辑当前选中元素的通用属性。
-export function PropertyPanel({ element, updateElement }) {
+export function PropertyPanel({ element, panel, asset, updateElement }) {
+  const fillPanel = () => {
+    updateElement(element.id, {
+      centerX: 0.5,
+      centerY: 0.5,
+      rotation: 0,
+      ...fillPanelSize(asset?.originalWidth / asset?.originalHeight, panel.logicalSize.width / panel.logicalSize.height),
+    });
+  };
+
   return (
     <div className="props">
+      {element.type === "image" && (
+        <button type="button" onClick={fillPanel}>铺满</button>
+      )}
       {element.type === "text" && (
         <label>
           内容

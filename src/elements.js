@@ -44,6 +44,12 @@ export function createImageElement(assetId, imageAspectRatio, panelAspectRatio =
   };
 }
 
+export function fillPanelSize(imageAspectRatio, panelAspectRatio = 1) {
+  if (!(imageAspectRatio > 0) || !(panelAspectRatio > 0)) return { width: 1, height: 1 };
+  const height = panelAspectRatio / imageAspectRatio;
+  return height >= 1 ? { width: 1, height } : { width: 1 / height, height: 1 };
+}
+
 // 创建文字元素，role 决定是姓名还是号码。
 export function createTextElement(role) {
   const element = {
@@ -60,9 +66,9 @@ export function createTextElement(role) {
     // 元素中心点 Y。
     centerY: role === "number" ? 0.45 : 0.22,
     // 元素宽度。
-    width: role === "number" ? 0.34 : 0.5,
+    width: role === "number" ? 0.18 : 0.5,
     // 元素高度。
-    height: role === "number" ? 0.16 : 0.08,
+    height: role === "number" ? 0.12 : 0.08,
     // 元素旋转角度。
     rotation: 0,
     // 文字填充颜色。

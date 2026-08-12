@@ -1,3 +1,12 @@
+<#
+.SYNOPSIS
+通过 Photoshop COM 运行 restore-panels-smart-objects.jsx，可传入或选择设计包目录。
+.PARAMETER PackageFolder
+已解压的设计包目录，包含 manifest.json 或 order-design.json。
+.PARAMETER PickFolder
+弹出目录选择框选择设计包目录。
+#>
+
 param(
   [string]$PackageFolder = "",
   [switch]$PickFolder

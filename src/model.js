@@ -87,8 +87,8 @@ export function clampElement(element) {
     ...element,
     centerX: clamp01(element.centerX),
     centerY: clamp01(element.centerY),
-    width: Math.min(1, Math.max(0.03, Number(element.width) || 0.03)),
-    height: Math.min(1, Math.max(0.03, Number(element.height) || 0.03)),
+    width: Math.min(element.type === "image" ? 4 : 1, Math.max(0.03, Number(element.width) || 0.03)),
+    height: Math.min(element.type === "image" ? 4 : 1, Math.max(0.03, Number(element.height) || 0.03)),
     opacity: Math.min(1, Math.max(0.1, Number(element.opacity) || 1)),
   };
 }
@@ -108,10 +108,10 @@ export function validateDesign(design) {
 
   Object.entries(design.panels).forEach(([panelId, panel]) => {
     panel.elements.forEach((element) => {
-      if (element.centerX - element.width / 2 < 0 || element.centerX + element.width / 2 > 1) {
+      if (element.type !== "image" && (element.centerX - element.width / 2 < 0 || element.centerX + element.width / 2 > 1)) {
         errors.push(`${panelId} 存在横向超出裁片的元素`);
       }
-      if (element.centerY - element.height / 2 < 0 || element.centerY + element.height / 2 > 1) {
+      if (element.type !== "image" && (element.centerY - element.height / 2 < 0 || element.centerY + element.height / 2 > 1)) {
         errors.push(`${panelId} 存在纵向超出裁片的元素`);
       }
       if (element.type === "image" && !design.assets.some((asset) => asset.assetId === element.assetId)) {

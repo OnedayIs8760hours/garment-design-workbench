@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createImageElement, createTextElement } from "./elements.js";
+import { createImageElement, createTextElement, fillPanelSize } from "./elements.js";
 import { createInitialDesign, garmentColors, normalizeColor } from "./config.js";
 import { textFonts } from "./fontMap.js";
 import { clampElement, createExportJson, createPanelState, createTemplate, validateDesign } from "./model.js";
@@ -74,10 +74,23 @@ design.panels.back.changed = true;
 assert.equal(createExportJson(design).panels.back.changed, true);
 assert.equal(createExportJson(design).panels.back.status, "not_started");
 
-design.panels.front.elements[0].centerX = 0.95;
+design.panels.front.elements[1].centerX = 0.95;
 assert.equal(validateDesign(design).passed, false);
+design.panels.front.elements[1].centerX = 0.5;
 
 // 验证上传图片默认尺寸会按原图比例计算。
 const uploadedImage = createImageElement("asset-wide", 2, 1);
 assert.equal(uploadedImage.width, 0.42);
 assert.equal(uploadedImage.height, 0.21);
+assert.deepEqual(fillPanelSize(2, 1), { width: 2, height: 1 });
+assert.deepEqual(fillPanelSize(0.5, 1), { width: 1, height: 2 });
+assert.equal(validateDesign({
+  ...design,
+  panels: {
+    ...design.panels,
+    front: {
+      ...design.panels.front,
+      elements: [{ ...design.panels.front.elements[0], centerX: 0.5, centerY: 0.5, width: 2, height: 1 }],
+    },
+  },
+}).passed, true);

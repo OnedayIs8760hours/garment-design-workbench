@@ -25,11 +25,20 @@ export function PanelTabs({ design, commit }) {
 
 // 底部面板，包含属性编辑和图层列表。
 export function BottomPanels({ design, selected, selectedId, select, updateElement, moveLayer, removeSelected }) {
+  const selectedAsset = design.assets.find((asset) => asset.assetId === selected?.assetId);
+
   return (
     <div className="bottom-panels">
       <section>
         <h2>属性</h2>
-        {selected ? <PropertyPanel element={selected} updateElement={updateElement} /> : <p className="muted">选择画布元素后编辑属性</p>}
+        {selected ? (
+          <PropertyPanel
+            element={selected}
+            panel={design.panels[design.currentPanelId]}
+            asset={selectedAsset}
+            updateElement={updateElement}
+          />
+        ) : <p className="muted">选择画布元素后编辑属性</p>}
       </section>
 
       <section>
