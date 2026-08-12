@@ -1,7 +1,6 @@
 import React from "react";
 import { fillPanelSize } from "../elements.js";
 
-// 属性面板组件，用于编辑当前选中元素的通用属性。
 export function PropertyPanel({ element, panel, asset, updateElement }) {
   const fillPanel = () => {
     updateElement(element.id, {
@@ -36,11 +35,11 @@ export function PropertyPanel({ element, panel, asset, updateElement }) {
         <>
           <label>
             填充
-            <input type="color" value={element.fill} onChange={(event) => updateElement(element.id, { fill: event.target.value })} />
+            <ColorInput value={element.fill} onCommit={(fill) => updateElement(element.id, { fill })} />
           </label>
           <label>
             描边
-            <input type="color" value={element.stroke} onChange={(event) => updateElement(element.id, { stroke: event.target.value })} />
+            <ColorInput value={element.stroke} onCommit={(stroke) => updateElement(element.id, { stroke })} />
           </label>
         </>
       )}
@@ -48,7 +47,6 @@ export function PropertyPanel({ element, panel, asset, updateElement }) {
   );
 }
 
-// 数字输入控件，统一处理属性面板里的数值字段。
 function NumberInput({ label, value, step = "0.01", onChange }) {
   return (
     <label>
@@ -56,4 +54,30 @@ function NumberInput({ label, value, step = "0.01", onChange }) {
       <input type="number" step={step} value={value} onChange={(event) => onChange(Number(event.target.value))} />
     </label>
   );
+}
+
+function ColorInput({ value, onCommit }) {
+  const [draft, setDraft] = React.useState(value);
+  const timerRef = React.useRef(null);
+
+  React.useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
+  React.useEffect(() => () => clearTimeout(timerRef.current), []);
+
+  const scheduleCommit = (next) => {
+    setDraft(next);
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      if (next !== value) onCommit(next);
+    }, 300);
+  };
+
+  const flushCommit = () => {
+    clearTimeout(timerRef.current);
+    if (draft !== value) onCommit(draft);
+  };
+
+  return <input type="color" value={draft} onChange={(event) => scheduleCommit(event.target.value)} onBlur={flushCommit} />;
 }

@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { createInitialDesign, draftKey, normalizeDesignColors, template } from "./config.js";
 
 const removedSampleAssetId = "asset-sample-mark";
+const maxDraftBytes = 20 * 1024 * 1024;
 
 // 深拷贝设计状态，保证 undo 历史不会被后续修改污染。
 function clone(value) {
@@ -12,7 +13,9 @@ function clone(value) {
 function readDraft() {
   try {
     // localStorage 中保存的上一次草稿。
-    const draft = JSON.parse(localStorage.getItem(draftKey));
+    const rawDraft = localStorage.getItem(draftKey);
+    if (!rawDraft || rawDraft.length > maxDraftBytes) return null;
+    const draft = JSON.parse(rawDraft);
     if (!draft || draft.templateId !== template.templateId || !template.panels[draft.currentPanelId]) return null;
     draft.assets = (draft.assets ?? []).filter((asset) => asset.assetId !== removedSampleAssetId);
     Object.values(draft.panels).forEach((panel) => {

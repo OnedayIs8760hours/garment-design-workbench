@@ -137,17 +137,20 @@ export function ThreeDPreview({ design, modelUrl, setModelUrl, onExpand, large =
   React.useEffect(() => {
     // 防止异步贴图生成完成后写入已卸载组件。
     let cancelled = false;
-    createDesignTexture(design, panelRects).then((texture) => {
-      if (cancelled) {
-        texture.dispose();
-        return;
-      }
-      textureRef.current?.dispose();
-      textureRef.current = texture;
-      applyTextureRef.current(texture);
-    });
+    const timer = setTimeout(() => {
+      createDesignTexture(design, panelRects).then((texture) => {
+        if (cancelled) {
+          texture.dispose();
+          return;
+        }
+        textureRef.current?.dispose();
+        textureRef.current = texture;
+        applyTextureRef.current(texture);
+      });
+    }, 150);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [design, panelRects]);
 

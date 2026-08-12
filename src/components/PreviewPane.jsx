@@ -6,7 +6,7 @@ import { ThreeDPreview } from "./ThreeDPreview.jsx";
 // 右侧整体预览区域，负责在 3D 和 2D 预览间切换。
 export function PreviewPane({ design, validation }) {
   // 当前预览模式。
-  const [mode, setMode] = React.useState("3d");
+  const [mode, setMode] = React.useState("2d");
   const [modelUrl, setModelUrl] = React.useState(template.threeD?.defaultModelUrl ?? "");
   const [isModelExpanded, setIsModelExpanded] = React.useState(false);
 
