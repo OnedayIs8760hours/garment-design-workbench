@@ -138,7 +138,7 @@
     function createTextLayer(doc, group, element) {
         app.activeDocument = doc;
 
-        var target = elementTargetRect(doc, element);
+        var target = elementTargetRect(doc, element.rasterTarget || element);
         var layer = doc.artLayers.add();
         layer.kind = LayerKind.TEXT;
         layer.name = (element.role === "number" ? "号码 " : "姓名 ") + element.text;
@@ -162,7 +162,7 @@
             layer.rotate(Number(element.rotation), AnchorPosition.MIDDLECENTER);
         }
 
-        applyStroke(layer, element.stroke || "#000000", Math.max(1, target.width * Number(element.strokeWidth || 0.01)));
+        applyStroke(layer, element.stroke || "#000000", Math.max(1, toPixels(doc.width) * Number(element.strokeWidth || 0.01)));
         moveIntoGroup(layer, group);
     }
 

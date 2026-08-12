@@ -4,6 +4,7 @@ import { clampElement } from "../model.js";
 import { getStageSize, template } from "../config.js";
 import { currentElements } from "../designStore.js";
 import { textFontFor } from "../fontMap.js";
+import { textFontSizeForBox } from "../textMetrics.js";
 
 // 加载图片资源并返回浏览器 Image 对象。
 function useImage(src) {
@@ -176,7 +177,7 @@ function CanvasElement({ element, asset, selected, stageSize, setRef, onSelect, 
       stroke={element.stroke}
       strokeWidth={element.strokeWidth * stageSize.width}
       fontFamily={font.cssFamily}
-      fontSize={Math.max(18, element.height * stageSize.height * 0.72)}
+      fontSize={textFontSizeForBox(element.height * stageSize.height, 18)}
       fontStyle={font.cssStyle}
       align="center"
       verticalAlign="middle"

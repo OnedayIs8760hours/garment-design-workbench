@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createImageElement, createTextElement, fillPanelSize } from "./elements.js";
 import { createInitialDesign, garmentColors, normalizeColor } from "./config.js";
+import { prepareTextRasterManifest, textRasterTargetFromBounds } from "./download.js";
 import { textFonts } from "./fontMap.js";
 import { clampElement, createExportJson, createPanelState, createTemplate, validateDesign } from "./model.js";
 
@@ -84,6 +85,25 @@ assert.equal(uploadedImage.width, 0.42);
 assert.equal(uploadedImage.height, 0.21);
 assert.deepEqual(fillPanelSize(2, 1), { width: 2, height: 1 });
 assert.deepEqual(fillPanelSize(0.5, 1), { width: 1, height: 2 });
+const packageManifest = prepareTextRasterManifest(createExportJson(design));
+const exportedNameText = packageManifest.panels.front.elements.find((element) => element.type === "text");
+assert.equal(exportedNameText.restoreMode, "editableText");
+assert.equal(exportedNameText.measurementMode, "webRasterBounds");
+assert.match(exportedNameText.rasterAssetId, /^text-raster-front-/);
+assert.match(exportedNameText.rasterSourceFile, /^text-raster\/front-/);
+assert.equal(packageManifest.assets.find((asset) => asset.assetId === exportedNameText.rasterAssetId).type, "text-raster");
+assert.deepEqual(textRasterTargetFromBounds({
+  centerX: 0.5,
+  centerY: 0.5,
+  width: 0.2,
+  height: 0.2,
+  rotation: 90,
+}, 1000, 1000, { left: 0, top: 50, right: 100, bottom: 150 }), {
+  centerX: 0.5,
+  centerY: 0.45,
+  width: 0.1,
+  height: 0.1,
+});
 assert.equal(validateDesign({
   ...design,
   panels: {

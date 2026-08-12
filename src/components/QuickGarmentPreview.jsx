@@ -1,6 +1,7 @@
 import React from "react";
 import { template } from "../config.js";
 import { textFontFor } from "../fontMap.js";
+import { textFontSizeForBox } from "../textMetrics.js";
 
 // 快速 2D 裁片预览，使用 mask 把元素限制在裁片内。
 export function QuickGarmentPreview({ design, panelId }) {
@@ -103,7 +104,7 @@ function GarmentElement({ element, asset }) {
   if (element.type === "image") return <img className="preview-element" style={style} src={asset?.dataUrl} alt="" />;
 
   // 根据盒子高度计算文字大小。
-  const fontSize = Math.max(8, textBox.height * 0.72 || 20);
+  const fontSize = textBox.height ? textFontSizeForBox(textBox.height, 8) : 20;
   // 根据盒子宽度计算文字描边宽度。
   const strokeWidth = Math.max(1, (textBox.width || 0) * (element.strokeWidth ?? 0.01));
   const font = textFontFor(element);
