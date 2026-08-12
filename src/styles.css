@@ -104,6 +104,25 @@ h3 {
   line-height: 1.15;
 }
 
+.template-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #60717d;
+}
+
+.template-switcher select {
+  min-width: 132px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 7px 30px 7px 10px;
+  background: #ffffff;
+  color: #111827;
+  font: inherit;
+}
+
 .brand-block span {
   font-size: 13px;
   color: #5d6975;

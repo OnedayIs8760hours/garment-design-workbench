@@ -1,4 +1,4 @@
-import { activeTemplateDefinition } from "./templates/index.js";
+import { activeTemplateDefinition, templateDefinitionFor } from "./templates/index.js";
 import { textFontFor } from "./fontMap.js";
 
 // 将模板 JSON 转成应用内部统一使用的模板结构。
@@ -19,6 +19,7 @@ export function createTemplate(definition = activeTemplateDefinition) {
     sizes: definition.sizes ?? [exportedTemplate.templateId],
     productId: definition.productId ?? `PRODUCT-${exportedTemplate.templateId}`,
     draftKey: definition.draftKey ?? `sds-design-${exportedTemplate.templateId}-panels-v${exportedTemplate.templateVersion}`,
+    defaultPanelId: definition.defaultPanelId ?? panelIds[0],
     threeD: {
       // 3D 预览默认模型地址。
       defaultModelUrl: definition.defaultModelUrl ?? null,
@@ -133,7 +134,7 @@ export function validateDesign(design) {
 // 生成交给 Photoshop 和导出包使用的订单 JSON。
 export function createExportJson(design, validation = validateDesign(design)) {
   // 最新模板结构，用于补齐导出里的模板元数据。
-  const template = createTemplate();
+  const template = createTemplate(templateDefinitionFor(design.templateId));
   return {
     schemaVersion: design.schemaVersion,
     orderId: design.orderId,

@@ -2,14 +2,14 @@ import React from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { template } from "../config.js";
+import { createTemplate } from "../model.js";
+import { templateDefinitionFor } from "../templates/index.js";
 import { textFontFor } from "../fontMap.js";
 import { textFontSizeForBox } from "../textMetrics.js";
 
 // 图片加载缓存，避免 3D 贴图生成时重复解码同一素材。
 const imageCache = new Map();
 // 模板自带的裁片 UV 区域。
-const defaultPanelRects = template.threeD?.uvRects ?? {};
 
 // 3D 服装预览组件，负责加载模型并把当前设计绘制成贴图。
 export function ThreeDPreview({ design, modelUrl, setModelUrl, onExpand, large = false }) {
@@ -23,10 +23,16 @@ export function ThreeDPreview({ design, modelUrl, setModelUrl, onExpand, large =
   const textureRef = React.useRef(null);
   // 将贴图应用到模型材质的函数引用。
   const applyTextureRef = React.useRef(() => {});
+  const template = React.useMemo(() => createTemplate(templateDefinitionFor(design.templateId)), [design.templateId]);
+  const defaultPanelRects = React.useMemo(() => template.threeD?.uvRects ?? {}, [template]);
   // 当前模型各裁片对应的 UV 区域。
   const [panelRects, setPanelRects] = React.useState(defaultPanelRects);
   // 预览区提示文案。
   const [message, setMessage] = React.useState("选择 CLO 导出的 .glb/.gltf 模型");
+
+  React.useEffect(() => {
+    setPanelRects(defaultPanelRects);
+  }, [defaultPanelRects]);
 
   React.useEffect(() => {
     // 3D 容器 DOM。
@@ -124,7 +130,7 @@ export function ThreeDPreview({ design, modelUrl, setModelUrl, onExpand, large =
         fitModel(gltf.scene);
         sceneRef.current.add(gltf.scene);
         // 从模型材质和 UV 中反推裁片区域。
-        const nextRects = getPanelRects(gltf.scene);
+        const nextRects = getPanelRects(gltf.scene, template);
         setPanelRects(Object.keys(nextRects).length ? nextRects : defaultPanelRects);
         applyTextureRef.current(textureRef.current);
         setMessage("实时预览");
@@ -132,13 +138,13 @@ export function ThreeDPreview({ design, modelUrl, setModelUrl, onExpand, large =
       undefined,
       () => setMessage("模型加载失败，请确认文件是 .glb/.gltf"),
     );
-  }, [modelUrl]);
+  }, [modelUrl, defaultPanelRects, template]);
 
   React.useEffect(() => {
     // 防止异步贴图生成完成后写入已卸载组件。
     let cancelled = false;
     const timer = setTimeout(() => {
-      createDesignTexture(design, panelRects).then((texture) => {
+      createDesignTexture(design, panelRects, template).then((texture) => {
         if (cancelled) {
           texture.dispose();
           return;
@@ -152,7 +158,7 @@ export function ThreeDPreview({ design, modelUrl, setModelUrl, onExpand, large =
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [design, panelRects]);
+  }, [design, panelRects, template]);
 
   // 处理用户导入本地 3D 模型。
   const chooseModel = (event) => {
@@ -182,7 +188,7 @@ export function ThreeDPreview({ design, modelUrl, setModelUrl, onExpand, large =
 }
 
 // 把所有裁片设计绘制到一张 UV 图集贴图上。
-async function createDesignTexture(design, panelRects) {
+async function createDesignTexture(design, panelRects, template) {
   // 贴图画布尺寸。
   const size = 2048;
   // UV 图集画布。
@@ -298,7 +304,7 @@ function fitModel(model) {
 }
 
 // 根据模型材质名和 UV 坐标推导每个裁片的 UV 矩形。
-function getPanelRects(model) {
+function getPanelRects(model, template) {
   // 裁片 ID 到 UV 矩形的映射。
   const rects = {};
   model.traverse((object) => {

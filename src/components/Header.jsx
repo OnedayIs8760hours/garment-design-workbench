@@ -1,13 +1,31 @@
 import React from "react";
 import { firstPanel, template } from "../config.js";
+import { templateOptions } from "../templates/index.js";
 
-// 顶部栏组件，显示项目状态和全局操作按钮。
-export function Header({ status, totalElements, validation, canUndo, canReset, onUndo, onReset, onSave, onExportPackage }) {
+export function Header({
+  status,
+  totalElements,
+  validation,
+  canUndo,
+  canReset,
+  onUndo,
+  onReset,
+  onSave,
+  onExportPackage,
+  onTemplateChange,
+}) {
   return (
     <header className="topbar">
       <div className="brand-block">
         <p>裁片定制工作台</p>
-        <strong>{template.name}</strong>
+        <label className="template-switcher">
+          <span>模板</span>
+          <select value={template.templateId} onChange={(event) => onTemplateChange(event.target.value)}>
+            {templateOptions.map((option) => (
+              <option key={option.templateId} value={option.templateId}>{option.label}</option>
+            ))}
+          </select>
+        </label>
         <span>模板 V{template.templateVersion} · {firstPanel.logicalSize.width} x {firstPanel.logicalSize.height} · {status}</span>
       </div>
       <div className="top-metrics">

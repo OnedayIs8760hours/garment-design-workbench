@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "templateId": "W-M",
+  "templateVersion": 1,
+  "generatedAt": "2026-08-12T11:16:07Z",
+  "sourceDocument": {
+    "fileName": "W-M.psd",
+    "width": 4452,
+    "height": 2377,
+    "resolution": 99.9999847412109,
+    "unit": "px",
+    "colorMode": "RGB"
+  },
+  "panelOrder": [
+    "up-front",
+    "up-back",
+    "under-front",
+    "under-back",
+    "left-sleeve",
+    "right-sleeve",
+    "collar"
+  ],
+  "panels": {
+    "up-front": {
+      "panelId": "up-front",
+      "name": "上前片",
+      "layerName": "前片",
+      "layerPath": "前片",
+      "bounds": {
+        "left": 2693,
+        "top": 341,
+        "right": 5352,
+        "bottom": 1280
+      },
+      "size": {
+        "width": 2659,
+        "height": 939
+      },
+      "center": {
+        "x": 4022.5,
+        "y": 810.5
+      },
+      "panelImage": "up-front/panels/front.png",
+      "maskImage": "up-front/masks/front-mask.png",
+      "maskMode": "white-on-transparent"
+    },
+    "up-back": {
+      "panelId": "up-back",
+      "name": "上后片",
+      "layerName": "后片",
+      "layerPath": "后片",
+      "bounds": {
+        "left": 8,
+        "top": 368,
+        "right": 2641,
+        "bottom": 1277
+      },
+      "size": {
+        "width": 2633,
+        "height": 909
+      },
+      "center": {
+        "x": 1324.5,
+        "y": 822.5
+      },
+      "panelImage": "up-back/panels/back.png",
+      "maskImage": "up-back/masks/back-mask.png",
+      "maskMode": "white-on-transparent"
+    },
+    "under-front": {
+      "panelId": "under-front",
+      "name": "下前片",
+      "layerName": "前片",
+      "layerPath": "前片",
+      "bounds": {
+        "left": 8,
+        "top": 8,
+        "right": 2311,
+        "bottom": 1212
+      },
+      "size": {
+        "width": 2303,
+        "height": 1204
+      },
+      "center": {
+        "x": 1159.5,
+        "y": 610
+      },
+      "panelImage": "under-front/panels/front.png",
+      "maskImage": "under-front/masks/front-mask.png",
+      "maskMode": "white-on-transparent"
+    },
+    "under-back": {
+      "panelId": "under-back",
+      "name": "下后片",
+      "layerName": "后片",
+      "layerPath": "后片",
+      "bounds": {
+        "left": 8,
+        "top": 1257,
+        "right": 2312,
+        "bottom": 2369
+      },
+      "size": {
+        "width": 2304,
+        "height": 1112
+      },
+      "center": {
+        "x": 1160,
+        "y": 1813
+      },
+      "panelImage": "under-back/panels/back.png",
+      "maskImage": "under-back/masks/back-mask.png",
+      "maskMode": "white-on-transparent"
+    },
+    "left-sleeve": {
+      "panelId": "left-sleeve",
+      "name": "左袖",
+      "layerName": "左袖",
+      "layerPath": "左袖",
+      "bounds": {
+        "left": 2693,
+        "top": 17,
+        "right": 4444,
+        "bottom": 1085
+      },
+      "size": {
+        "width": 1751,
+        "height": 1068
+      },
+      "center": {
+        "x": 3568.5,
+        "y": 551
+      },
+      "panelImage": "left-sleeve/panels/left-sleeve.png",
+      "maskImage": "left-sleeve/masks/left-sleeve-mask.png",
+      "maskMode": "white-on-transparent"
+    },
+    "right-sleeve": {
+      "panelId": "right-sleeve",
+      "name": "右袖",
+      "layerName": "右袖",
+      "layerPath": "右袖",
+      "bounds": {
+        "left": 2693,
+        "top": 1202,
+        "right": 4444,
+        "bottom": 2270
+      },
+      "size": {
+        "width": 1751,
+        "height": 1068
+      },
+      "center": {
+        "x": 3568.5,
+        "y": 1736
+      },
+      "panelImage": "right-sleeve/panels/right-sleeve.png",
+      "maskImage": "right-sleeve/masks/right-sleeve-mask.png",
+      "maskMode": "white-on-transparent"
+    },
+    "collar": {
+      "panelId": "collar",
+      "name": "领条",
+      "layerName": "领条",
+      "layerPath": "领条",
+      "bounds": {
+        "left": 2850,
+        "top": 8,
+        "right": 5194,
+        "bottom": 287
+      },
+      "size": {
+        "width": 2344,
+        "height": 279
+      },
+      "center": {
+        "x": 4022,
+        "y": 147.5
+      },
+      "panelImage": "collar/panels/collar.png",
+      "maskImage": "collar/masks/collar-mask.png",
+      "maskMode": "white-on-transparent"
+    }
+  }
+}

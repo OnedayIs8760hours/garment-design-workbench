@@ -8,6 +8,7 @@ import { ToolsSidebar } from "./components/ToolsSidebar.jsx";
 import { PanelTabs, BottomPanels } from "./components/EditorPanels.jsx";
 import { PanelStage } from "./components/PanelStage.jsx";
 import { PreviewPane } from "./components/PreviewPane.jsx";
+import { resolveTemplateId, templateSelectionStorageKey } from "./templates/index.js";
 
 // 应用根组件，负责连接状态仓库、编辑器和预览区域。
 export function App() {
@@ -26,6 +27,15 @@ export function App() {
   const canUndo = past.length > 0;
   // 是否有可清空的画布元素。
   const canReset = totalElements > 0;
+
+  const switchTemplate = (templateId) => {
+    const nextTemplateId = resolveTemplateId(templateId);
+    if (nextTemplateId === design.templateId) return;
+    localStorage.setItem(templateSelectionStorageKey, nextTemplateId);
+    const url = new URL(window.location.href);
+    url.searchParams.set("template", nextTemplateId);
+    window.location.assign(url.toString());
+  };
 
   React.useEffect(() => {
     // 处理 Ctrl+Z 撤销快捷键。
@@ -239,6 +249,7 @@ export function App() {
         onReset={resetDesign}
         onSave={saveNow}
         onExportPackage={() => downloadZip(design, exportJson)}
+        onTemplateChange={switchTemplate}
       />
 
       <main className={sidebarCollapsed ? "workspace sidebar-collapsed" : "workspace"}>

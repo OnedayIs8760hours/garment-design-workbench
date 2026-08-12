@@ -4,9 +4,10 @@ import { createInitialDesign, garmentColors, normalizeColor } from "./config.js"
 import { prepareTextRasterManifest, textRasterTargetFromBounds } from "./download.js";
 import { textFonts } from "./fontMap.js";
 import { clampElement, createExportJson, createPanelState, createTemplate, validateDesign } from "./model.js";
+import { activeTemplateId, resolveTemplateId, templateDefinitions, templateOptions } from "./templates/index.js";
 
 // 测试使用的模板结构。
-const template = createTemplate();
+const template = createTemplate(templateDefinitions["M-2XL"]);
 // 测试使用的最小设计草稿。
 const design = {
   // JSON schema 版本。
@@ -114,3 +115,34 @@ assert.equal(validateDesign({
     },
   },
 }).passed, true);
+
+assert.equal(activeTemplateId, "W-M");
+assert.ok(templateDefinitions["M-2XL"]);
+assert.ok(templateDefinitions["W-M"]);
+const womenTemplate = createTemplate(templateDefinitions["W-M"]);
+assert.equal(womenTemplate.templateId, "W-M");
+assert.equal(womenTemplate.productId, "PRODUCT-W-M");
+assert.equal(womenTemplate.defaultPanelId, "up-front");
+assert.equal(Object.keys(womenTemplate.panels).length, 7);
+assert.deepEqual(Object.keys(womenTemplate.panels), [
+  "up-front",
+  "up-back",
+  "under-front",
+  "under-back",
+  "left-sleeve",
+  "right-sleeve",
+  "collar",
+]);
+assert.equal(womenTemplate.panels["up-front"].templateImage, "/templates/W-M/up-front/panels/front.png");
+assert.equal(womenTemplate.panels["under-back"].maskImage, "/templates/W-M/under-back/masks/back-mask.png");
+assert.equal(womenTemplate.threeD.defaultModelUrl, "/models/soccer-women.glb");
+const womenDesign = createInitialDesign(womenTemplate);
+assert.equal(womenDesign.templateId, "W-M");
+assert.equal(womenDesign.currentPanelId, "up-front");
+assert.equal(womenDesign.panels["up-front"].logicalSize.width, 2659);
+assert.equal(createExportJson(womenDesign).panels["up-front"].sourceFile, "templates/W-M/up-front/panels/front.png");
+assert.equal(createExportJson(design).panels.front.maskImage, "/templates/M-2XL/masks/front-mask.png");
+assert.deepEqual(templateOptions.map((option) => option.templateId), ["M-2XL", "W-M"]);
+assert.equal(resolveTemplateId("M-2XL"), "M-2XL");
+assert.equal(resolveTemplateId("unknown"), "W-M");
+assert.equal(resolveTemplateId(null), "W-M");
