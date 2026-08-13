@@ -1,5 +1,5 @@
 import { createPanelState, createTemplate } from "./model.js";
-import { selectedTemplateIdFromLocation, templateDefinitionFor } from "./templates/index.js";
+import { selectedTemplateIdFromLocation, templateDefinitionFor } from "../templates/index.js";
 
 // 应用运行时使用的模板对象。
 export const template = createTemplate(templateDefinitionFor(selectedTemplateIdFromLocation()));

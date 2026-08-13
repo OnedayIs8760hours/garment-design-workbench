@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { createTemplate } from "../model.js";
-import { templateDefinitionFor } from "../templates/index.js";
+import { templateDefinitionFor } from "../../templates/index.js";
 import { textFontFor } from "../fontMap.js";
 import { textFontSizeForBox } from "../textMetrics.js";
 

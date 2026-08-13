@@ -1,4 +1,4 @@
-import { activeTemplateDefinition, templateDefinitionFor } from "./templates/index.js";
+import { activeTemplateDefinition, templateDefinitionFor } from "../templates/index.js";
 import { textFontFor } from "./fontMap.js";
 
 // 将模板 JSON 转成应用内部统一使用的模板结构。
@@ -6,7 +6,7 @@ export function createTemplate(definition = activeTemplateDefinition) {
   // 从定义中取出原始导出模板。
   const exportedTemplate = definition.template;
   // 浏览器访问模板静态资源的基础路径。
-  const basePath = `/templates/${exportedTemplate.templateId}`;
+  const basePath = definition.publicAssetBase ?? `/templates/${exportedTemplate.templateId}`;
   // 把模板内的相对资源路径转换成浏览器路径。
   const assetUrl = (filePath) => (filePath ? `${basePath}/${filePath}` : null);
   // 裁片显示顺序，未配置时使用对象键顺序。
@@ -42,7 +42,7 @@ export function createTemplate(definition = activeTemplateDefinition) {
             logicalSize: panel.size,
             templateImage: assetUrl(panel.panelImage),
             maskImage: assetUrl(panel.maskImage),
-            sourceFile: `templates/${exportedTemplate.templateId}/${panel.panelImage}`,
+            sourceFile: `${basePath.replace(/^\//, "")}/${panel.panelImage}`,
             guides: panel.guides ?? [],
             previewMapping: { type: "simple", target: panelId },
           },

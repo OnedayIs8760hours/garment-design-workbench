@@ -7,11 +7,12 @@ This is a Vite + React app for garment panel customization and Photoshop JSON re
 - `src/` contains application code.
 - `src/components/` contains React UI components.
 - `src/model.js`, `src/config.js`, and `src/designStore.js` hold template, order, and state logic.
-- `src/templates/` stores imported template metadata, such as `M-2XL.template.json`.
-- `public/templates/` stores browser-served template images and masks.
+- `templates/` stores imported template metadata and UV mappings, grouped by English category slug.
+- `public/templates/` stores browser-served template images and masks, grouped by the same English category slug.
 - `public/samples/` stores demo assets.
 - `photoshop/` contains Photoshop automation scripts (`.jsx`) and runner scripts (`.ps1`).
 - `项目实现思路/` contains design notes and implementation process documentation.
+- `规范/` contains project conventions that should be followed for future category and asset changes.
 - `src/model.test.js` is the current test entry point.
 
 ## Build, Test, and Development Commands
@@ -34,7 +35,8 @@ npm run build
 
 Use ES modules, React function components, and plain JavaScript. Keep changes small and close to the existing pattern. Use 2-space indentation in JS/JSX/JSON. Component files use `PascalCase.jsx`; utility modules use `camelCase.js`.
 
-Do not hard-code garment-specific geometry in React components. Template facts belong in `template.json` or `src/templates/*.template.json`; UI code should render those fields.
+Do not hard-code garment-specific geometry in React components. Template facts belong in `template.json` or `templates/<category>/*.template.json`; UI code should render those fields.
+For template, public asset, GLB, and UV naming rules, follow `规范/模板与资源目录规范.md`.
 
 ## Testing Guidelines
 

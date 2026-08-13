@@ -1,8 +1,22 @@
-import m2xlTemplate from "./M-2XL.template.json" with { type: "json" };
-import m2xlUvMapping from "./M-2XL.uv_mapping.json" with { type: "json" };
-import wmTemplate from "./W-M.template.json" with { type: "json" };
+import m2xlTemplate from "./football-jersey/M-2XL.template.json" with { type: "json" };
+import m2xlUvMapping from "./football-jersey/M-2XL.uv_mapping.json" with { type: "json" };
+import wmTemplate from "./football-jersey-crop-top-two-tone/W-M.template.json" with { type: "json" };
+import wmUvMapping from "./football-jersey-crop-top-two-tone/W-M.uv_mapping.json" with { type: "json" };
 
 export const activeTemplateId = "W-M";
+
+export const templateCatalogPaths = {
+  "M-2XL": {
+    category: "football-jersey",
+    template: "templates/football-jersey/M-2XL.template.json",
+    uvMapping: "templates/football-jersey/M-2XL.uv_mapping.json",
+  },
+  "W-M": {
+    category: "football-jersey-crop-top-two-tone",
+    template: "templates/football-jersey-crop-top-two-tone/W-M.template.json",
+    uvMapping: "templates/football-jersey-crop-top-two-tone/W-M.uv_mapping.json",
+  },
+};
 
 export const templateDefinitions = {
   "M-2XL": {
@@ -10,7 +24,8 @@ export const templateDefinitions = {
     sizes: ["M-2XL"],
     productId: "PRODUCT-M-2XL",
     defaultPanelId: "front",
-    defaultModelUrl: "/models/soccer-new-rename.glb",
+    publicAssetBase: "/templates/football-jersey",
+    defaultModelUrl: "/models/football-jersey.glb",
     uvMapping: m2xlUvMapping,
   },
   "W-M": {
@@ -18,7 +33,9 @@ export const templateDefinitions = {
     sizes: ["W-M"],
     productId: "PRODUCT-W-M",
     defaultPanelId: "up-front",
-    defaultModelUrl: "/models/soccer-women.glb",
+    publicAssetBase: "/templates/football-jersey-crop-top-two-tone",
+    defaultModelUrl: "/models/football-jersey-crop-top-two-tone.glb",
+    uvMapping: wmUvMapping,
   },
 };
 

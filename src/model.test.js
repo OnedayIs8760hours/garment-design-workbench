@@ -4,7 +4,7 @@ import { createInitialDesign, garmentColors, normalizeColor } from "./config.js"
 import { prepareTextRasterManifest, textRasterTargetFromBounds } from "./download.js";
 import { textFonts } from "./fontMap.js";
 import { clampElement, createExportJson, createPanelState, createTemplate, validateDesign } from "./model.js";
-import { activeTemplateId, resolveTemplateId, templateDefinitions, templateOptions } from "./templates/index.js";
+import { activeTemplateId, resolveTemplateId, templateCatalogPaths, templateDefinitions, templateOptions } from "../templates/index.js";
 
 // 测试使用的模板结构。
 const template = createTemplate(templateDefinitions["M-2XL"]);
@@ -52,7 +52,7 @@ assert.equal(createExportJson(design).panels.front.logicalSize.width, 2796);
 assert.equal(createExportJson(design).panels.front.changed, true);
 assert.equal(createExportJson(design).panels.front.layerName, "前片");
 assert.equal(createExportJson(design).panels.front.bounds.left, 9);
-assert.equal(createExportJson(design).panels.front.maskImage, "/templates/M-2XL/masks/front-mask.png");
+assert.equal(createExportJson(design).panels.front.maskImage, "/templates/football-jersey/masks/front-mask.png");
 assert.equal(createExportJson(design).panels.front.guides[0].id, "cutline");
 assert.equal(createExportJson(design).panels.front.guides[0].style.dash[0], 8);
 assert.equal(createExportJson(design).panels.front.elements[1].photoshopFont, "NFLSeattleSeahawksFlat");
@@ -61,10 +61,10 @@ assert.equal(textFonts["font-nfl-seahawks-flat"].label, "NFL Seattle Seahawks Fl
 assert.equal(createExportJson(design).panels.front.guides[1].id, "center_line");
 assert.equal(template.productId, "PRODUCT-M-2XL");
 assert.equal(template.draftKey, "sds-design-M-2XL-panels-v1");
-assert.equal(template.threeD.defaultModelUrl, "/models/soccer-new-rename.glb");
+assert.equal(template.threeD.defaultModelUrl, "/models/football-jersey.glb");
 assert.deepEqual(template.threeD.uvRects.front, [0.450439453125, 0.5546875, 0.88720703125, 0.9921875]);
 assert.equal(Object.keys(template.panels).length, 8);
-assert.equal(template.panels.back.templateImage, "/templates/M-2XL/panels/back.png");
+assert.equal(template.panels.back.templateImage, "/templates/football-jersey/panels/back.png");
 assert.equal(createExportJson(design).panels.shouder.logicalSize.width, 2980);
 assert.equal(createInitialDesign().assets.length, 0);
 assert.equal(createInitialDesign().garmentColor, "rgb(141, 174, 212)");
@@ -133,16 +133,27 @@ assert.deepEqual(Object.keys(womenTemplate.panels), [
   "right-sleeve",
   "collar",
 ]);
-assert.equal(womenTemplate.panels["up-front"].templateImage, "/templates/W-M/up-front/panels/front.png");
-assert.equal(womenTemplate.panels["under-back"].maskImage, "/templates/W-M/under-back/masks/back-mask.png");
-assert.equal(womenTemplate.threeD.defaultModelUrl, "/models/soccer-women.glb");
+assert.equal(womenTemplate.panels["up-front"].templateImage, "/templates/football-jersey-crop-top-two-tone/up-front/panels/front.png");
+assert.equal(womenTemplate.panels["under-back"].maskImage, "/templates/football-jersey-crop-top-two-tone/under-back/masks/back-mask.png");
+assert.equal(womenTemplate.threeD.defaultModelUrl, "/models/football-jersey-crop-top-two-tone.glb");
+assert.deepEqual(womenTemplate.threeD.uvRects["up-front"], [0.537857532501, 0.046225443482, 0.942080974579, 0.188682049513]);
 const womenDesign = createInitialDesign(womenTemplate);
 assert.equal(womenDesign.templateId, "W-M");
 assert.equal(womenDesign.currentPanelId, "up-front");
 assert.equal(womenDesign.panels["up-front"].logicalSize.width, 2659);
-assert.equal(createExportJson(womenDesign).panels["up-front"].sourceFile, "templates/W-M/up-front/panels/front.png");
-assert.equal(createExportJson(design).panels.front.maskImage, "/templates/M-2XL/masks/front-mask.png");
+assert.equal(createExportJson(womenDesign).panels["up-front"].sourceFile, "templates/football-jersey-crop-top-two-tone/up-front/panels/front.png");
+assert.equal(createExportJson(design).panels.front.maskImage, "/templates/football-jersey/masks/front-mask.png");
 assert.deepEqual(templateOptions.map((option) => option.templateId), ["M-2XL", "W-M"]);
 assert.equal(resolveTemplateId("M-2XL"), "M-2XL");
 assert.equal(resolveTemplateId("unknown"), "W-M");
 assert.equal(resolveTemplateId(null), "W-M");
+assert.deepEqual(templateCatalogPaths["M-2XL"], {
+  category: "football-jersey",
+  template: "templates/football-jersey/M-2XL.template.json",
+  uvMapping: "templates/football-jersey/M-2XL.uv_mapping.json",
+});
+assert.deepEqual(templateCatalogPaths["W-M"], {
+  category: "football-jersey-crop-top-two-tone",
+  template: "templates/football-jersey-crop-top-two-tone/W-M.template.json",
+  uvMapping: "templates/football-jersey-crop-top-two-tone/W-M.uv_mapping.json",
+});

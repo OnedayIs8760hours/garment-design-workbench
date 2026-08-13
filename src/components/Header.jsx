@@ -1,6 +1,6 @@
 import React from "react";
 import { firstPanel, template } from "../config.js";
-import { templateOptions } from "../templates/index.js";
+import { templateOptions } from "../../templates/index.js";
 
 export function Header({
   status,

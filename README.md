@@ -83,7 +83,7 @@ SDS-design/
 │  ├─ download.js                # 设计包 zip 导出逻辑
 │  └─ model.test.js              # 当前测试入口
 ├─ public/
-│  ├─ templates/M-2XL/           # 浏览器可访问的裁片图片和遮罩
+│  ├─ templates/football-jersey/ # 浏览器可访问的裁片图片和遮罩
 │  └─ models/                    # 3D 预览 GLB 模型
 ├─ photoshop/                    # Photoshop 还原、导出、辅助脚本
 ├─ 使用方法/                     # Photoshop 脚本使用说明
@@ -172,40 +172,46 @@ powershell -ExecutionPolicy Bypass -File S:\ps-save\SDS-design\photoshop\run-res
 
 ## 模板与资源说明
 
+目录命名和新增品类流程见 `规范/模板与资源目录规范.md`。
+
 当前模板入口在：
 
 ```text
-src/templates/index.js
+templates/index.js
 ```
 
 核心模板文件：
 
 ```text
-src/templates/M-2XL.template.json
-src/templates/M-2XL.uv_mapping.json
+templates/football-jersey/M-2XL.template.json
+templates/football-jersey/M-2XL.uv_mapping.json
+templates/football-jersey-crop-top-two-tone/W-M.template.json
+templates/football-jersey-crop-top-two-tone/W-M.uv_mapping.json
 ```
 
 浏览器实际加载的裁片图和遮罩在：
 
 ```text
-public/templates/M-2XL/panels/
-public/templates/M-2XL/masks/
+public/templates/football-jersey/panels/
+public/templates/football-jersey/masks/
+public/templates/football-jersey-crop-top-two-tone/
 ```
 
 3D 预览默认模型：
 
 ```text
-public/models/soccer-new-rename.glb
+public/models/football-jersey.glb
+public/models/football-jersey-crop-top-two-tone.glb
 ```
 
-新增或替换模板时，应优先修改模板 JSON 和 `src/templates/index.js`，不要把裁片尺寸、坐标、图层名等模板事实硬编码到 React 组件里。
+新增或替换模板时，应优先修改模板 JSON 和 `templates/index.js`，不要把裁片尺寸、坐标、图层名等模板事实硬编码到 React 组件里。
 
 ## 数据流简述
 
 ```text
 PSD 模板数据 / 裁片图片 / 遮罩
         ↓
-src/templates/*.template.json
+templates/<category>/*.template.json
         ↓
 createTemplate() 转成 Web 编辑器模板
         ↓
@@ -262,5 +268,5 @@ npm run dev -- --port 5173
 - 使用 ES modules、React 函数组件和普通 JavaScript。
 - JS/JSX/JSON 使用 2 空格缩进。
 - 组件文件使用 `PascalCase.jsx`，工具模块使用 `camelCase.js`。
-- 模板相关事实放在模板 JSON 或 `src/templates/` 中，避免写死在 UI 组件里。
+- 模板相关事实放在模板 JSON 或根目录 `templates/` 中，避免写死在 UI 组件里。
 - Web 端导出的订单 JSON 可能只引用素材文件名，不嵌入图片内容；交给 Photoshop 还原时需要保留 `assets/` 目录。

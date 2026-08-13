@@ -5,16 +5,17 @@ import process from "node:process";
 const args = parseArgs(process.argv.slice(2));
 
 if (!args.source || !args.templateId) {
-  console.error("Usage: node scripts/import-clo-template.mjs --source <clo-export-dir> --template-id <id> [--panel-order a,b,c]");
+  console.error("Usage: node scripts/import-clo-template.mjs --source <clo-export-dir> --template-id <id> [--category <english-category>] [--panel-order a,b,c]");
   process.exit(1);
 }
 
 const repoRoot = process.cwd();
 const sourceRoot = path.resolve(args.source);
 const templateId = args.templateId;
+const category = args.category ?? templateId;
 const panelOrderPreference = args.panelOrder ? args.panelOrder.split(",").map((id) => id.trim()).filter(Boolean) : null;
-const templateOut = path.join(repoRoot, "src", "templates", `${templateId}.template.json`);
-const publicOut = path.join(repoRoot, "public", "templates", templateId);
+const templateOut = path.join(repoRoot, "templates", category, `${templateId}.template.json`);
+const publicOut = path.join(repoRoot, "public", "templates", category);
 
 const sourceFolders = fs.readdirSync(sourceRoot, { withFileTypes: true })
   .filter((entry) => entry.isDirectory())

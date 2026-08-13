@@ -8,7 +8,7 @@ import { ToolsSidebar } from "./components/ToolsSidebar.jsx";
 import { PanelTabs, BottomPanels } from "./components/EditorPanels.jsx";
 import { PanelStage } from "./components/PanelStage.jsx";
 import { PreviewPane } from "./components/PreviewPane.jsx";
-import { resolveTemplateId, templateSelectionStorageKey } from "./templates/index.js";
+import { resolveTemplateId, templateSelectionStorageKey } from "../templates/index.js";
 
 // 应用根组件，负责连接状态仓库、编辑器和预览区域。
 export function App() {
