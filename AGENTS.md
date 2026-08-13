@@ -2,49 +2,71 @@
 
 ## Project Structure & Module Organization
 
-This is a Vite + React app for garment panel customization and Photoshop JSON restoration.
+This repository is now a frontend/backend workspace for garment panel customization and Photoshop JSON restoration.
 
-- `src/` contains application code.
-- `src/components/` contains React UI components.
-- `src/model.js`, `src/config.js`, and `src/designStore.js` hold template, order, and state logic.
-- `templates/` stores imported template metadata and UV mappings, grouped by English category slug.
-- `public/templates/` stores browser-served template images and masks, grouped by the same English category slug.
-- `public/samples/` stores demo assets.
+- `frontend/` contains the Vite + React web editor.
+- `frontend/src/` contains application code.
+- `frontend/src/components/` contains React UI components.
+- `frontend/src/model.js`, `frontend/src/config.js`, and `frontend/src/designStore.js` hold template, order, and state logic.
+- `frontend/templates/` stores imported template metadata and UV mappings, grouped by English category slug.
+- `frontend/public/templates/` stores browser-served template images and masks, grouped by the same English category slug.
+- `frontend/public/models/` stores browser-served GLB models.
+- `backend/` contains the Spring Boot API service.
 - `photoshop/` contains Photoshop automation scripts (`.jsx`) and runner scripts (`.ps1`).
 - `项目实现思路/` contains design notes and implementation process documentation.
 - `规范/` contains project conventions that should be followed for future category and asset changes.
-- `src/model.test.js` is the current test entry point.
+- `frontend/src/model.test.js` is the current frontend test entry point.
 
 ## Build, Test, and Development Commands
 
-Run from the repository root:
+Frontend commands run from `frontend/`:
 
 ```powershell
+cd frontend
 npm install
 npm run dev -- --port 5000 --strictPort
 npm test
 npm run build
 ```
 
+Backend commands run from `backend/`:
+
+```powershell
+cd backend
+mvn spring-boot:run
+mvn test
+```
+
 - `npm run dev` starts the local Vite server. Use port `5000` for current manual testing.
-- `npm test` runs the model self-checks in `src/model.test.js`.
-- `npm run build` verifies the production bundle.
+- `npm test` runs the model self-checks in `frontend/src/model.test.js`.
+- `npm run build` verifies the production frontend bundle.
+- `mvn test` verifies the Spring Boot backend.
 - `photoshop/run-restore-front.ps1` runs the current Photoshop restoration script.
 
 ## Coding Style & Naming Conventions
 
-Use ES modules, React function components, and plain JavaScript. Keep changes small and close to the existing pattern. Use 2-space indentation in JS/JSX/JSON. Component files use `PascalCase.jsx`; utility modules use `camelCase.js`.
+Use ES modules, React function components, and plain JavaScript in the frontend. Keep changes small and close to the existing pattern. Use 2-space indentation in JS/JSX/JSON. Component files use `PascalCase.jsx`; utility modules use `camelCase.js`.
 
-Do not hard-code garment-specific geometry in React components. Template facts belong in `template.json` or `templates/<category>/*.template.json`; UI code should render those fields.
+Use Java 21 and Spring Boot conventions in the backend. Java packages live under `com.sdsdesign`. Keep controllers, services, and data access separated as backend scope grows.
+
+Do not hard-code garment-specific geometry in React components. Template facts belong in `template.json` or `frontend/templates/<category>/*.template.json`; UI code should render those fields.
 For template, public asset, GLB, and UV naming rules, follow `规范/模板与资源目录规范.md`.
 
 ## Testing Guidelines
 
-There is no full test framework yet. Keep focused `assert` checks in `src/model.test.js` for template shape, JSON export, coordinate validation, and regression cases. Run both:
+There is no full frontend test framework yet. Keep focused `assert` checks in `frontend/src/model.test.js` for template shape, JSON export, coordinate validation, and regression cases. Run:
 
 ```powershell
+cd frontend
 npm test
 npm run build
+```
+
+For backend changes, add focused Spring Boot/JUnit tests and run:
+
+```powershell
+cd backend
+mvn test
 ```
 
 For Photoshop scripts, verify by checking the target PSD update and expected layer group names, such as `CODEX_ORDER_RESTORE`.

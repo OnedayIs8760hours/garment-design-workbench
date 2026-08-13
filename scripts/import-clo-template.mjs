@@ -10,12 +10,13 @@ if (!args.source || !args.templateId) {
 }
 
 const repoRoot = process.cwd();
+const frontendRoot = path.join(repoRoot, "frontend");
 const sourceRoot = path.resolve(args.source);
 const templateId = args.templateId;
 const category = args.category ?? templateId;
 const panelOrderPreference = args.panelOrder ? args.panelOrder.split(",").map((id) => id.trim()).filter(Boolean) : null;
-const templateOut = path.join(repoRoot, "templates", category, `${templateId}.template.json`);
-const publicOut = path.join(repoRoot, "public", "templates", category);
+const templateOut = path.join(frontendRoot, "templates", category, `${templateId}.template.json`);
+const publicOut = path.join(frontendRoot, "public", "templates", category);
 
 const sourceFolders = fs.readdirSync(sourceRoot, { withFileTypes: true })
   .filter((entry) => entry.isDirectory())

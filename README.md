@@ -17,6 +17,7 @@ SDS Design 是一个基于 Vite + React 的球衣裁片定制工作台，用于�
 
 ## 技术栈
 
+- Java 21 / Spring Boot 3
 - Vite 7
 - React 19
 - Zustand
@@ -33,9 +34,10 @@ SDS Design 是一个基于 Vite + React 的球衣裁片定制工作台，用于�
 
 ## 快速开始
 
-在项目根目录运行：
+前端在 `frontend/` 目录下运行：
 
 ```powershell
+cd frontend
 npm install
 npm run dev -- --port 5000 --strictPort
 ```
@@ -49,13 +51,28 @@ http://127.0.0.1:5000
 如果只想使用默认 Vite 端口，也可以运行：
 
 ```powershell
+cd frontend
 npm run dev
+```
+
+后端在 `backend/` 目录下运行：
+
+```powershell
+cd backend
+mvn spring-boot:run
+```
+
+后端默认地址：
+
+```text
+http://127.0.0.1:8080
 ```
 
 ## 常用命令
 
 ```powershell
 # 安装依赖
+cd frontend
 npm install
 
 # 启动本地开发服务器
@@ -66,30 +83,45 @@ npm test
 
 # 构建生产包
 npm run build
+
+# 启动后端
+cd ../backend
+mvn spring-boot:run
+
+# 运行后端测试
+mvn test
 ```
 
 ## 项目结构
 
 ```text
 SDS-design/
-├─ src/                         # Web 应用源码
-│  ├─ components/                # React UI 组件
+├─ backend/                      # Spring Boot 后端服务
+│  ├─ src/main/java/             # Java 应用源码
+│  ├─ src/main/resources/        # 后端配置
+│  ├─ src/test/java/             # 后端测试
+│  └─ pom.xml                    # Maven 配置
+├─ frontend/                     # Vite + React 前端项目
+│  ├─ src/                       # Web 应用源码
+│  │  ├─ components/             # React UI 组件
+│  │  ├─ App.jsx                 # 应用主组件
+│  │  ├─ config.js               # 默认配置、模板初始化、颜色配置
+│  │  ├─ designStore.js          # Zustand 状态、草稿保存、撤销逻辑
+│  │  ├─ model.js                # 模板转换、导出 JSON、校验逻辑
+│  │  ├─ elements.js             # 图片/文字元素创建和显示逻辑
+│  │  ├─ download.js             # 设计包 zip 导出逻辑
+│  │  └─ model.test.js           # 当前测试入口
 │  ├─ templates/                 # 模板 JSON 和 UV 映射入口
-│  ├─ App.jsx                    # 应用主组件
-│  ├─ config.js                  # 默认配置、模板初始化、颜色配置
-│  ├─ designStore.js             # Zustand 状态、草稿保存、撤销逻辑
-│  ├─ model.js                   # 模板转换、导出 JSON、校验逻辑
-│  ├─ elements.js                # 图片/文字元素创建和显示逻辑
-│  ├─ download.js                # 设计包 zip 导出逻辑
-│  └─ model.test.js              # 当前测试入口
-├─ public/
-│  ├─ templates/football-jersey/ # 浏览器可访问的裁片图片和遮罩
-│  └─ models/                    # 3D 预览 GLB 模型
+│  ├─ public/                    # 浏览器可访问静态资源
+│  │  ├─ templates/              # 裁片图片和遮罩
+│  │  └─ models/                 # 3D 预览 GLB 模型
+│  ├─ package.json
+│  └─ vite.config.js
 ├─ photoshop/                    # Photoshop 还原、导出、辅助脚本
+├─ scripts/                      # 模板导入和 GLB UV 工具脚本
 ├─ 使用方法/                     # Photoshop 脚本使用说明
 ├─ 项目实现思路/                 # 实现方案和过程文档
-├─ package.json
-└─ vite.config.js
+└─ 规范/                         # 项目规范文档
 ```
 
 ## Web 端使用流程
@@ -177,41 +209,41 @@ powershell -ExecutionPolicy Bypass -File S:\ps-save\SDS-design\photoshop\run-res
 当前模板入口在：
 
 ```text
-templates/index.js
+frontend/templates/index.js
 ```
 
 核心模板文件：
 
 ```text
-templates/football-jersey/M-2XL.template.json
-templates/football-jersey/M-2XL.uv_mapping.json
-templates/football-jersey-crop-top-two-tone/W-M.template.json
-templates/football-jersey-crop-top-two-tone/W-M.uv_mapping.json
+frontend/templates/football-jersey/M-2XL.template.json
+frontend/templates/football-jersey/M-2XL.uv_mapping.json
+frontend/templates/football-jersey-crop-top-two-tone/W-M.template.json
+frontend/templates/football-jersey-crop-top-two-tone/W-M.uv_mapping.json
 ```
 
 浏览器实际加载的裁片图和遮罩在：
 
 ```text
-public/templates/football-jersey/panels/
-public/templates/football-jersey/masks/
-public/templates/football-jersey-crop-top-two-tone/
+frontend/public/templates/football-jersey/panels/
+frontend/public/templates/football-jersey/masks/
+frontend/public/templates/football-jersey-crop-top-two-tone/
 ```
 
 3D 预览默认模型：
 
 ```text
-public/models/football-jersey.glb
-public/models/football-jersey-crop-top-two-tone.glb
+frontend/public/models/football-jersey.glb
+frontend/public/models/football-jersey-crop-top-two-tone.glb
 ```
 
-新增或替换模板时，应优先修改模板 JSON 和 `templates/index.js`，不要把裁片尺寸、坐标、图层名等模板事实硬编码到 React 组件里。
+新增或替换模板时，应优先修改模板 JSON 和 `frontend/templates/index.js`，不要把裁片尺寸、坐标、图层名等模板事实硬编码到 React 组件里。
 
 ## 数据流简述
 
 ```text
 PSD 模板数据 / 裁片图片 / 遮罩
         ↓
-templates/<category>/*.template.json
+frontend/templates/<category>/*.template.json
         ↓
 createTemplate() 转成 Web 编辑器模板
         ↓
@@ -229,11 +261,12 @@ Photoshop JSX 按 manifest.json 还原到 PSD
 提交或交付前建议至少运行：
 
 ```powershell
+cd frontend
 npm test
 npm run build
 ```
 
-当前测试入口是 `src/model.test.js`，主要覆盖模板结构、导出 JSON、坐标校验和回归用例。项目暂未接入完整测试框架。
+当前前端测试入口是 `frontend/src/model.test.js`，主要覆盖模板结构、导出 JSON、坐标校验和回归用例。项目暂未接入完整测试框架。
 
 ## 常见问题
 
@@ -268,5 +301,5 @@ npm run dev -- --port 5173
 - 使用 ES modules、React 函数组件和普通 JavaScript。
 - JS/JSX/JSON 使用 2 空格缩进。
 - 组件文件使用 `PascalCase.jsx`，工具模块使用 `camelCase.js`。
-- 模板相关事实放在模板 JSON 或根目录 `templates/` 中，避免写死在 UI 组件里。
+- 模板相关事实放在模板 JSON 或 `frontend/templates/` 中，避免写死在 UI 组件里。
 - Web 端导出的订单 JSON 可能只引用素材文件名，不嵌入图片内容；交给 Photoshop 还原时需要保留 `assets/` 目录。
