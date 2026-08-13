@@ -1,9 +1,10 @@
 import { createPanelState, createTemplate } from "./model.js";
+import { selectedTemplateIdFromLocation, templateDefinitionFor } from "./templates/index.js";
 
 // 应用运行时使用的模板对象。
-export const template = createTemplate();
+export const template = createTemplate(templateDefinitionFor(selectedTemplateIdFromLocation()));
 // 默认裁片，用于计算初始舞台尺寸。
-export const firstPanel = template.panels.front;
+export const firstPanel = template.panels[template.defaultPanelId];
 // localStorage 保存草稿时使用的键。
 export const draftKey = template.draftKey;
 
@@ -46,31 +47,31 @@ export function normalizeDesignColors(design) {
 }
 
 // 创建一份新的空白设计草稿。
-export function createInitialDesign() {
+export function createInitialDesign(activeTemplate = template) {
   return {
     // 导出 JSON 的 schema 版本。
     schemaVersion: 1,
     // 默认订单编号。
     orderId: "ORDER-20260805-001",
     // 当前产品 ID。
-    productId: template.productId,
+    productId: activeTemplate.productId,
     // 当前模板 ID。
-    templateId: template.templateId,
+    templateId: activeTemplate.templateId,
     // 当前模板版本。
-    templateVersion: template.templateVersion,
+    templateVersion: activeTemplate.templateVersion,
     // 当前尺码。
-    size: template.sizes[0],
+    size: activeTemplate.sizes[0],
     // 当前服装底色。
     garmentColor: "rgb(141, 174, 212)",
     // 当前正在编辑的裁片 ID。
-    currentPanelId: "front",
+    currentPanelId: activeTemplate.defaultPanelId,
     // 上次保存时间。
     savedAt: null,
     // 设计里可复用的素材清单。
     assets: [],
     // 每个裁片的编辑状态。
     panels: Object.fromEntries(
-      Object.entries(template.panels).map(([panelId, panel]) => [panelId, createPanelState(panel)]),
+      Object.entries(activeTemplate.panels).map(([panelId, panel]) => [panelId, createPanelState(panel)]),
     ),
   };
 }
