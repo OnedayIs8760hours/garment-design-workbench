@@ -9,9 +9,23 @@ import { PanelTabs, BottomPanels } from "./components/EditorPanels.jsx";
 import { PanelStage } from "./components/PanelStage.jsx";
 import { PreviewPane } from "./components/PreviewPane.jsx";
 import { resolveTemplateId, templateSelectionStorageKey } from "../templates/index.js";
+import { LoginPrototype } from "./pages/LoginPrototype.jsx";
 
 // 应用根组件，负责连接状态仓库、编辑器和预览区域。
 export function App() {
+  const [showEditor, setShowEditor] = React.useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("screen") !== "login";
+  });
+
+  if (!showEditor) {
+    return <LoginPrototype onEnterPrototype={() => setShowEditor(true)} />;
+  }
+
+  return <EditorApp />;
+}
+
+function EditorApp() {
   // 从全局 store 读取设计数据、选择状态和操作方法。
   const { design, selectedId, status, past, commit, undo, select, saveNow } = useDesignStore();
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
