@@ -1,4 +1,5 @@
 import React from "react";
+import { Maximize2, Upload } from "lucide-react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
@@ -28,7 +29,7 @@ export function ThreeDPreview({ design, modelUrl, setModelUrl, onExpand, large =
   // 当前模型各裁片对应的 UV 区域。
   const [panelRects, setPanelRects] = React.useState(defaultPanelRects);
   // 预览区提示文案。
-  const [message, setMessage] = React.useState("选择 CLO 导出的 .glb/.gltf 模型");
+  const [message, setMessage] = React.useState("Load a CLO-exported .glb or .gltf model");
 
   React.useEffect(() => {
     setPanelRects(defaultPanelRects);
@@ -119,7 +120,7 @@ export function ThreeDPreview({ design, modelUrl, setModelUrl, onExpand, large =
     if (!modelUrl || !sceneRef.current) return;
     // GLTF/GLB 模型加载器。
     const loader = new GLTFLoader();
-    setMessage("模型加载中");
+    setMessage("Loading model");
 
     loader.load(
       modelUrl,
@@ -133,10 +134,10 @@ export function ThreeDPreview({ design, modelUrl, setModelUrl, onExpand, large =
         const nextRects = getPanelRects(gltf.scene, template);
         setPanelRects(Object.keys(nextRects).length ? nextRects : defaultPanelRects);
         applyTextureRef.current(textureRef.current);
-        setMessage("实时预览");
+        setMessage("Live 3D preview");
       },
       undefined,
-      () => setMessage("模型加载失败，请确认文件是 .glb/.gltf"),
+      () => setMessage("Model failed to load. Use a .glb or .gltf file."),
     );
   }, [modelUrl, defaultPanelRects, template]);
 
@@ -174,15 +175,21 @@ export function ThreeDPreview({ design, modelUrl, setModelUrl, onExpand, large =
       <div className="model-toolbar">
         <strong>{message}</strong>
         <div className="model-actions">
-          {onExpand && <button type="button" className="model-expand" onClick={onExpand}>放大查看</button>}
+          {onExpand && (
+            <button type="button" className="model-expand" onClick={onExpand}>
+              <Maximize2 size={15} aria-hidden="true" />
+              Expand
+            </button>
+          )}
           <label className="upload model-upload">
-            导入模型
+            <Upload size={15} aria-hidden="true" />
+            Import model
             <input type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" onChange={chooseModel} />
           </label>
         </div>
       </div>
       <div ref={hostRef} className="model-canvas" />
-      <p className="model-empty">材质名前缀需对应裁片 ID，例如 front、back、left-sleeve。</p>
+      <p className="model-empty">Material name prefixes should match panel IDs, such as front, back, or left-sleeve.</p>
     </section>
   );
 }

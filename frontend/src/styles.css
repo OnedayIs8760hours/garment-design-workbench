@@ -1003,3 +1003,565 @@ h3 {
     backdrop-filter: none;
   }
 }
+
+/* Premium editor surface overrides. Keep these at the end so older editor rules remain easy to trace. */
+:root {
+  --surface: rgb(255 255 255 / 68%);
+  --surface-strong: rgb(255 255 255 / 86%);
+  --surface-soft: rgb(248 250 252 / 74%);
+  --ink: #0f172a;
+  --ink-muted: #5b6673;
+  --ink-faint: #7a8491;
+  --line: rgb(15 23 42 / 10%);
+  --line-bright: rgb(255 255 255 / 72%);
+  --accent: #007aff;
+  --success: #34c759;
+  --danger: #d92d20;
+  --shadow-soft: 0 26px 70px rgb(18 32 52 / 12%);
+  --shadow-low: 0 14px 34px rgb(18 32 52 / 8%);
+}
+
+body {
+  min-height: 100dvh;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", "Microsoft YaHei", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 18% 14%, rgb(255 255 255 / 94%) 0 15rem, transparent 34rem),
+    radial-gradient(circle at 82% 18%, rgb(229 242 239 / 68%) 0 18rem, transparent 37rem),
+    linear-gradient(135deg, #f8fafc 0%, #f3f7f4 48%, #fbf4f0 100%);
+}
+
+button,
+.upload {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-strong);
+  color: var(--ink);
+  font-weight: 700;
+  box-shadow: 0 1px 0 rgb(255 255 255 / 86%) inset, var(--shadow-low);
+  transition: transform 140ms ease, background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+button:hover,
+.upload:hover {
+  background: #ffffff;
+  border-color: rgb(0 122 255 / 26%);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 90%) inset, 0 18px 42px rgb(18 32 52 / 12%);
+}
+
+button:focus-visible,
+.upload:focus-within,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgb(0 122 255 / 20%);
+  outline-offset: 2px;
+}
+
+.primary-action {
+  border-color: transparent;
+  background: #101827;
+  color: #ffffff;
+  box-shadow: 0 18px 38px rgb(16 24 39 / 22%);
+}
+
+.primary-action:hover {
+  background: #020617;
+  border-color: transparent;
+}
+
+.app {
+  grid-template-rows: 86px minmax(0, 1fr);
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  gap: 22px;
+  padding: 0 28px;
+  background: rgb(255 255 255 / 62%);
+  backdrop-filter: blur(30px) saturate(180%);
+  border-bottom: 1px solid var(--line-bright);
+  box-shadow: 0 18px 52px rgb(31 41 55 / 9%);
+}
+
+.brand-block {
+  gap: 4px;
+  min-width: 280px;
+}
+
+.brand-block p {
+  color: var(--ink);
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+.brand-block p::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 9px;
+  border-radius: 999px;
+  background: var(--success);
+  box-shadow: 0 0 0 4px rgb(52 199 89 / 12%);
+}
+
+.brand-block span,
+.template-switcher {
+  color: var(--ink-muted);
+}
+
+.template-switcher select {
+  min-height: 34px;
+  border-color: var(--line);
+  background: rgb(255 255 255 / 88%);
+}
+
+.top-metrics {
+  justify-content: center;
+}
+
+.top-metrics span,
+.ribbon-stats span {
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: rgb(255 255 255 / 58%);
+  border: 1px solid var(--line-bright);
+  color: var(--ink-muted);
+  backdrop-filter: blur(16px) saturate(150%);
+}
+
+.metric-ok {
+  color: #0f7a3a !important;
+}
+
+.metric-error {
+  color: var(--danger) !important;
+}
+
+.actions button {
+  min-height: 40px;
+  padding-inline: 12px;
+}
+
+.workspace {
+  grid-template-columns: 348px 20px minmax(560px, 1fr) 322px;
+  column-gap: 16px;
+  padding: 18px;
+}
+
+.workspace.sidebar-collapsed {
+  grid-template-columns: 72px minmax(560px, 1fr) 322px;
+}
+
+.sidebar,
+.preview,
+.bottom-panels section,
+.canvas-shell {
+  border: 1px solid var(--line-bright);
+  background: var(--surface);
+  backdrop-filter: blur(26px) saturate(170%);
+  box-shadow: var(--shadow-soft);
+}
+
+.sidebar,
+.preview {
+  border-radius: 8px;
+}
+
+.sidebar {
+  grid-template-columns: 76px minmax(0, 1fr);
+  background: rgb(255 255 255 / 76%);
+}
+
+.preview {
+  padding: 16px;
+  background: rgb(255 255 255 / 58%);
+}
+
+.tool-rail {
+  gap: 6px;
+  padding: 14px 6px;
+  background: rgb(255 255 255 / 74%);
+  border-right: 1px solid var(--line);
+}
+
+.tool-rail-button {
+  min-height: 68px;
+  border-radius: 8px;
+  color: var(--ink-muted);
+  font-size: 11px;
+  box-shadow: none;
+}
+
+.tool-rail-button:hover {
+  color: var(--ink);
+  background: rgb(15 23 42 / 5%);
+}
+
+.tool-rail-button.active {
+  background: #101827;
+  color: #ffffff;
+  box-shadow: 0 14px 28px rgb(16 24 39 / 20%);
+}
+
+.tool-rail-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.tool-drawer {
+  padding: 20px;
+  background: linear-gradient(180deg, rgb(255 255 255 / 58%), rgb(248 250 252 / 66%));
+}
+
+.tool-panel h2,
+.preview h2,
+.bottom-panels h2 {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.tool-summary {
+  gap: 10px;
+  padding: 14px;
+  background: var(--surface-soft);
+  border-color: var(--line);
+}
+
+.tool-summary strong {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.upload-wide {
+  min-height: 54px;
+  margin-bottom: 12px;
+}
+
+.sidebar-tabs button {
+  gap: 6px;
+  min-height: 34px;
+  border-radius: 8px;
+}
+
+.sidebar-tabs .active {
+  background: #101827;
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.swatches {
+  gap: 7px;
+}
+
+.swatch {
+  border-radius: 8px;
+}
+
+.swatch.active {
+  outline-color: var(--ink);
+}
+
+.rgb-popover {
+  border-radius: 8px;
+  border-color: var(--line);
+  box-shadow: 0 26px 70px rgb(18 32 52 / 16%);
+  overflow: hidden;
+}
+
+.rgb-eyedropper::before,
+.rgb-eyedropper::after {
+  display: none;
+}
+
+.rgb-eyedropper {
+  color: var(--ink);
+}
+
+.panel-tabs {
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  max-width: 100%;
+  scrollbar-width: thin;
+}
+
+.panel-tabs button {
+  min-height: 40px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 62%);
+  backdrop-filter: blur(16px);
+}
+
+.panel-tabs .active {
+  background: #101827;
+  border-color: transparent;
+}
+
+.canvas-shell {
+  position: relative;
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / 78%), rgb(238 244 242 / 60%)),
+    repeating-linear-gradient(0deg, rgb(15 23 42 / 4%) 0 1px, transparent 1px 32px),
+    repeating-linear-gradient(90deg, rgb(15 23 42 / 4%) 0 1px, transparent 1px 32px);
+}
+
+.canvas-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 28% 18%, rgb(0 122 255 / 7%), transparent 28%),
+    radial-gradient(circle at 74% 76%, rgb(52 199 89 / 9%), transparent 28%);
+}
+
+.canvas-shell canvas {
+  position: relative;
+  z-index: 1;
+  border-radius: 6px;
+  box-shadow: 0 24px 70px rgb(15 23 42 / 18%);
+}
+
+.bottom-panels {
+  gap: 16px;
+}
+
+.bottom-panels section {
+  padding: 14px;
+}
+
+.props {
+  gap: 10px;
+}
+
+.props label {
+  color: var(--ink-muted);
+  font-weight: 700;
+}
+
+.props input {
+  min-height: 34px;
+  border-radius: 8px;
+  border-color: var(--line);
+}
+
+.layer {
+  grid-template-columns: minmax(0, 1fr) 38px 38px;
+}
+
+.layer button {
+  min-width: 0;
+}
+
+.layer.active button:first-child {
+  background: rgb(0 122 255 / 12%);
+  border-color: rgb(0 122 255 / 24%);
+  color: #0f4f8f;
+}
+
+.preview-head {
+  align-items: center;
+}
+
+.segmented {
+  border-radius: 8px;
+  background: rgb(255 255 255 / 62%);
+}
+
+.segmented .active {
+  background: #101827;
+}
+
+.panel-preview h3 {
+  color: var(--ink-muted);
+}
+
+.model-canvas,
+.panel-preview-canvas,
+.garment-preview {
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  box-shadow: 0 22px 54px rgb(18 32 52 / 12%);
+}
+
+.model-canvas {
+  background:
+    radial-gradient(circle at 50% 22%, rgb(255 255 255 / 92%), transparent 36%),
+    #f6f7f5;
+}
+
+.hint,
+.muted,
+.model-empty {
+  color: var(--ink-muted);
+}
+
+.ok,
+.warn,
+.error {
+  display: block;
+  padding: 9px 10px;
+  border-radius: 8px;
+}
+
+.ok {
+  background: rgb(52 199 89 / 10%);
+}
+
+.warn {
+  background: rgb(245 158 11 / 11%);
+}
+
+.error {
+  background: rgb(217 45 32 / 10%);
+}
+
+@media (max-width: 1100px) {
+  .workspace {
+    grid-template-columns: 310px 20px minmax(480px, 1fr) 270px;
+  }
+
+  .workspace.sidebar-collapsed {
+    grid-template-columns: 70px minmax(480px, 1fr) 270px;
+  }
+}
+
+@media (max-width: 840px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  .app {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .topbar {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .brand-block {
+    min-width: 0;
+  }
+
+  .top-metrics {
+    justify-content: flex-start;
+  }
+
+  .actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .actions button {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 8px;
+    font-size: 12px;
+  }
+
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding: 12px;
+    overflow: hidden;
+  }
+
+  .workspace.sidebar-collapsed {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sidebar,
+  .preview,
+  .editor {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .sidebar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tool-rail {
+    display: flex;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .tool-rail-button {
+    min-width: 68px;
+  }
+
+  .tool-drawer {
+    width: 100%;
+  }
+
+  .sidebar-collapse-button {
+    width: 54px;
+    height: 36px;
+    justify-self: end;
+    border-radius: 8px;
+    margin: -8px 12px 0 0;
+  }
+
+  .editor {
+    grid-template-rows: auto minmax(520px, auto) auto;
+    overflow: hidden;
+  }
+
+  .panel-tabs {
+    max-width: 100%;
+  }
+
+  .canvas-shell {
+    width: 100%;
+    min-width: 0;
+    overflow: auto;
+  }
+
+  .bottom-panels {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .preview {
+    overflow: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  .upload,
+  input,
+  select {
+    transition: opacity 120ms ease, background 120ms ease, border-color 120ms ease;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .topbar,
+  .sidebar,
+  .preview,
+  .bottom-panels section,
+  .canvas-shell,
+  .tool-drawer,
+  .tool-rail {
+    background: #ffffff;
+    backdrop-filter: none;
+  }
+}

@@ -1,11 +1,11 @@
 import React from "react";
+import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
 import { getPanelStatus } from "../model.js";
 import { template } from "../config.js";
 import { currentElements } from "../designStore.js";
 import { elementLabel } from "../elements.js";
 import { PropertyPanel } from "./PropertyPanel.jsx";
 
-// 裁片切换按钮组。
 export function PanelTabs({ design, commit }) {
   return (
     <div className="panel-tabs">
@@ -23,14 +23,13 @@ export function PanelTabs({ design, commit }) {
   );
 }
 
-// 底部面板，包含属性编辑和图层列表。
 export function BottomPanels({ design, selected, selectedId, select, updateElement, moveLayer, removeSelected }) {
   const selectedAsset = design.assets.find((asset) => asset.assetId === selected?.assetId);
 
   return (
     <div className="bottom-panels">
       <section>
-        <h2>属性</h2>
+        <h2>Properties</h2>
         {selected ? (
           <PropertyPanel
             element={selected}
@@ -38,21 +37,24 @@ export function BottomPanels({ design, selected, selectedId, select, updateEleme
             asset={selectedAsset}
             updateElement={updateElement}
           />
-        ) : <p className="muted">选择画布元素后编辑属性</p>}
+        ) : <p className="muted">Select an element on the canvas to edit its properties.</p>}
       </section>
 
       <section>
-        <h2>图层</h2>
+        <h2>Layers</h2>
         <div className="layer-list">
           {currentElements(design).toReversed().map((element) => (
             <div key={element.id} className={element.id === selectedId ? "layer active" : "layer"}>
               <button onClick={() => select(element.id)}>{elementLabel(element)}</button>
-              <button onClick={() => moveLayer(element.id, 1)}>上移</button>
-              <button onClick={() => moveLayer(element.id, -1)}>下移</button>
+              <button onClick={() => moveLayer(element.id, 1)} aria-label="Move layer up"><ArrowUp size={15} aria-hidden="true" /></button>
+              <button onClick={() => moveLayer(element.id, -1)} aria-label="Move layer down"><ArrowDown size={15} aria-hidden="true" /></button>
             </div>
           ))}
         </div>
-        <button disabled={!selectedId} onClick={removeSelected}>删除选中</button>
+        <button disabled={!selectedId} onClick={removeSelected}>
+          <Trash2 size={16} aria-hidden="true" />
+          Delete selected
+        </button>
       </section>
     </div>
   );

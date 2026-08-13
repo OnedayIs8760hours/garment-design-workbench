@@ -1,9 +1,21 @@
 import React from "react";
+import {
+  BadgeCheck,
+  BookOpen,
+  Box,
+  Brush,
+  Image,
+  Layers,
+  Package,
+  Palette,
+  Pipette,
+  PenLine,
+  Upload,
+} from "lucide-react";
 import { garmentColors, normalizeColor } from "../config.js";
 import { currentElements } from "../designStore.js";
 import { elementLabel } from "../elements.js";
 
-// 左侧工具栏，负责上传素材、添加文字、切换颜色和复用素材。
 export function ToolsSidebar({
   design,
   addImage,
@@ -26,14 +38,14 @@ export function ToolsSidebar({
   const activeColor = design.assets.find((asset) => asset.assetId === panelColorElement?.assetId)?.color ?? design.garmentColor;
   const [customRgb, setCustomRgb] = React.useState(() => parseRgb(activeColor));
   const tools = [
-    ["product", "⌂", "产品"],
-    ["uploads", "↑", "上传"],
-    ["text", "T", "文字"],
-    ["saved", "▣", "草稿"],
-    ["clipart", "○", "图形"],
-    ["quick", "✦", "快设"],
-    ["fill", "▰", "填色"],
-    ["layers", "▱", "图层"],
+    ["product", Package, "Product"],
+    ["uploads", Upload, "Uploads"],
+    ["text", PenLine, "Text"],
+    ["saved", BookOpen, "Drafts"],
+    ["clipart", Image, "Graphics"],
+    ["quick", BadgeCheck, "Presets"],
+    ["fill", Palette, "Color"],
+    ["layers", Layers, "Layers"],
   ];
   const chooseColor = (color) => (applyToAll ? applyAllPanelColors(color) : applyPanelColor(color));
   const customColor = rgbString(customRgb);
@@ -82,8 +94,8 @@ export function ToolsSidebar({
 
   return (
     <aside className="sidebar">
-      <nav className="tool-rail" aria-label="设计工具">
-        {tools.map(([id, icon, label]) => (
+      <nav className="tool-rail" aria-label="Design tools">
+        {tools.map(([id, Icon, label]) => (
           <button
             key={id}
             type="button"
@@ -93,160 +105,166 @@ export function ToolsSidebar({
               if (collapsed) onExpandSidebar();
             }}
             title={label}
+            aria-label={label}
           >
-            <span className="tool-rail-icon">{icon}</span>
+            <Icon className="tool-rail-icon" size={20} strokeWidth={1.8} aria-hidden="true" />
             <span>{label}</span>
           </button>
         ))}
       </nav>
-      {!collapsed && <div className="tool-drawer">
-        {activeTool === "product" && (
-          <section className="tool-panel">
-            <h2>产品</h2>
-            <div className="tool-summary">
-              <strong>{design.size}</strong>
-              <span>{design.templateId}</span>
-              <span>当前裁片：{design.currentPanelId}</span>
-            </div>
-          </section>
-        )}
-
-        {activeTool === "uploads" && (
-          <section className="tool-panel">
-            <h2>素材</h2>
-            <label className="upload upload-wide">
-              上传图片
-              <input type="file" accept="image/*" onChange={onUpload} />
-            </label>
-            <div className="asset-list">
-              {visibleAssets.map((asset) => (
-                <button key={asset.assetId} onClick={() => addImage(asset)}>{asset.name}</button>
-              ))}
-            </div>
-            <button className="danger-button" onClick={clearAssets} disabled={!visibleAssets.length}>清空素材清单</button>
-          </section>
-        )}
-
-        {activeTool === "text" && (
-          <section className="tool-panel">
-            <h2>文字</h2>
-            <button onClick={() => addText("name")}>添加姓名</button>
-            <button onClick={() => addText("number")}>添加号码</button>
-          </section>
-        )}
-
-        {activeTool === "fill" && (
-          <section className="tool-panel fill-panel">
-            <label className="tool-check">
-              <input type="checkbox" checked={applyToAll} onChange={(event) => setApplyToAll(event.target.checked)} />
-              <span>应用底色到所有裁片</span>
-            </label>
-            <div className="sidebar-tabs" role="tablist" aria-label="填充类型">
-              <button className="active" type="button">颜色</button>
-              <button type="button" disabled>图形</button>
-              <button type="button" disabled>图案</button>
-            </div>
-            <div className="swatches-wrap" ref={rgbPickerRef}>
-              {rgbOpen && (
-                <div className="rgb-popover">
-                  <div
-                    className="rgb-field"
-                    style={{
-                      "--hue-color": hueColor,
-                      "--cursor-x": `${picker.s * 100}%`,
-                      "--cursor-y": `${(1 - picker.v) * 100}%`,
-                    }}
-                    onPointerDown={(event) => {
-                      event.currentTarget.setPointerCapture(event.pointerId);
-                      pickPanelColor(event);
-                    }}
-                    onPointerMove={(event) => {
-                      if (event.buttons === 1) pickPanelColor(event);
-                    }}
-                  >
-                    <span className="rgb-cursor" aria-hidden="true" />
-                  </div>
-                  <div className="rgb-controls">
-                    <button
-                      className="rgb-eyedropper"
-                      type="button"
-                      onClick={pickScreenColor}
-                      aria-label="吸取屏幕颜色"
-                      title="吸取屏幕颜色"
-                      disabled={!window.EyeDropper}
-                    />
-                    <span className="rgb-preview" style={{ backgroundColor: customColor }} />
-                    <input
-                      className="rgb-hue"
-                      type="range"
-                      min="0"
-                      max="360"
-                      value={hue}
-                      onChange={(event) => {
-                        const nextHue = Number(event.target.value);
-                        const rgb = hsvToRgb(nextHue, picker.s, picker.v);
-                        setHue(nextHue);
-                        setAndChooseRgb(rgb, false);
-                      }}
-                      aria-label="色相"
-                    />
-                  </div>
-                  <div className="rgb-inputs">
-                    {["r", "g", "b"].map((channel) => (
-                      <label key={channel}>
-                        <input
-                          type="number"
-                          min="0"
-                          max="255"
-                          value={customRgb[channel]}
-                          onChange={(event) => setAndChooseRgb({ ...customRgb, [channel]: clampRgb(event.target.value) })}
-                        />
-                        <span>{channel.toUpperCase()}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <div className="swatches">
-                <button
-                  type="button"
-                  className="swatch rgb-swatch"
-                  onClick={() => setRgbOpen(!rgbOpen)}
-                  aria-label="打开 RGB 画板"
-                />
-              {garmentColors.map((color) => (
-                <button
-                  key={color}
-                  className={color === activeColor ? "swatch active" : "swatch"}
-                  style={{ backgroundColor: color }}
-                  onClick={() => chooseColor(color)}
-                  aria-label={`选择颜色 ${color}`}
-                />
-              ))}
+      {!collapsed && (
+        <div className="tool-drawer">
+          {activeTool === "product" && (
+            <section className="tool-panel">
+              <h2>Product</h2>
+              <div className="tool-summary">
+                <strong>{design.size}</strong>
+                <span>{design.templateId}</span>
+                <span>Current panel: {design.currentPanelId}</span>
               </div>
-            </div>
-          </section>
-        )}
+            </section>
+          )}
 
-        {["saved", "clipart", "quick"].includes(activeTool) && (
-          <section className="tool-panel">
-            <h2>{tools.find(([id]) => id === activeTool)?.[2]}</h2>
-            <p className="muted">暂无内容</p>
-          </section>
-        )}
+          {activeTool === "uploads" && (
+            <section className="tool-panel">
+              <h2>Assets</h2>
+              <label className="upload upload-wide">
+                <Upload size={16} aria-hidden="true" />
+                Upload image
+                <input type="file" accept="image/*" onChange={onUpload} />
+              </label>
+              <div className="asset-list">
+                {visibleAssets.map((asset) => (
+                  <button key={asset.assetId} onClick={() => addImage(asset)}>{asset.name}</button>
+                ))}
+              </div>
+              <button className="danger-button" onClick={clearAssets} disabled={!visibleAssets.length}>Clear assets</button>
+            </section>
+          )}
 
-        {activeTool === "layers" && (
-          <section className="tool-panel">
-            <h2>图层</h2>
-            <div className="asset-list compact-list">
-              {layers.map((element) => (
-                <span key={element.id}>{elementLabel(element)}</span>
-              ))}
-              {!layers.length && <span className="muted">当前裁片暂无图层</span>}
-            </div>
-          </section>
-        )}
-      </div>}
+          {activeTool === "text" && (
+            <section className="tool-panel">
+              <h2>Text</h2>
+              <button onClick={() => addText("name")}><PenLine size={16} aria-hidden="true" />Add name</button>
+              <button onClick={() => addText("number")}><Box size={16} aria-hidden="true" />Add number</button>
+            </section>
+          )}
+
+          {activeTool === "fill" && (
+            <section className="tool-panel fill-panel">
+              <label className="tool-check">
+                <input type="checkbox" checked={applyToAll} onChange={(event) => setApplyToAll(event.target.checked)} />
+                <span>Apply base color to all panels</span>
+              </label>
+              <div className="sidebar-tabs" role="tablist" aria-label="Fill type">
+                <button className="active" type="button"><Palette size={14} aria-hidden="true" />Color</button>
+                <button type="button" disabled><Brush size={14} aria-hidden="true" />Graphic</button>
+                <button type="button" disabled><Image size={14} aria-hidden="true" />Pattern</button>
+              </div>
+              <div className="swatches-wrap" ref={rgbPickerRef}>
+                {rgbOpen && (
+                  <div className="rgb-popover">
+                    <div
+                      className="rgb-field"
+                      style={{
+                        "--hue-color": hueColor,
+                        "--cursor-x": `${picker.s * 100}%`,
+                        "--cursor-y": `${(1 - picker.v) * 100}%`,
+                      }}
+                      onPointerDown={(event) => {
+                        event.currentTarget.setPointerCapture(event.pointerId);
+                        pickPanelColor(event);
+                      }}
+                      onPointerMove={(event) => {
+                        if (event.buttons === 1) pickPanelColor(event);
+                      }}
+                    >
+                      <span className="rgb-cursor" aria-hidden="true" />
+                    </div>
+                    <div className="rgb-controls">
+                      <button
+                        className="rgb-eyedropper"
+                        type="button"
+                        onClick={pickScreenColor}
+                        aria-label="Pick screen color"
+                        title="Pick screen color"
+                        disabled={!window.EyeDropper}
+                      >
+                        <Pipette size={16} aria-hidden="true" />
+                      </button>
+                      <span className="rgb-preview" style={{ backgroundColor: customColor }} />
+                      <input
+                        className="rgb-hue"
+                        type="range"
+                        min="0"
+                        max="360"
+                        value={hue}
+                        onChange={(event) => {
+                          const nextHue = Number(event.target.value);
+                          const rgb = hsvToRgb(nextHue, picker.s, picker.v);
+                          setHue(nextHue);
+                          setAndChooseRgb(rgb, false);
+                        }}
+                        aria-label="Hue"
+                      />
+                    </div>
+                    <div className="rgb-inputs">
+                      {["r", "g", "b"].map((channel) => (
+                        <label key={channel}>
+                          <input
+                            type="number"
+                            min="0"
+                            max="255"
+                            value={customRgb[channel]}
+                            onChange={(event) => setAndChooseRgb({ ...customRgb, [channel]: clampRgb(event.target.value) })}
+                          />
+                          <span>{channel.toUpperCase()}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="swatches">
+                  <button
+                    type="button"
+                    className="swatch rgb-swatch"
+                    onClick={() => setRgbOpen(!rgbOpen)}
+                    aria-label="Open RGB picker"
+                  />
+                  {garmentColors.map((color) => (
+                    <button
+                      key={color}
+                      className={color === activeColor ? "swatch active" : "swatch"}
+                      style={{ backgroundColor: color }}
+                      onClick={() => chooseColor(color)}
+                      aria-label={`Choose color ${color}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {["saved", "clipart", "quick"].includes(activeTool) && (
+            <section className="tool-panel">
+              <h2>{tools.find(([id]) => id === activeTool)?.[2]}</h2>
+              <p className="muted">No items yet.</p>
+            </section>
+          )}
+
+          {activeTool === "layers" && (
+            <section className="tool-panel">
+              <h2>Layers</h2>
+              <div className="asset-list compact-list">
+                {layers.map((element) => (
+                  <span key={element.id}>{elementLabel(element)}</span>
+                ))}
+                {!layers.length && <span className="muted">Current panel has no layers.</span>}
+              </div>
+            </section>
+          )}
+        </div>
+      )}
     </aside>
   );
 }
@@ -268,10 +286,6 @@ function parseRgb(color) {
 
 function rgbString({ r, g, b }) {
   return `rgb(${clampRgb(r)}, ${clampRgb(g)}, ${clampRgb(b)})`;
-}
-
-function rgbToHex({ r, g, b }) {
-  return `#${[r, g, b].map((value) => clampRgb(value).toString(16).padStart(2, "0")).join("")}`;
 }
 
 function hueToRgb(hue) {

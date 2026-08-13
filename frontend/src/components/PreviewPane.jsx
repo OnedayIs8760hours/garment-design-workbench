@@ -1,11 +1,10 @@
 import React from "react";
+import { Maximize2, X } from "lucide-react";
 import { template } from "../config.js";
 import { QuickGarmentPreview } from "./QuickGarmentPreview.jsx";
 import { ThreeDPreview } from "./ThreeDPreview.jsx";
 
-// 右侧整体预览区域，负责在 3D 和 2D 预览间切换。
 export function PreviewPane({ design, validation }) {
-  // 当前预览模式。
   const [mode, setMode] = React.useState("2d");
   const [modelUrl, setModelUrl] = React.useState(template.threeD?.defaultModelUrl ?? "");
   const [isModelExpanded, setIsModelExpanded] = React.useState(false);
@@ -14,8 +13,8 @@ export function PreviewPane({ design, validation }) {
     <>
       <aside className="preview">
         <div className="preview-head">
-          <h2>整体预览</h2>
-          <div className="segmented">
+          <h2>Live preview</h2>
+          <div className="segmented" role="tablist" aria-label="Preview mode">
             <button className={mode === "3d" ? "active" : ""} onClick={() => setMode("3d")}>3D</button>
             <button className={mode === "2d" ? "active" : ""} onClick={() => setMode("2d")}>2D</button>
           </div>
@@ -33,22 +32,27 @@ export function PreviewPane({ design, validation }) {
                 </div>
               ))}
             </div>
-            <p className="hint">当前为快速预览，最终真实效果以高清效果图为准。</p>
+            <p className="hint">Fast panel preview. Final production output should be checked against the exported package.</p>
           </>
         )}
 
-        <section className="tool-panel">
-          <h2>校验</h2>
-          {validation.errors.length ? validation.errors.map((error) => <p className="error" key={error}>{error}</p>) : <p className="ok">基础校验通过</p>}
+        <section className="tool-panel validation-panel">
+          <h2>Validation</h2>
+          {validation.errors.length
+            ? validation.errors.map((error) => <p className="error" key={error}>{error}</p>)
+            : <p className="ok">Basic validation passed</p>}
           {validation.warnings.map((warning) => <p className="warn" key={warning}>{warning}</p>)}
         </section>
       </aside>
 
       {isModelExpanded && (
-        <div className="model-modal" role="dialog" aria-modal="true" aria-label="3D模型大预览">
+        <div className="model-modal" role="dialog" aria-modal="true" aria-label="Large 3D model preview">
           <div className="model-modal-head">
-            <h2>3D模型预览</h2>
-            <button onClick={() => setIsModelExpanded(false)}>关闭</button>
+            <h2>3D model preview</h2>
+            <button type="button" onClick={() => setIsModelExpanded(false)}>
+              <X size={16} aria-hidden="true" />
+              Close
+            </button>
           </div>
           <ThreeDPreview design={design} modelUrl={modelUrl} setModelUrl={setModelUrl} large />
         </div>

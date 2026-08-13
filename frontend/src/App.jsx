@@ -1,4 +1,5 @@
 import React from "react";
+import { PanelLeftClose } from "lucide-react";
 import { clampElement, createExportJson, validateDesign } from "./model.js";
 import { currentPanel, useDesignStore } from "./designStore.js";
 import { createImageElement, createTextElement } from "./elements.js";
@@ -286,7 +287,7 @@ function EditorApp() {
             aria-label="收起素材面板"
             title="收起素材面板"
           >
-            {"‹"}
+            <PanelLeftClose size={18} aria-hidden="true" />
           </button>
         )}
         <section className="editor">

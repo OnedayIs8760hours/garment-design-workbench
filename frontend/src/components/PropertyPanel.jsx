@@ -1,4 +1,5 @@
 import React from "react";
+import { Maximize } from "lucide-react";
 import { fillPanelSize } from "../elements.js";
 
 export function PropertyPanel({ element, panel, asset, updateElement }) {
@@ -14,31 +15,34 @@ export function PropertyPanel({ element, panel, asset, updateElement }) {
   return (
     <div className="props">
       {element.type === "image" && (
-        <button type="button" onClick={fillPanel}>铺满</button>
+        <button type="button" onClick={fillPanel}>
+          <Maximize size={16} aria-hidden="true" />
+          Fit panel
+        </button>
       )}
       {element.type === "text" && (
         <label>
-          内容
+          Content
           <input value={element.text} onChange={(event) => updateElement(element.id, { text: event.target.value })} />
         </label>
       )}
       <NumberInput label="X" value={element.centerX} onChange={(centerX) => updateElement(element.id, { centerX })} />
       <NumberInput label="Y" value={element.centerY} onChange={(centerY) => updateElement(element.id, { centerY })} />
-      <NumberInput label="宽" value={element.width} onChange={(width) => updateElement(element.id, { width })} />
-      <NumberInput label="高" value={element.height} onChange={(height) => updateElement(element.id, { height })} />
-      <NumberInput label="旋转" value={Math.round(element.rotation)} step="1" onChange={(rotation) => updateElement(element.id, { rotation })} />
+      <NumberInput label="Width" value={element.width} onChange={(width) => updateElement(element.id, { width })} />
+      <NumberInput label="Height" value={element.height} onChange={(height) => updateElement(element.id, { height })} />
+      <NumberInput label="Rotation" value={Math.round(element.rotation)} step="1" onChange={(rotation) => updateElement(element.id, { rotation })} />
       <label>
-        透明度
+        Opacity
         <input type="range" min="0.1" max="1" step="0.05" value={element.opacity} onChange={(event) => updateElement(element.id, { opacity: Number(event.target.value) })} />
       </label>
       {element.type === "text" && (
         <>
           <label>
-            填充
+            Fill
             <ColorInput value={element.fill} onCommit={(fill) => updateElement(element.id, { fill })} />
           </label>
           <label>
-            描边
+            Stroke
             <ColorInput value={element.stroke} onCommit={(stroke) => updateElement(element.id, { stroke })} />
           </label>
         </>
