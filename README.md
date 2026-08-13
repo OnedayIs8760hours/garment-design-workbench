@@ -1,0 +1,266 @@
+﻿# SDS Design
+
+SDS Design 是一个基于 Vite + React 的球衣裁片定制工作台，用于在浏览器里编辑服装裁片、上传图片素材、添加姓名/号码文字、设置裁片底色、预览 2D/3D 效果，并导出可供 Photoshop 脚本还原的设计包。
+
+当前项目内置 `M-2XL` 模板，包含前片、后片、领条、左右袖、左右袖条、肩片等裁片资源，以及对应的 3D UV 映射数据。
+
+## 功能概览
+
+- 多裁片编辑：按模板裁片切换编辑前片、后片、袖片等区域。
+- 图片素材：上传本地图片，复用已上传素材，并放置到当前裁片。
+- 文字元素：添加姓名、号码文字，并调整位置、大小、旋转、颜色、描边和透明度。
+- 裁片底色：使用色板或 RGB 取色器设置当前裁片底色，也可以一键应用到所有裁片。
+- 图层管理：查看当前裁片图层，支持调整图层上下顺序和删除选中元素。
+- 草稿保存：设计数据自动保存到浏览器 `localStorage`，刷新后会尝试恢复。
+- 导出设计包：导出 `manifest.json` 和素材文件，供后续 Photoshop 脚本还原。
+- 预览：提供裁片预览、快速成衣预览和基于 GLB/UV 映射的 3D 预览。
+
+## 技术栈
+
+- Vite 7
+- React 19
+- Zustand
+- Konva / react-konva
+- Three.js
+- JSZip
+- Photoshop JSX / PowerShell COM 自动化
+
+## 环境要求
+
+- Node.js 版本建议使用 20 或更高版本。
+- npm。
+- 如需运行 Photoshop 还原流程，需要 Windows + Adobe Photoshop，并允许通过 COM 调用 Photoshop。
+
+## 快速开始
+
+在项目根目录运行：
+
+```powershell
+npm install
+npm run dev -- --port 5000 --strictPort
+```
+
+浏览器打开：
+
+```text
+http://127.0.0.1:5000
+```
+
+如果只想使用默认 Vite 端口，也可以运行：
+
+```powershell
+npm run dev
+```
+
+## 常用命令
+
+```powershell
+# 安装依赖
+npm install
+
+# 启动本地开发服务器
+npm run dev -- --port 5000 --strictPort
+
+# 运行当前模型自检
+npm test
+
+# 构建生产包
+npm run build
+```
+
+## 项目结构
+
+```text
+SDS-design/
+├─ src/                         # Web 应用源码
+│  ├─ components/                # React UI 组件
+│  ├─ templates/                 # 模板 JSON 和 UV 映射入口
+│  ├─ App.jsx                    # 应用主组件
+│  ├─ config.js                  # 默认配置、模板初始化、颜色配置
+│  ├─ designStore.js             # Zustand 状态、草稿保存、撤销逻辑
+│  ├─ model.js                   # 模板转换、导出 JSON、校验逻辑
+│  ├─ elements.js                # 图片/文字元素创建和显示逻辑
+│  ├─ download.js                # 设计包 zip 导出逻辑
+│  └─ model.test.js              # 当前测试入口
+├─ public/
+│  ├─ templates/M-2XL/           # 浏览器可访问的裁片图片和遮罩
+│  └─ models/                    # 3D 预览 GLB 模型
+├─ photoshop/                    # Photoshop 还原、导出、辅助脚本
+├─ 使用方法/                     # Photoshop 脚本使用说明
+├─ 项目实现思路/                 # 实现方案和过程文档
+├─ package.json
+└─ vite.config.js
+```
+
+## Web 端使用流程
+
+1. 启动开发服务器并打开页面。
+2. 在顶部或裁片区域切换需要编辑的裁片。
+3. 在左侧工具栏选择功能：
+   - `填色`：设置当前裁片或所有裁片底色。
+   - `上传`：上传图片素材，并点击素材名称添加到当前裁片。
+   - `文字`：添加姓名或号码。
+   - `图层`：查看当前裁片图层。
+4. 在画布中选中元素后，可拖动、缩放、旋转，也可以在底部属性面板精确修改 X、Y、宽、高、旋转和透明度。
+5. 点击 `保存草稿` 可手动保存；编辑过程中也会自动延迟保存到浏览器。
+6. 点击 `导出设计包` 下载 zip 文件。
+
+## 导出设计包
+
+点击页面右上角 `导出设计包` 后，会生成类似下面名称的文件：
+
+```text
+design-package-ORDER-xxxx.zip
+```
+
+解压后目录结构通常为：
+
+```text
+design-package-ORDER-xxxx/
+├─ manifest.json
+└─ assets/
+   └─ asset-xxx-filename.png
+```
+
+`manifest.json` 是 Photoshop 还原脚本使用的主数据文件，记录订单、模板、裁片、元素、坐标、字体、素材引用和校验结果。图片素材不会以内嵌 `dataUrl` 形式写入 JSON，而是放在 `assets/` 目录下。
+
+## Photoshop 还原流程
+
+项目提供 PowerShell 启动脚本，通过 Photoshop COM 执行 JSX 还原脚本。
+
+### 方式一：弹窗选择设计包目录
+
+先解压 Web 端导出的 zip，然后运行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File S:\ps-save\SDS-design\photoshop\run-restore-front.ps1 -PickFolder
+```
+
+在弹窗中选择已经解压的设计包目录，例如：
+
+```text
+E:\download\design-package-ORDER-xxxx
+```
+
+目录内至少需要包含：
+
+```text
+manifest.json
+assets\
+```
+
+### 方式二：直接传入设计包目录
+
+```powershell
+powershell -ExecutionPolicy Bypass -File S:\ps-save\SDS-design\photoshop\run-restore-front.ps1 -PackageFolder "E:\download\design-package-ORDER-xxxx"
+```
+
+这种方式适合重复运行同一个设计包。
+
+### Photoshop 注意事项
+
+- 当前 PowerShell 脚本调用的是 `photoshop/restore-panels-smart-objects.jsx`。
+- PSD 中需要存在与模板裁片对应的智能对象图层或脚本预期的图层结构。
+- 还原结果会写入脚本指定的还原图层组，常见名称为 `CODEX_ORDER_RESTORE`。
+- 如果 Photoshop 无法打开素材，优先检查素材扩展名和真实内容是否一致，例如文件名是 `.png`，但内容实际是 SVG 文本时会打开失败。
+
+更多 Photoshop 说明见：
+
+```text
+使用方法/PS脚本使用方法.md
+```
+
+## 模板与资源说明
+
+当前模板入口在：
+
+```text
+src/templates/index.js
+```
+
+核心模板文件：
+
+```text
+src/templates/M-2XL.template.json
+src/templates/M-2XL.uv_mapping.json
+```
+
+浏览器实际加载的裁片图和遮罩在：
+
+```text
+public/templates/M-2XL/panels/
+public/templates/M-2XL/masks/
+```
+
+3D 预览默认模型：
+
+```text
+public/models/soccer-new-rename.glb
+```
+
+新增或替换模板时，应优先修改模板 JSON 和 `src/templates/index.js`，不要把裁片尺寸、坐标、图层名等模板事实硬编码到 React 组件里。
+
+## 数据流简述
+
+```text
+PSD 模板数据 / 裁片图片 / 遮罩
+        ↓
+src/templates/*.template.json
+        ↓
+createTemplate() 转成 Web 编辑器模板
+        ↓
+浏览器编辑设计状态 Zustand store
+        ↓
+createExportJson() 生成订单 JSON
+        ↓
+downloadZip() 导出 manifest.json + assets
+        ↓
+Photoshop JSX 按 manifest.json 还原到 PSD
+```
+
+## 测试与构建
+
+提交或交付前建议至少运行：
+
+```powershell
+npm test
+npm run build
+```
+
+当前测试入口是 `src/model.test.js`，主要覆盖模板结构、导出 JSON、坐标校验和回归用例。项目暂未接入完整测试框架。
+
+## 常见问题
+
+### 页面打不开
+
+确认开发服务器已启动，并访问：
+
+```text
+http://127.0.0.1:5000
+```
+
+如果端口被占用，可以去掉 `--strictPort` 或换一个端口：
+
+```powershell
+npm run dev -- --port 5173
+```
+
+### 刷新后旧设计还在
+
+草稿保存在浏览器 `localStorage` 中。可以在页面内重做/清空，也可以打开浏览器开发者工具清理当前站点的本地存储。
+
+### Photoshop 找不到 JSON
+
+传给脚本的应该是解压后的设计包文件夹，不是 zip 文件本身。目录下需要有 `manifest.json`。
+
+### Photoshop 找不到素材
+
+检查 `manifest.json` 中的素材路径是否能在设计包 `assets/` 目录中找到。尽量保持导出的目录结构不变。
+
+## 开发约定
+
+- 使用 ES modules、React 函数组件和普通 JavaScript。
+- JS/JSX/JSON 使用 2 空格缩进。
+- 组件文件使用 `PascalCase.jsx`，工具模块使用 `camelCase.js`。
+- 模板相关事实放在模板 JSON 或 `src/templates/` 中，避免写死在 UI 组件里。
+- Web 端导出的订单 JSON 可能只引用素材文件名，不嵌入图片内容；交给 Photoshop 还原时需要保留 `assets/` 目录。

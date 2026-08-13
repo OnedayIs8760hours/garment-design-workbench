@@ -1,0 +1,261 @@
+{
+  "format": "uv-atlas-v1",
+  "atlas_size": [
+    4096,
+    4096
+  ],
+  "coordinate_notes": {
+    "atlas_origin": "top-left",
+    "uv_origin": "bottom-left",
+    "uv_rect_order": [
+      "u_min",
+      "v_min",
+      "u_max",
+      "v_max"
+    ],
+    "note": "These UV rectangles describe where each 2D pattern piece was packed in the atlas. Final per-vertex UVs still depend on the 3D mesh topology."
+  },
+  "uniform_scale": 0.8750366210937499,
+  "parts": {
+    "back": {
+      "source_file": "back.png",
+      "source_size_px": [
+        2045,
+        2048
+      ],
+      "source_alpha_bbox_px": [
+        0,
+        0,
+        2045,
+        2048
+      ],
+      "atlas_rect_px": [
+        32,
+        32,
+        1789,
+        1792
+      ],
+      "uv_rect": [
+        0.0078125,
+        0.5546875,
+        0.444580078125,
+        0.9921875
+      ],
+      "transform": {
+        "scale_x": 0.8748166259168704,
+        "scale_y": 0.875,
+        "rotation_deg": 0
+      }
+    },
+    "collar": {
+      "source_file": "collar.png",
+      "source_size_px": [
+        2047,
+        200
+      ],
+      "source_alpha_bbox_px": [
+        0,
+        0,
+        2047,
+        200
+      ],
+      "atlas_rect_px": [
+        1848,
+        2918,
+        1791,
+        175
+      ],
+      "uv_rect": [
+        0.451171875,
+        0.244873046875,
+        0.888427734375,
+        0.28759765625
+      ],
+      "transform": {
+        "scale_x": 0.8749389350268686,
+        "scale_y": 0.875,
+        "rotation_deg": 0
+      }
+    },
+    "front": {
+      "source_file": "front.png",
+      "source_size_px": [
+        2045,
+        2048
+      ],
+      "source_alpha_bbox_px": [
+        0,
+        0,
+        2045,
+        2048
+      ],
+      "atlas_rect_px": [
+        1845,
+        32,
+        1789,
+        1792
+      ],
+      "uv_rect": [
+        0.450439453125,
+        0.5546875,
+        0.88720703125,
+        0.9921875
+      ],
+      "transform": {
+        "scale_x": 0.8748166259168704,
+        "scale_y": 0.875,
+        "rotation_deg": 0
+      }
+    },
+    "left-sleeve": {
+      "source_file": "left-sleeve.png",
+      "source_size_px": [
+        2048,
+        972
+      ],
+      "source_alpha_bbox_px": [
+        0,
+        0,
+        2048,
+        972
+      ],
+      "atlas_rect_px": [
+        32,
+        2918,
+        1792,
+        851
+      ],
+      "uv_rect": [
+        0.0078125,
+        0.079833984375,
+        0.4453125,
+        0.28759765625
+      ],
+      "transform": {
+        "scale_x": 0.875,
+        "scale_y": 0.8755144032921811,
+        "rotation_deg": 0
+      }
+    },
+    "left-sleeve-strip": {
+      "source_file": "left-sleeve-strip.png",
+      "source_size_px": [
+        1917,
+        175
+      ],
+      "source_alpha_bbox_px": [
+        0,
+        0,
+        1917,
+        175
+      ],
+      "atlas_rect_px": [
+        32,
+        3793,
+        1677,
+        153
+      ],
+      "uv_rect": [
+        0.0078125,
+        0.03662109375,
+        0.417236328125,
+        0.073974609375
+      ],
+      "transform": {
+        "scale_x": 0.8748043818466353,
+        "scale_y": 0.8742857142857143,
+        "rotation_deg": 0
+      }
+    },
+    "right-sleeve": {
+      "source_file": "right-sleeve.png",
+      "source_size_px": [
+        2048,
+        976
+      ],
+      "source_alpha_bbox_px": [
+        0,
+        0,
+        2048,
+        976
+      ],
+      "atlas_rect_px": [
+        1848,
+        1848,
+        1792,
+        854
+      ],
+      "uv_rect": [
+        0.451171875,
+        0.34033203125,
+        0.888671875,
+        0.548828125
+      ],
+      "transform": {
+        "scale_x": 0.875,
+        "scale_y": 0.875,
+        "rotation_deg": 0
+      }
+    },
+    "right-sleeve-strip": {
+      "source_file": "right-sleeve-strip.png",
+      "source_size_px": [
+        1916,
+        170
+      ],
+      "source_alpha_bbox_px": [
+        0,
+        0,
+        1916,
+        170
+      ],
+      "atlas_rect_px": [
+        1733,
+        3793,
+        1677,
+        149
+      ],
+      "uv_rect": [
+        0.423095703125,
+        0.03759765625,
+        0.83251953125,
+        0.073974609375
+      ],
+      "transform": {
+        "scale_x": 0.8752609603340292,
+        "scale_y": 0.8764705882352941,
+        "rotation_deg": 0
+      }
+    },
+    "shouder": {
+      "source_file": "shouder.png",
+      "source_size_px": [
+        2048,
+        1195
+      ],
+      "source_alpha_bbox_px": [
+        0,
+        0,
+        2048,
+        1195
+      ],
+      "atlas_rect_px": [
+        32,
+        1848,
+        1792,
+        1046
+      ],
+      "uv_rect": [
+        0.0078125,
+        0.29345703125,
+        0.4453125,
+        0.548828125
+      ],
+      "transform": {
+        "scale_x": 0.875,
+        "scale_y": 0.8753138075313808,
+        "rotation_deg": 0
+      }
+    }
+  }
+}

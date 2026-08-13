@@ -5,22 +5,7 @@ import { currentElements } from "../designStore.js";
 import { elementLabel } from "../elements.js";
 import { PropertyPanel } from "./PropertyPanel.jsx";
 
-export function EditorRibbon() {
-  return (
-    <div className="editor-ribbon">
-      <div>
-        <strong>真实前片模板已加载</strong>
-        <span>素材会裁切在绿色前片区域内，导出 JSON 记录相对坐标和原始模板尺寸。</span>
-      </div>
-      <div className="ribbon-stats">
-        <span>相对坐标</span>
-        <span>本地草稿</span>
-        <span>Konva</span>
-      </div>
-    </div>
-  );
-}
-
+// 裁片切换按钮组。
 export function PanelTabs({ design, commit }) {
   return (
     <div className="panel-tabs">
@@ -38,12 +23,22 @@ export function PanelTabs({ design, commit }) {
   );
 }
 
+// 底部面板，包含属性编辑和图层列表。
 export function BottomPanels({ design, selected, selectedId, select, updateElement, moveLayer, removeSelected }) {
+  const selectedAsset = design.assets.find((asset) => asset.assetId === selected?.assetId);
+
   return (
     <div className="bottom-panels">
       <section>
         <h2>属性</h2>
-        {selected ? <PropertyPanel element={selected} updateElement={updateElement} /> : <p className="muted">选择画布元素后编辑属性</p>}
+        {selected ? (
+          <PropertyPanel
+            element={selected}
+            panel={design.panels[design.currentPanelId]}
+            asset={selectedAsset}
+            updateElement={updateElement}
+          />
+        ) : <p className="muted">选择画布元素后编辑属性</p>}
       </section>
 
       <section>
