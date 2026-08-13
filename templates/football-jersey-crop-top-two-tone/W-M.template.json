@@ -63,8 +63,8 @@
         "x": 1324.5,
         "y": 822.5
       },
-      "panelImage": "up-back/panels/back.png",
-      "maskImage": "up-back/masks/back-mask.png",
+      "panelImage": "up-back/panels/up-back.png",
+      "maskImage": "up-back/masks/up-back-mask.png",
       "maskMode": "white-on-transparent"
     },
     "under-front": {

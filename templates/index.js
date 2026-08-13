@@ -21,6 +21,7 @@ export const templateCatalogPaths = {
 export const templateDefinitions = {
   "M-2XL": {
     template: m2xlTemplate,
+    label: "橄榄球衣",
     sizes: ["M-2XL"],
     productId: "PRODUCT-M-2XL",
     defaultPanelId: "front",
@@ -30,6 +31,7 @@ export const templateDefinitions = {
   },
   "W-M": {
     template: wmTemplate,
+    label: "橄榄球衣-双拼-露脐",
     sizes: ["W-M"],
     productId: "PRODUCT-W-M",
     defaultPanelId: "up-front",

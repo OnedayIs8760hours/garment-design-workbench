@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import { createImageElement, createTextElement, fillPanelSize } from "./elements.js";
 import { createInitialDesign, garmentColors, normalizeColor } from "./config.js";
 import { prepareTextRasterManifest, textRasterTargetFromBounds } from "./download.js";
@@ -137,6 +138,18 @@ assert.equal(womenTemplate.panels["up-front"].templateImage, "/templates/footbal
 assert.equal(womenTemplate.panels["under-back"].maskImage, "/templates/football-jersey-crop-top-two-tone/under-back/masks/back-mask.png");
 assert.equal(womenTemplate.threeD.defaultModelUrl, "/models/football-jersey-crop-top-two-tone.glb");
 assert.deepEqual(womenTemplate.threeD.uvRects["up-front"], [0.537857532501, 0.046225443482, 0.942080974579, 0.188682049513]);
+[template, womenTemplate].forEach((checkedTemplate) => {
+  Object.entries(checkedTemplate.panels).forEach(([panelId, panel]) => {
+    assert.ok(
+      fs.existsSync(`public${panel.templateImage}`),
+      `${checkedTemplate.templateId}.${panelId}.templateImage missing: ${panel.templateImage}`,
+    );
+    assert.ok(
+      fs.existsSync(`public${panel.maskImage}`),
+      `${checkedTemplate.templateId}.${panelId}.maskImage missing: ${panel.maskImage}`,
+    );
+  });
+});
 const womenDesign = createInitialDesign(womenTemplate);
 assert.equal(womenDesign.templateId, "W-M");
 assert.equal(womenDesign.currentPanelId, "up-front");
@@ -144,6 +157,7 @@ assert.equal(womenDesign.panels["up-front"].logicalSize.width, 2659);
 assert.equal(createExportJson(womenDesign).panels["up-front"].sourceFile, "templates/football-jersey-crop-top-two-tone/up-front/panels/front.png");
 assert.equal(createExportJson(design).panels.front.maskImage, "/templates/football-jersey/masks/front-mask.png");
 assert.deepEqual(templateOptions.map((option) => option.templateId), ["M-2XL", "W-M"]);
+assert.deepEqual(templateOptions.map((option) => option.label), ["橄榄球衣", "橄榄球衣-双拼-露脐"]);
 assert.equal(resolveTemplateId("M-2XL"), "M-2XL");
 assert.equal(resolveTemplateId("unknown"), "W-M");
 assert.equal(resolveTemplateId(null), "W-M");
