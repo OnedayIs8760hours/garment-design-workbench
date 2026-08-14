@@ -596,6 +596,25 @@ h3 {
   box-shadow: 0 12px 36px rgb(23 32 42 / 16%);
 }
 
+.panel-stage-frame {
+  position: relative;
+  overflow: visible;
+}
+
+.panel-stage-frame .konvajs-content {
+  position: relative;
+  z-index: 1;
+}
+
+.selected-outer-preview {
+  position: absolute;
+  z-index: 0;
+  max-width: none;
+  pointer-events: none;
+  transform-origin: center;
+  user-select: none;
+}
+
 .bottom-panels {
   display: grid;
   grid-template-columns: 1fr 1fr;

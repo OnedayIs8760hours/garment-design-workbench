@@ -35,6 +35,8 @@ export function PanelStage({ design, selectedId, onSelect, onChange }) {
   const panelImage = useImage(panel.templateImage);
   // 当前裁片遮罩图。
   const maskImage = useImage(panel.maskImage);
+  const selectedElement = elements.find((element) => element.id === selectedId);
+  const selectedAsset = design.assets.find((asset) => asset.assetId === selectedElement?.assetId);
 
   React.useEffect(() => {
     transformerRef.current?.nodes(selectedId ? [nodeRefs.current[selectedId]].filter(Boolean) : []);
@@ -42,55 +44,58 @@ export function PanelStage({ design, selectedId, onSelect, onChange }) {
   }, [selectedId, elements]);
 
   return (
-    <Stage
-      width={stageSize.width}
-      height={stageSize.height}
-      onMouseDown={(event) => {
-        if (event.target === event.target.getStage()) onSelect(null);
-      }}
-    >
-      <Layer>
-        <Rect width={stageSize.width} height={stageSize.height} fill="#ffffff" />
-        <KonvaImage image={panelImage} width={stageSize.width} height={stageSize.height} listening={false} />
-        {panel.guides?.map((guide) => (
-          <GuideLine key={guide.id} guide={guide} panel={panel} stageSize={stageSize} />
-        ))}
-        <Text text={panel.name} x={14} y={12} fontSize={18} fill="#111827" />
-      </Layer>
-      <Layer>
-        {elements.map((element) => (
-          <CanvasElement
-            key={element.id}
-            element={element}
-            asset={design.assets.find((asset) => asset.assetId === element.assetId)}
-            selected={element.id === selectedId}
-            stageSize={stageSize}
-            setRef={(node) => {
-              nodeRefs.current[element.id] = node;
-            }}
-            onSelect={() => onSelect(element.id)}
-            onChange={(patch) => onChange(element.id, patch)}
+    <div className="panel-stage-frame" style={{ width: stageSize.width, height: stageSize.height }}>
+      <SelectedOuterPreview element={selectedElement} asset={selectedAsset} stageSize={stageSize} />
+      <Stage
+        width={stageSize.width}
+        height={stageSize.height}
+        onMouseDown={(event) => {
+          if (event.target === event.target.getStage()) onSelect(null);
+        }}
+      >
+        <Layer>
+          <Rect width={stageSize.width} height={stageSize.height} fill="#ffffff" />
+          <KonvaImage image={panelImage} width={stageSize.width} height={stageSize.height} listening={false} />
+          {panel.guides?.map((guide) => (
+            <GuideLine key={guide.id} guide={guide} panel={panel} stageSize={stageSize} />
+          ))}
+          <Text text={panel.name} x={14} y={12} fontSize={18} fill="#111827" />
+        </Layer>
+        <Layer>
+          {elements.map((element) => (
+            <CanvasElement
+              key={element.id}
+              element={element}
+              asset={design.assets.find((asset) => asset.assetId === element.assetId)}
+              selected={element.id === selectedId}
+              stageSize={stageSize}
+              setRef={(node) => {
+                nodeRefs.current[element.id] = node;
+              }}
+              onSelect={() => onSelect(element.id)}
+              onChange={(patch) => onChange(element.id, patch)}
+            />
+          ))}
+          {maskImage ? (
+            <KonvaImage
+              image={maskImage}
+              width={stageSize.width}
+              height={stageSize.height}
+              globalCompositeOperation="destination-in"
+              listening={false}
+            />
+          ) : null}
+        </Layer>
+        <Layer>
+          <Transformer
+            ref={transformerRef}
+            rotateEnabled
+            keepRatio={true}
+            enabledAnchors={["top-left", "top-center", "top-right", "middle-left", "middle-right", "bottom-left", "bottom-center", "bottom-right"]}
           />
-        ))}
-        {maskImage ? (
-          <KonvaImage
-            image={maskImage}
-            width={stageSize.width}
-            height={stageSize.height}
-            globalCompositeOperation="destination-in"
-            listening={false}
-          />
-        ) : null}
-      </Layer>
-      <Layer>
-        <Transformer
-          ref={transformerRef}
-          rotateEnabled
-          keepRatio={true}
-          enabledAnchors={["top-left", "top-center", "top-right", "middle-left", "middle-right", "bottom-left", "bottom-center", "bottom-right"]}
-        />
-      </Layer>
-    </Stage>
+        </Layer>
+      </Stage>
+    </div>
   );
 }
 
@@ -120,6 +125,21 @@ function GuideLine({ guide, panel, stageSize }) {
 // 把模板逻辑坐标转换成当前 Konva 舞台坐标。
 function scalePoint([x, y], panel, stageSize) {
   return [(x / panel.logicalSize.width) * stageSize.width, (y / panel.logicalSize.height) * stageSize.height];
+}
+
+function SelectedOuterPreview({ element, asset, stageSize }) {
+  if (!element?.visible || element.type !== "image" || !asset?.dataUrl) return null;
+  const width = element.width * stageSize.width;
+  const height = element.height * stageSize.height;
+
+  return <img className="selected-outer-preview" src={asset.dataUrl} alt="" style={{
+    left: element.centerX * stageSize.width,
+    top: element.centerY * stageSize.height,
+    width,
+    height,
+    opacity: (element.opacity ?? 1) * 0.3,
+    transform: `translate(-50%, -50%) rotate(${element.rotation}deg)`,
+  }} />;
 }
 
 // 渲染并处理单个图片或文字元素。
