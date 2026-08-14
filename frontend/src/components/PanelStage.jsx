@@ -87,7 +87,7 @@ export function PanelStage({ design, selectedId, onSelect, onChange }) {
         <Transformer
           ref={transformerRef}
           rotateEnabled
-          keepRatio={false}
+          keepRatio={true}
           enabledAnchors={["top-left", "top-center", "top-right", "middle-left", "middle-right", "bottom-left", "bottom-center", "bottom-right"]}
         />
       </Layer>
