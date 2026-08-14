@@ -84,12 +84,16 @@ export function clamp01(value) {
 
 // 修正元素的坐标、尺寸和透明度，避免写入非法值。
 export function clampElement(element) {
+  const minimumSize = 0.03;
+  const width = Math.max(minimumSize, Number(element.width) || minimumSize);
+  const height = Math.max(minimumSize, Number(element.height) || minimumSize);
+
   return {
     ...element,
     centerX: clamp01(element.centerX),
     centerY: clamp01(element.centerY),
-    width: Math.min(element.type === "image" ? 4 : 1, Math.max(0.03, Number(element.width) || 0.03)),
-    height: Math.min(element.type === "image" ? 4 : 1, Math.max(0.03, Number(element.height) || 0.03)),
+    width: element.type === "image" ? width : Math.min(1, width),
+    height: element.type === "image" ? height : Math.min(1, height),
     opacity: Math.min(1, Math.max(0.1, Number(element.opacity) || 1)),
   };
 }

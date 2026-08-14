@@ -48,6 +48,8 @@ design.panels.front.elements.push(createTextElement("name"));
 
 assert.equal(validateDesign(design).passed, true);
 assert.equal(clampElement({ centerX: 2, centerY: -1, width: 0, height: 2, opacity: 3 }).centerX, 1);
+assert.equal(clampElement({ type: "image", centerX: 0.5, centerY: 0.5, width: 12, height: 9, opacity: 1 }).width, 12);
+assert.equal(clampElement({ type: "text", centerX: 0.5, centerY: 0.5, width: 12, height: 9, opacity: 1 }).width, 1);
 assert.equal(createExportJson(design).assets[0].dataUrl, undefined);
 assert.equal(createExportJson(design).panels.front.logicalSize.width, 2796);
 assert.equal(createExportJson(design).panels.front.changed, true);

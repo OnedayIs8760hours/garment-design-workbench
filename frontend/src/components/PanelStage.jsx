@@ -1,6 +1,5 @@
 import React from "react";
 import { Stage, Layer, Rect, Text, Image as KonvaImage, Transformer, Line } from "react-konva";
-import { clampElement } from "../model.js";
 import { getStageSize, template } from "../config.js";
 import { currentElements } from "../designStore.js";
 import { textFontFor } from "../fontMap.js";
@@ -154,13 +153,13 @@ function CanvasElement({ element, asset, selected, stageSize, setRef, onSelect, 
       const height = Math.max(24, node.height() * node.scaleY());
       node.scaleX(1);
       node.scaleY(1);
-      onChange(clampElement({
+      onChange({
         centerX: node.x() / stageSize.width,
         centerY: node.y() / stageSize.height,
         width: width / stageSize.width,
         height: height / stageSize.height,
         rotation: node.rotation(),
-      }));
+      });
     },
   };
 
