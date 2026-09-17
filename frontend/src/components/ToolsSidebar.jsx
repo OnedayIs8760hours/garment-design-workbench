@@ -38,14 +38,14 @@ export function ToolsSidebar({
   const activeColor = design.assets.find((asset) => asset.assetId === panelColorElement?.assetId)?.color ?? design.garmentColor;
   const [customRgb, setCustomRgb] = React.useState(() => parseRgb(activeColor));
   const tools = [
-    ["product", Package, "Product"],
-    ["uploads", Upload, "Uploads"],
-    ["text", PenLine, "Text"],
-    ["saved", BookOpen, "Drafts"],
-    ["clipart", Image, "Graphics"],
-    ["quick", BadgeCheck, "Presets"],
-    ["fill", Palette, "Color"],
-    ["layers", Layers, "Layers"],
+    ["product", Package, "产品"],
+    ["uploads", Upload, "素材"],
+    ["text", PenLine, "文字"],
+    ["saved", BookOpen, "草稿"],
+    ["clipart", Image, "图形"],
+    ["quick", BadgeCheck, "预设"],
+    ["fill", Palette, "颜色"],
+    ["layers", Layers, "图层"],
   ];
   const chooseColor = (color) => (applyToAll ? applyAllPanelColors(color) : applyPanelColor(color));
   const customColor = rgbString(customRgb);
@@ -94,7 +94,7 @@ export function ToolsSidebar({
 
   return (
     <aside className="sidebar">
-      <nav className="tool-rail" aria-label="Design tools">
+      <nav className="tool-rail" aria-label="设计工具">
         {tools.map(([id, Icon, label]) => (
           <button
             key={id}
@@ -116,21 +116,21 @@ export function ToolsSidebar({
         <div className="tool-drawer">
           {activeTool === "product" && (
             <section className="tool-panel">
-              <h2>Product</h2>
+              <h2>产品</h2>
               <div className="tool-summary">
                 <strong>{design.size}</strong>
                 <span>{design.templateId}</span>
-                <span>Current panel: {design.currentPanelId}</span>
+                <span>当前裁片：{design.currentPanelId}</span>
               </div>
             </section>
           )}
 
           {activeTool === "uploads" && (
             <section className="tool-panel">
-              <h2>Assets</h2>
+              <h2>素材</h2>
               <label className="upload upload-wide">
                 <Upload size={16} aria-hidden="true" />
-                Upload image
+                上传图片
                 <input type="file" accept="image/*" onChange={onUpload} />
               </label>
               <div className="asset-list">
@@ -138,15 +138,15 @@ export function ToolsSidebar({
                   <button key={asset.assetId} onClick={() => addImage(asset)}>{asset.name}</button>
                 ))}
               </div>
-              <button className="danger-button" onClick={clearAssets} disabled={!visibleAssets.length}>Clear assets</button>
+              <button className="danger-button" onClick={clearAssets} disabled={!visibleAssets.length}>清空素材</button>
             </section>
           )}
 
           {activeTool === "text" && (
             <section className="tool-panel">
-              <h2>Text</h2>
-              <button onClick={() => addText("name")}><PenLine size={16} aria-hidden="true" />Add name</button>
-              <button onClick={() => addText("number")}><Box size={16} aria-hidden="true" />Add number</button>
+              <h2>文字</h2>
+              <button onClick={() => addText("name")}><PenLine size={16} aria-hidden="true" />添加姓名</button>
+              <button onClick={() => addText("number")}><Box size={16} aria-hidden="true" />添加号码</button>
             </section>
           )}
 
@@ -154,12 +154,12 @@ export function ToolsSidebar({
             <section className="tool-panel fill-panel">
               <label className="tool-check">
                 <input type="checkbox" checked={applyToAll} onChange={(event) => setApplyToAll(event.target.checked)} />
-                <span>Apply base color to all panels</span>
+                <span>底色应用到所有裁片</span>
               </label>
-              <div className="sidebar-tabs" role="tablist" aria-label="Fill type">
-                <button className="active" type="button"><Palette size={14} aria-hidden="true" />Color</button>
-                <button type="button" disabled><Brush size={14} aria-hidden="true" />Graphic</button>
-                <button type="button" disabled><Image size={14} aria-hidden="true" />Pattern</button>
+              <div className="sidebar-tabs" role="tablist" aria-label="填充类型">
+                <button className="active" type="button"><Palette size={14} aria-hidden="true" />颜色</button>
+                <button type="button" disabled><Brush size={14} aria-hidden="true" />图形</button>
+                <button type="button" disabled><Image size={14} aria-hidden="true" />图案</button>
               </div>
               <div className="swatches-wrap" ref={rgbPickerRef}>
                 {rgbOpen && (
@@ -186,8 +186,8 @@ export function ToolsSidebar({
                         className="rgb-eyedropper"
                         type="button"
                         onClick={pickScreenColor}
-                        aria-label="Pick screen color"
-                        title="Pick screen color"
+                        aria-label="拾取屏幕颜色"
+                        title="拾取屏幕颜色"
                         disabled={!window.EyeDropper}
                       >
                         <Pipette size={16} aria-hidden="true" />
@@ -205,7 +205,7 @@ export function ToolsSidebar({
                           setHue(nextHue);
                           setAndChooseRgb(rgb, false);
                         }}
-                        aria-label="Hue"
+                        aria-label="色相"
                       />
                     </div>
                     <div className="rgb-inputs">
@@ -229,7 +229,7 @@ export function ToolsSidebar({
                     type="button"
                     className="swatch rgb-swatch"
                     onClick={() => setRgbOpen(!rgbOpen)}
-                    aria-label="Open RGB picker"
+                    aria-label="打开 RGB 取色器"
                   />
                   {garmentColors.map((color) => (
                     <button
@@ -237,7 +237,7 @@ export function ToolsSidebar({
                       className={color === activeColor ? "swatch active" : "swatch"}
                       style={{ backgroundColor: color }}
                       onClick={() => chooseColor(color)}
-                      aria-label={`Choose color ${color}`}
+                      aria-label={`选择颜色 ${color}`}
                     />
                   ))}
                 </div>
@@ -248,18 +248,18 @@ export function ToolsSidebar({
           {["saved", "clipart", "quick"].includes(activeTool) && (
             <section className="tool-panel">
               <h2>{tools.find(([id]) => id === activeTool)?.[2]}</h2>
-              <p className="muted">No items yet.</p>
+              <p className="muted">暂无内容。</p>
             </section>
           )}
 
           {activeTool === "layers" && (
             <section className="tool-panel">
-              <h2>Layers</h2>
+              <h2>图层</h2>
               <div className="asset-list compact-list">
                 {layers.map((element) => (
                   <span key={element.id}>{elementLabel(element)}</span>
                 ))}
-                {!layers.length && <span className="muted">Current panel has no layers.</span>}
+                {!layers.length && <span className="muted">当前裁片没有图层。</span>}
               </div>
             </section>
           )}

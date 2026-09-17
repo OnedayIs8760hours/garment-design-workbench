@@ -13,8 +13,8 @@ export function PreviewPane({ design, validation }) {
     <>
       <aside className="preview">
         <div className="preview-head">
-          <h2>Live preview</h2>
-          <div className="segmented" role="tablist" aria-label="Preview mode">
+          <h2>实时预览</h2>
+          <div className="segmented" role="tablist" aria-label="预览模式">
             <button className={mode === "3d" ? "active" : ""} onClick={() => setMode("3d")}>3D</button>
             <button className={mode === "2d" ? "active" : ""} onClick={() => setMode("2d")}>2D</button>
           </div>
@@ -32,26 +32,26 @@ export function PreviewPane({ design, validation }) {
                 </div>
               ))}
             </div>
-            <p className="hint">Fast panel preview. Final production output should be checked against the exported package.</p>
+            <p className="hint">裁片快速预览。最终生产效果请以导出的压缩包为准。</p>
           </>
         )}
 
         <section className="tool-panel validation-panel">
-          <h2>Validation</h2>
+          <h2>校验</h2>
           {validation.errors.length
             ? validation.errors.map((error) => <p className="error" key={error}>{error}</p>)
-            : <p className="ok">Basic validation passed</p>}
+            : <p className="ok">基础校验通过</p>}
           {validation.warnings.map((warning) => <p className="warn" key={warning}>{warning}</p>)}
         </section>
       </aside>
 
       {isModelExpanded && (
-        <div className="model-modal" role="dialog" aria-modal="true" aria-label="Large 3D model preview">
+        <div className="model-modal" role="dialog" aria-modal="true" aria-label="3D 模型大图预览">
           <div className="model-modal-head">
-            <h2>3D model preview</h2>
+            <h2>3D 模型预览</h2>
             <button type="button" onClick={() => setIsModelExpanded(false)}>
               <X size={16} aria-hidden="true" />
-              Close
+              关闭
             </button>
           </div>
           <ThreeDPreview design={design} modelUrl={modelUrl} setModelUrl={setModelUrl} large />

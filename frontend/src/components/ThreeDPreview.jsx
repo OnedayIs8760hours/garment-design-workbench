@@ -29,7 +29,7 @@ export function ThreeDPreview({ design, modelUrl, setModelUrl, onExpand, large =
   // 当前模型各裁片对应的 UV 区域。
   const [panelRects, setPanelRects] = React.useState(defaultPanelRects);
   // 预览区提示文案。
-  const [message, setMessage] = React.useState("Load a CLO-exported .glb or .gltf model");
+  const [message, setMessage] = React.useState("请加载 CLO 导出的 .glb 或 .gltf 模型");
 
   React.useEffect(() => {
     setPanelRects(defaultPanelRects);
@@ -120,7 +120,7 @@ export function ThreeDPreview({ design, modelUrl, setModelUrl, onExpand, large =
     if (!modelUrl || !sceneRef.current) return;
     // GLTF/GLB 模型加载器。
     const loader = new GLTFLoader();
-    setMessage("Loading model");
+    setMessage("模型加载中");
 
     loader.load(
       modelUrl,
@@ -134,10 +134,10 @@ export function ThreeDPreview({ design, modelUrl, setModelUrl, onExpand, large =
         const nextRects = getPanelRects(gltf.scene, template);
         setPanelRects(Object.keys(nextRects).length ? nextRects : defaultPanelRects);
         applyTextureRef.current(textureRef.current);
-        setMessage("Live 3D preview");
+        setMessage("实时 3D 预览");
       },
       undefined,
-      () => setMessage("Model failed to load. Use a .glb or .gltf file."),
+      () => setMessage("模型加载失败，请使用 .glb 或 .gltf 文件。"),
     );
   }, [modelUrl, defaultPanelRects, template]);
 
@@ -178,18 +178,18 @@ export function ThreeDPreview({ design, modelUrl, setModelUrl, onExpand, large =
           {onExpand && (
             <button type="button" className="model-expand" onClick={onExpand}>
               <Maximize2 size={15} aria-hidden="true" />
-              Expand
+              放大
             </button>
           )}
           <label className="upload model-upload">
             <Upload size={15} aria-hidden="true" />
-            Import model
+            导入模型
             <input type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" onChange={chooseModel} />
           </label>
         </div>
       </div>
       <div ref={hostRef} className="model-canvas" />
-      <p className="model-empty">Material name prefixes should match panel IDs, such as front, back, or left-sleeve.</p>
+      <p className="model-empty">材质名前缀需与裁片 ID 匹配，例如 front、back 或 left-sleeve。</p>
     </section>
   );
 }

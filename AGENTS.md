@@ -25,6 +25,7 @@ Frontend commands run from `frontend/`:
 cd frontend
 npm install
 npm run dev -- --port 5000 --strictPort
+npm run dev -- --host 0.0.0.0 --port 5000 --strictPort
 npm test
 npm run build
 ```

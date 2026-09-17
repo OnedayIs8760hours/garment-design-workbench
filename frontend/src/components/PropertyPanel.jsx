@@ -17,32 +17,32 @@ export function PropertyPanel({ element, panel, asset, updateElement }) {
       {element.type === "image" && (
         <button type="button" onClick={fillPanel}>
           <Maximize size={16} aria-hidden="true" />
-          Fit panel
+          铺满裁片
         </button>
       )}
       {element.type === "text" && (
         <label>
-          Content
+          内容
           <input value={element.text} onChange={(event) => updateElement(element.id, { text: event.target.value })} />
         </label>
       )}
       <NumberInput label="X" value={element.centerX} onChange={(centerX) => updateElement(element.id, { centerX })} />
       <NumberInput label="Y" value={element.centerY} onChange={(centerY) => updateElement(element.id, { centerY })} />
-      <NumberInput label="Width" value={element.width} onChange={(width) => updateElement(element.id, { width })} />
-      <NumberInput label="Height" value={element.height} onChange={(height) => updateElement(element.id, { height })} />
-      <NumberInput label="Rotation" value={Math.round(element.rotation)} step="1" onChange={(rotation) => updateElement(element.id, { rotation })} />
+      <NumberInput label="宽度" value={element.width} onChange={(width) => updateElement(element.id, { width })} />
+      <NumberInput label="高度" value={element.height} onChange={(height) => updateElement(element.id, { height })} />
+      <NumberInput label="旋转" value={Math.round(element.rotation)} step="1" onChange={(rotation) => updateElement(element.id, { rotation })} />
       <label>
-        Opacity
+        不透明度
         <input type="range" min="0.1" max="1" step="0.05" value={element.opacity} onChange={(event) => updateElement(element.id, { opacity: Number(event.target.value) })} />
       </label>
       {element.type === "text" && (
         <>
           <label>
-            Fill
+            填充
             <ColorInput value={element.fill} onCommit={(fill) => updateElement(element.id, { fill })} />
           </label>
           <label>
-            Stroke
+            描边
             <ColorInput value={element.stroke} onCommit={(stroke) => updateElement(element.id, { stroke })} />
           </label>
         </>

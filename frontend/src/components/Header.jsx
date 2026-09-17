@@ -18,38 +18,38 @@ export function Header({
   return (
     <header className="topbar">
       <div className="brand-block">
-        <p>Garment customization studio</p>
+        <p>服装定制工作台</p>
         <label className="template-switcher">
-          <span>Template</span>
+          <span>模板</span>
           <select value={template.templateId} onChange={(event) => onTemplateChange(event.target.value)}>
             {templateOptions.map((option) => (
               <option key={option.templateId} value={option.templateId}>{option.label}</option>
             ))}
           </select>
         </label>
-        <span>Template V{template.templateVersion} · {firstPanel.logicalSize.width} x {firstPanel.logicalSize.height} · {status}</span>
+        <span>模板 V{template.templateVersion} · {firstPanel.logicalSize.width} x {firstPanel.logicalSize.height} · {status}</span>
       </div>
       <div className="top-metrics">
-        <span>Panels {Object.keys(template.panels).length}</span>
-        <span>Elements {totalElements}</span>
-        <span className={validation.passed ? "metric-ok" : "metric-error"}>{validation.passed ? "Export ready" : "Needs review"}</span>
+        <span>裁片 {Object.keys(template.panels).length}</span>
+        <span>元素 {totalElements}</span>
+        <span className={validation.passed ? "metric-ok" : "metric-error"}>{validation.passed ? "可导出" : "需检查"}</span>
       </div>
       <div className="actions">
         <button type="button" onClick={onUndo} disabled={!canUndo}>
           <Undo2 size={16} aria-hidden="true" />
-          Undo
+          撤销
         </button>
         <button type="button" onClick={onReset} disabled={!canReset}>
           <RotateCcw size={16} aria-hidden="true" />
-          Reset
+          重置
         </button>
         <button type="button" onClick={onSave}>
           <Save size={16} aria-hidden="true" />
-          Save draft
+          保存草稿
         </button>
         <button type="button" className="primary-action" onClick={onExportPackage}>
           <Download size={16} aria-hidden="true" />
-          Export package
+          导出压缩包
         </button>
       </div>
     </header>
