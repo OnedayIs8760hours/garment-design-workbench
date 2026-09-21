@@ -17,7 +17,7 @@ SDS Design 是一个基于 Vite + React 的球衣裁片定制工作台，用于�
 
 ## 技术栈
 
-- Java 21 / Spring Boot 3
+- Python 3.13 / FastAPI
 - Vite 7
 - React 19
 - Zustand
@@ -30,6 +30,7 @@ SDS Design 是一个基于 Vite + React 的球衣裁片定制工作台，用于�
 
 - Node.js 版本建议使用 20 或更高版本。
 - npm。
+- Python 版本建议使用 3.13 或更高版本。
 - 如需运行 Photoshop 还原流程，需要 Windows + Adobe Photoshop，并允许通过 COM 调用 Photoshop。
 
 ## 快速开始
@@ -59,7 +60,8 @@ npm run dev
 
 ```powershell
 cd backend
-mvn spring-boot:run
+uv sync
+uv run uvicorn app.main:app --host 127.0.0.1 --port 8080 --reload
 ```
 
 后端默认地址：
@@ -86,21 +88,20 @@ npm run build
 
 # 启动后端
 cd ../backend
-mvn spring-boot:run
+uv run uvicorn app.main:app --host 127.0.0.1 --port 8080 --reload
 
 # 运行后端测试
-mvn test
+uv run pytest
 ```
 
 ## 项目结构
 
 ```text
 SDS-design/
-├─ backend/                      # Spring Boot 后端服务
-│  ├─ src/main/java/             # Java 应用源码
-│  ├─ src/main/resources/        # 后端配置
-│  ├─ src/test/java/             # 后端测试
-│  └─ pom.xml                    # Maven 配置
+├─ backend/                      # FastAPI 后端服务
+│  ├─ app/                       # Python 应用源码
+│  ├─ tests/                     # 后端测试
+│  └─ pyproject.toml             # uv 项目配置与依赖
 ├─ frontend/                     # Vite + React 前端项目
 │  ├─ src/                       # Web 应用源码
 │  │  ├─ components/             # React UI 组件

@@ -1,2 +1,4 @@
-target/
-.mvn/wrapper/maven-wrapper.jar
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
