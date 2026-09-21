@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.users import User
 
-
+"""用户相关的 CRUD 操作"""
 async def get_user_by_username(db: AsyncSession, username: str) -> User | None:
     result = await db.execute(
         select(User).where(
@@ -24,7 +24,7 @@ async def get_active_user_by_id(db: AsyncSession, user_id: int) -> User | None:
     )
     return result.scalar_one_or_none()
 
-
+# * 后面的参数必须使用“关键字参数”传递，不能按位置传递
 async def create_user(
     db: AsyncSession,
     *,

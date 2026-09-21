@@ -11,22 +11,77 @@ import { PanelStage } from "./components/PanelStage.jsx";
 import { PreviewPane } from "./components/PreviewPane.jsx";
 import { resolveTemplateId, templateSelectionStorageKey } from "../templates/index.js";
 import { LoginPrototype } from "./pages/LoginPrototype.jsx";
+import { clearAccessToken, getAccessToken, getCurrentUser, logoutUser } from "./api.js";
 
 // 应用根组件，负责连接状态仓库、编辑器和预览区域。
 export function App() {
-  const [showEditor, setShowEditor] = React.useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("screen") !== "login";
-  });
+  const [auth, setAuth] = React.useState(() => ({
+    status: getAccessToken() ? "checking" : "anonymous",
+    user: null,
+  }));
 
-  if (!showEditor) {
-    return <LoginPrototype onEnterPrototype={() => setShowEditor(true)} />;
+  React.useEffect(() => {
+    if (auth.status !== "checking") return undefined;
+
+    let cancelled = false;
+    getCurrentUser()
+      .then((user) => {
+        if (!cancelled) setAuth({ status: "authenticated", user });
+      })
+      .catch(() => {
+        clearAccessToken();
+        if (!cancelled) setAuth({ status: "anonymous", user: null });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [auth.status]);
+
+  if (auth.status === "checking") {
+    return <main className="auth-loading">正在验证登录状态...</main>;
   }
 
-  return <EditorApp />;
+  if (auth.status === "anonymous") {
+    return (
+      <LoginPrototype
+        onLogin={({ user }) => {
+          openEditor();
+          setAuth({ status: "authenticated", user });
+        }}
+      />
+    );
+  }
+
+  return (
+    <EditorApp
+      user={auth.user}
+      onSignOut={async () => {
+        try {
+          await logoutUser();
+        } catch {
+          clearAccessToken();
+        }
+        returnToLogin();
+        setAuth({ status: "anonymous", user: null });
+      }}
+    />
+  );
 }
 
-function EditorApp() {
+function openEditor() {
+  const url = new URL(window.location.href);
+  url.searchParams.set("screen", "editor");
+  window.history.replaceState(null, "", url.toString());
+}
+
+function returnToLogin() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("screen");
+  window.history.replaceState(null, "", url.toString());
+}
+
+function EditorApp({ user, onSignOut }) {
   // 从全局 store 读取设计数据、选择状态和操作方法。
   const { design, selectedId, status, past, commit, undo, select, saveNow } = useDesignStore();
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
@@ -265,6 +320,8 @@ function EditorApp() {
         onSave={saveNow}
         onExportPackage={() => downloadZip(design, exportJson)}
         onTemplateChange={switchTemplate}
+        onSignOut={onSignOut}
+        user={user}
       />
 
       <main className={sidebarCollapsed ? "workspace sidebar-collapsed" : "workspace"}>

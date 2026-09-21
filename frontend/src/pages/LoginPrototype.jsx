@@ -1,5 +1,6 @@
 import React from "react";
 import "../styles/login.css";
+import { loginUser } from "../api.js";
 
 const featureItems = [
   "Template-safe workflow",
@@ -7,26 +8,37 @@ const featureItems = [
   "Photoshop restore ready",
 ];
 
-export function LoginPrototype({ onEnterPrototype }) {
-  const [email, setEmail] = React.useState("");
+export function LoginPrototype({ onLogin }) {
+  const [username, setUsername] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const [message, setMessage] = React.useState("Prototype mode. Authentication is not connected yet.");
+  const [remember, setRemember] = React.useState(true);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [message, setMessage] = React.useState("请输入账号和密码登录设计工作台。");
 
-  const canSubmit = email.trim().length > 0 && password.trim().length > 0;
+  const canSubmit = username.trim().length > 0 && password.trim().length > 0;
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (!canSubmit) {
-      setMessage("Enter any email and password to preview the app shell.");
+      setMessage("请先填写用户名和密码。");
       return;
     }
-    setMessage("Prototype accepted. Authentication will be wired later.");
-    onEnterPrototype();
+
+    setIsSubmitting(true);
+    setMessage("正在验证登录信息...");
+    try {
+      const auth = await loginUser(username.trim(), password, remember);
+      onLogin(auth);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "登录失败，请稍后再试。");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <main className="login-page">
-      <section className="login-hero" aria-label="SDS Design login prototype">
+      <section className="login-hero" aria-label="SDS Design login">
         <div className="login-copy">
           <a className="login-brand" href="./" aria-label="SDS Design editor">
             <span className="brand-mark" aria-hidden="true">
@@ -58,18 +70,18 @@ export function LoginPrototype({ onEnterPrototype }) {
 
         <form className="login-panel" onSubmit={handleSubmit}>
           <div className="panel-header">
-            <p>Prototype login</p>
+            <p>SDS Design login</p>
             <h2>Welcome back</h2>
           </div>
 
           <label className="login-field">
-            <span>Email</span>
+            <span>Username</span>
             <input
-              type="email"
-              autoComplete="email"
+              type="text"
+              autoComplete="username"
               placeholder="designer@sds.local"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
             />
           </label>
 
@@ -78,7 +90,7 @@ export function LoginPrototype({ onEnterPrototype }) {
             <input
               type="password"
               autoComplete="current-password"
-              placeholder="Enter any password"
+              placeholder="Enter your password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
@@ -86,7 +98,7 @@ export function LoginPrototype({ onEnterPrototype }) {
 
           <div className="login-options">
             <label>
-              <input type="checkbox" defaultChecked />
+              <input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} />
               Keep me signed in
             </label>
             <button type="button" className="text-button">
@@ -94,8 +106,8 @@ export function LoginPrototype({ onEnterPrototype }) {
             </button>
           </div>
 
-          <button className="login-submit" type="submit">
-            Enter prototype
+          <button className="login-submit" type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "登录中..." : "进入设计工作台"}
           </button>
 
           <p className="login-message" role="status">

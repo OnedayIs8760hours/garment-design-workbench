@@ -7,6 +7,16 @@
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", "Microsoft YaHei", sans-serif;
 }
 
+.auth-loading {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  color: #56616d;
+  background: #f8fafc;
+  font-size: 14px;
+  font-weight: 700;
+}
+
 .login-hero {
   width: min(1180px, calc(100% - 48px));
   min-height: 100vh;

@@ -1,3 +1,7 @@
+"""
+认证相关的请求和响应模型
+"""
+
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field

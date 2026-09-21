@@ -1,3 +1,7 @@
+"""
+数据库配置，包括 SQLAlchemy 异步会话和 Redis 连接
+"""
+
 from collections.abc import AsyncIterator
 
 from redis.asyncio import Redis

@@ -1,3 +1,7 @@
+"""
+安全相关的工具函数，包括密码哈希、验证以及 JWT 访问令牌的创建和解码
+"""
+
 from datetime import UTC, datetime, timedelta
 from secrets import token_urlsafe
 from typing import Any

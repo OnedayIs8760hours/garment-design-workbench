@@ -1,5 +1,5 @@
 import React from "react";
-import { Download, RotateCcw, Save, Undo2 } from "lucide-react";
+import { Download, LogOut, RotateCcw, Save, Undo2 } from "lucide-react";
 import { firstPanel, template } from "../config.js";
 import { templateOptions } from "../../templates/index.js";
 
@@ -14,6 +14,8 @@ export function Header({
   onSave,
   onExportPackage,
   onTemplateChange,
+  onSignOut,
+  user,
 }) {
   return (
     <header className="topbar">
@@ -27,7 +29,10 @@ export function Header({
             ))}
           </select>
         </label>
-        <span>模板 V{template.templateVersion} · {firstPanel.logicalSize.width} x {firstPanel.logicalSize.height} · {status}</span>
+        <span>
+          模板 V{template.templateVersion} · {firstPanel.logicalSize.width} x {firstPanel.logicalSize.height} · {status}
+          {user?.username ? ` · ${user.username}` : ""}
+        </span>
       </div>
       <div className="top-metrics">
         <span>裁片 {Object.keys(template.panels).length}</span>
@@ -50,6 +55,10 @@ export function Header({
         <button type="button" className="primary-action" onClick={onExportPackage}>
           <Download size={16} aria-hidden="true" />
           导出压缩包
+        </button>
+        <button type="button" onClick={onSignOut}>
+          <LogOut size={16} aria-hidden="true" />
+          退出登录
         </button>
       </div>
     </header>

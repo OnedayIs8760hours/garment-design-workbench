@@ -1,3 +1,7 @@
+"""
+文本规范化工具函数
+"""
+
 def normalize_username(username: str) -> str:
     return username.strip()
 
