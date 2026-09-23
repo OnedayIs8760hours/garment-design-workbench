@@ -11,6 +11,7 @@ import { PanelStage } from "./components/PanelStage.jsx";
 import { PreviewPane } from "./components/PreviewPane.jsx";
 import { resolveTemplateId, templateSelectionStorageKey } from "../templates/index.js";
 import { LoginPrototype } from "./pages/LoginPrototype.jsx";
+import { RegisterPrototype } from "./pages/RegisterPrototype.jsx";
 import { clearAccessToken, getAccessToken, getCurrentUser, logoutUser } from "./api.js";
 
 // 应用根组件，负责连接状态仓库、编辑器和预览区域。
@@ -19,6 +20,10 @@ export function App() {
     status: getAccessToken() ? "checking" : "anonymous",
     user: null,
   }));
+  // 当前认证界面：login 为登录页，register 为注册页。
+  const [authScreen, setAuthScreen] = React.useState("login");
+  // 注册完成后带回的用户名，用于登录页预填。
+  const [pendingUsername, setPendingUsername] = React.useState("");
 
   React.useEffect(() => {
     if (auth.status !== "checking") return undefined;
@@ -43,8 +48,24 @@ export function App() {
   }
 
   if (auth.status === "anonymous") {
+    if (authScreen === "register") {
+      return (
+        <RegisterPrototype
+          onBackToLogin={(username) => {
+            setPendingUsername(username || "");
+            setAuthScreen("login");
+          }}
+        />
+      );
+    }
     return (
       <LoginPrototype
+        initialUsername={pendingUsername}
+        initialMessage={pendingUsername ? "账号创建成功，请登录。" : undefined}
+        onRegister={() => {
+          setPendingUsername("");
+          setAuthScreen("register");
+        }}
         onLogin={({ user }) => {
           openEditor();
           setAuth({ status: "authenticated", user });

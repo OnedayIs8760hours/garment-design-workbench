@@ -8,12 +8,14 @@ const featureItems = [
   "Photoshop restore ready",
 ];
 
-export function LoginPrototype({ onLogin }) {
-  const [username, setUsername] = React.useState("");
+export function LoginPrototype({ onLogin, onRegister, initialUsername = "", initialMessage }) {
+  const [username, setUsername] = React.useState(initialUsername);
   const [password, setPassword] = React.useState("");
   const [remember, setRemember] = React.useState(true);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [message, setMessage] = React.useState("请输入账号和密码登录设计工作台。");
+  const [message, setMessage] = React.useState(
+    initialMessage || "请输入账号和密码登录设计工作台。",
+  );
 
   const canSubmit = username.trim().length > 0 && password.trim().length > 0;
 
@@ -109,6 +111,13 @@ export function LoginPrototype({ onLogin }) {
           <button className="login-submit" type="submit" disabled={isSubmitting}>
             {isSubmitting ? "登录中..." : "进入设计工作台"}
           </button>
+
+          <div className="login-options">
+            <span>还没有账号？</span>
+            <button type="button" className="text-button" onClick={onRegister}>
+              注册新账号
+            </button>
+          </div>
 
           <p className="login-message" role="status">
             {message}

@@ -49,6 +49,7 @@ async function requestJson(path, options = {}) {
 function getApiErrorMessage(status, payload) {
   if (status === 401) return "用户名或密码错误，或登录会话已过期。";
   if (status === 403) return "当前账号已停用。";
+  if (status === 409) return "用户名已被占用，请换一个试试。";
   if (status === 503) return "认证服务暂时不可用，请稍后再试。";
 
   if (Array.isArray(payload?.detail)) {
@@ -56,6 +57,13 @@ function getApiErrorMessage(status, payload) {
   }
   if (typeof payload?.detail === "string") return payload.detail;
   return "请求失败，请稍后再试。";
+}
+
+export function registerUser(username, password, jobTitle) {
+  return requestJson("/auth/register", {
+    method: "POST",
+    body: JSON.stringify({ username, password, job_title: jobTitle || null }),
+  });
 }
 
 export async function loginUser(username, password, remember) {

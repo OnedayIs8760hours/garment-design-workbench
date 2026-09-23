@@ -61,13 +61,13 @@ npm run dev
 ```powershell
 cd backend
 uv sync
-uv run uvicorn app.main:app --host 127.0.0.1 --port 8080 --reload
+uv run uvicorn app.main:app --host 127.0.0.1 --port 8957 --reload
 ```
 
 后端默认地址：
 
 ```text
-http://127.0.0.1:8080
+http://127.0.0.1:8957
 ```
 
 ## 常用命令
@@ -88,7 +88,7 @@ npm run build
 
 # 启动后端
 cd ../backend
-uv run uvicorn app.main:app --host 127.0.0.1 --port 8080 --reload
+uv run uvicorn app.main:app --host 127.0.0.1 --port 8957 --reload
 
 # 运行后端测试
 uv run pytest

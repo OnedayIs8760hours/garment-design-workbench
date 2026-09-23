@@ -11,7 +11,7 @@ class Config:
     DATABASE_ECHO = os.getenv("DATABASE_ECHO", "false").lower() in {"1", "true", "yes", "on"}
 
     REDIS_HOST = os.getenv("REDIS_HOST", "127.0.0.1")
-    REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+    REDIS_PORT = int(os.getenv("REDIS_PORT", 4185))
     REDIS_DB = int(os.getenv("REDIS_DB", 0))
     REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "123456")
     REDIS_KEY_PREFIX = os.getenv("REDIS_KEY_PREFIX", "auth:dev")
