@@ -169,8 +169,11 @@ function openEditor() {
 
 function returnToHome() {
   const url = new URL(window.location.href);
-  url.searchParams.delete("screen");
-  window.history.replaceState(null, "", url.toString());
+  // 草稿箱是应用的固定入口，不把当前编辑器的模板和 screen 参数带回去。
+  url.pathname = "/";
+  url.search = "";
+  url.hash = "";
+  window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
 function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
