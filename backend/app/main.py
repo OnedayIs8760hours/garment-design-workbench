@@ -28,6 +28,12 @@ app.include_router(router, prefix="/api")
 
 @app.get("/api/health")
 def health() -> dict[str, str]:
+  """健康检查接口。
+
+  输入：无。
+  输出：服务状态、服务名称和 UTC 时间戳。
+  功能：供前端、部署平台或监控系统确认 FastAPI 进程仍可响应。
+  """
   return {
     "status": "ok",
     "service": "sds-design-backend",
