@@ -86,3 +86,14 @@ export async function logoutUser() {
     clearAccessToken();
   }
 }
+
+export function getDesignDraft(templateId) {
+  return requestJson(`/designs/${encodeURIComponent(templateId)}`);
+}
+
+export function saveDesignDraft(templateId, design) {
+  return requestJson(`/designs/${encodeURIComponent(templateId)}`, {
+    method: "PUT",
+    body: JSON.stringify({ design }),
+  });
+}

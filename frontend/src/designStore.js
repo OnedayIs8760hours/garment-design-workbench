@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createInitialDesign, draftKey, normalizeDesignColors, template } from "./config.js";
+import { getAccessToken, saveDesignDraft } from "./api.js";
 
 const removedSampleAssetId = "asset-sample-mark";
 const maxDraftBytes = 20 * 1024 * 1024;
@@ -35,7 +36,7 @@ let saveTimer = null;
 // 合并短时间内的频繁修改，延迟写入 localStorage。
 function scheduleSave() {
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => useDesignStore.getState().saveNow(), 500);
+  saveTimer = setTimeout(() => void useDesignStore.getState().saveNow(), 500);
 }
 
 // 页面启动时恢复的草稿。
@@ -78,12 +79,43 @@ export const useDesignStore = create((set, get) => ({
   select(selectedId) {
     set({ selectedId });
   },
-  // 立即把当前设计写入 localStorage。
-  saveNow() {
+  // 恢复服务端返回的设计，并清空当前撤销历史。
+  hydrateDesign(remoteDesign) {
+    if (!remoteDesign || remoteDesign.templateId !== template.templateId || !template.panels[remoteDesign.currentPanelId]) {
+      return false;
+    }
+    const normalized = normalizeDesignColors(clone(remoteDesign));
+    set({ design: normalized, past: [], selectedId: null, status: "已从服务器恢复" });
+    try {
+      localStorage.setItem(draftKey, JSON.stringify(normalized));
+    } catch {
+      // 本地缓存只是兜底，写入失败不影响服务端数据。
+    }
+    return true;
+  },
+  // 立即保存本地兜底，并在已登录时保存到 PostgreSQL/Redis。
+  async saveNow() {
     // 带最新保存时间的设计对象。
     const design = { ...get().design, savedAt: new Date().toISOString() };
-    localStorage.setItem(draftKey, JSON.stringify(design));
-    set({ design, status: `已保存 ${new Date(design.savedAt).toLocaleTimeString()}` });
+    try {
+      localStorage.setItem(draftKey, JSON.stringify(design));
+    } catch {
+      // 大图片素材可能超过浏览器配额，服务端保存仍可继续。
+    }
+    set({ design, status: "保存中..." });
+    if (!getAccessToken()) {
+      set({ status: `已保存本地草稿 ${new Date(design.savedAt).toLocaleTimeString()}` });
+      return design;
+    }
+    try {
+      const response = await saveDesignDraft(design.templateId, design);
+      const savedDesign = response?.design ?? design;
+      set({ design: savedDesign, status: `已保存云端 ${new Date(response.updated_at ?? design.savedAt).toLocaleTimeString()}` });
+      return savedDesign;
+    } catch {
+      set({ status: "本地已保存，云端保存失败" });
+      return design;
+    }
   },
 }));
 

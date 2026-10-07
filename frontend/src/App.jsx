@@ -12,7 +12,7 @@ import { PreviewPane } from "./components/PreviewPane.jsx";
 import { resolveTemplateId, templateSelectionStorageKey } from "../templates/index.js";
 import { LoginPrototype } from "./pages/LoginPrototype.jsx";
 import { RegisterPrototype } from "./pages/RegisterPrototype.jsx";
-import { clearAccessToken, getAccessToken, getCurrentUser, logoutUser } from "./api.js";
+import { clearAccessToken, getAccessToken, getCurrentUser, getDesignDraft, logoutUser } from "./api.js";
 
 // 应用根组件，负责连接状态仓库、编辑器和预览区域。
 export function App() {
@@ -104,8 +104,29 @@ function returnToLogin() {
 
 function EditorApp({ user, onSignOut }) {
   // 从全局 store 读取设计数据、选择状态和操作方法。
-  const { design, selectedId, status, past, commit, undo, select, saveNow } = useDesignStore();
+  const { design, selectedId, status, past, commit, undo, select, saveNow, hydrateDesign } = useDesignStore();
+  const templateId = design.templateId;
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    useDesignStore.setState({ status: "正在加载云端设计..." });
+    getDesignDraft(templateId)
+      .then((draft) => {
+        if (cancelled) return;
+        if (draft?.design) {
+          hydrateDesign(draft.design);
+        } else {
+          void saveNow();
+        }
+      })
+      .catch(() => {
+        if (!cancelled) useDesignStore.setState({ status: "云端读取失败，使用本地草稿" });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [templateId, hydrateDesign, saveNow]);
   // 当前设计的校验结果。
   const validation = validateDesign(design);
   // 当前选中的元素对象。

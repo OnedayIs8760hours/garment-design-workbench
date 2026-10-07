@@ -17,6 +17,7 @@ class Config:
     REDIS_KEY_PREFIX = os.getenv("REDIS_KEY_PREFIX", "auth:dev")
 
     SESSION_TTL_SECONDS = int(os.getenv("SESSION_TTL_SECONDS", 604800))
+    DESIGN_CACHE_TTL_SECONDS = int(os.getenv("DESIGN_CACHE_TTL_SECONDS", 604800))
 
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
     JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
@@ -40,6 +41,11 @@ class Config:
     def get_session_user_key(cls, user_id: str) -> str:
         """用来存储用户会话信息的 Redis 键，格式为 auth:dev:session:user:{user_id}"""
         return f"{cls.REDIS_KEY_PREFIX}:session:user:{user_id}"
+
+    @classmethod
+    def get_design_draft_key(cls, user_id: str, template_id: str) -> str:
+        """返回用户模板草稿的 Redis 缓存键。"""
+        return f"{cls.REDIS_KEY_PREFIX}:design:{user_id}:{template_id}"
 
     @classmethod
     def get_jwt_secret_key(cls) -> str:
