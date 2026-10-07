@@ -43,9 +43,10 @@ class Config:
         return f"{cls.REDIS_KEY_PREFIX}:session:user:{user_id}"
 
     @classmethod
-    def get_design_draft_key(cls, user_id: str, template_id: str) -> str:
+    def get_design_draft_key(cls, user_id: str, template_id: str, order_id: str | None = None) -> str:
         """返回用户模板草稿的 Redis 缓存键。"""
-        return f"{cls.REDIS_KEY_PREFIX}:design:{user_id}:{template_id}"
+        suffix = order_id or "latest"
+        return f"{cls.REDIS_KEY_PREFIX}:design:{user_id}:{template_id}:{suffix}"
 
     @classmethod
     def get_jwt_secret_key(cls) -> str:

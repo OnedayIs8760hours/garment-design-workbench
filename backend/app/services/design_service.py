@@ -6,7 +6,7 @@ from redis.exceptions import RedisError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config.config import Config
-from app.crud.designs import get_design_draft, upsert_design_draft
+from app.crud.designs import get_design_draft, list_design_drafts, upsert_design_draft
 from app.models.designs import DesignDraft
 
 
@@ -22,6 +22,7 @@ def serialize_draft(draft: DesignDraft) -> dict[str, Any]:
     """将数据库草稿转换为 API/Redis 共用的普通字典。"""
     return {
         "template_id": draft.template_id,
+        "order_id": draft.order_id,
         "template_version": draft.template_version,
         "design": draft.design_data,
         "created_at": draft.created_at,
@@ -29,14 +30,35 @@ def serialize_draft(draft: DesignDraft) -> dict[str, Any]:
     }
 
 
+def serialize_draft_summary(draft: DesignDraft) -> dict[str, Any]:
+    """将草稿转换为草稿箱列表所需的轻量摘要。"""
+    return {
+        "template_id": draft.template_id,
+        "order_id": draft.order_id,
+        "template_version": draft.template_version,
+        "updated_at": draft.updated_at,
+    }
+
+
+async def list_user_design_drafts(
+    db: AsyncSession,
+    user_id: int,
+    template_id: str | None = None,
+) -> list[dict[str, Any]]:
+    """返回当前用户的草稿箱列表，不返回大体积设计 JSON 和图片 data URL。"""
+    drafts = await list_design_drafts(db, user_id, template_id)
+    return [serialize_draft_summary(draft) for draft in drafts]
+
+
 async def load_design_draft(
     db: AsyncSession,
     redis: Redis,
     user_id: int,
     template_id: str,
+    order_id: str | None = None,
 ) -> dict[str, Any] | None:
     """读取设计草稿，优先使用 Redis，未命中时回源 PostgreSQL 并回填缓存。"""
-    cache_key = Config.get_design_draft_key(str(user_id), template_id)
+    cache_key = Config.get_design_draft_key(str(user_id), template_id, order_id)
     try:
         cached = await redis.get(cache_key)
         if cached:
@@ -45,7 +67,7 @@ async def load_design_draft(
         # 缓存不可用或内容损坏时继续读取数据库，不能阻塞设计恢复。
         pass
 
-    draft = await get_design_draft(db, user_id, template_id)
+    draft = await get_design_draft(db, user_id, template_id, order_id)
     if draft is None:
         return None
 
@@ -62,6 +84,7 @@ async def save_design_draft(
     redis: Redis,
     user_id: int,
     template_id: str,
+    order_id: str,
     template_version: int,
     design_data: dict[str, Any],
 ) -> dict[str, Any]:
@@ -70,13 +93,14 @@ async def save_design_draft(
         db,
         user_id=user_id,
         template_id=template_id,
+        order_id=order_id,
         template_version=template_version,
         design_data=design_data,
     )
     payload = serialize_draft(draft)
     try:
         await redis.set(
-            Config.get_design_draft_key(str(user_id), template_id),
+            Config.get_design_draft_key(str(user_id), template_id, order_id),
             json.dumps(payload, default=_json_default),
             ex=Config.DESIGN_CACHE_TTL_SECONDS,
         )

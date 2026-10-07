@@ -1,5 +1,5 @@
 import React from "react";
-import { Download, LogOut, RotateCcw, Save, Undo2 } from "lucide-react";
+import { ArrowLeft, Download, FilePlus2, LogOut, RotateCcw, Save, Undo2 } from "lucide-react";
 import { firstPanel, template } from "../config.js";
 import { templateOptions } from "../../templates/index.js";
 
@@ -12,6 +12,8 @@ export function Header({
   onUndo,
   onReset,
   onSave,
+  onNewDesign,
+  onBackHome,
   onExportPackage,
   onTemplateChange,
   onSignOut,
@@ -40,6 +42,10 @@ export function Header({
         <span className={validation.passed ? "metric-ok" : "metric-error"}>{validation.passed ? "可导出" : "需检查"}</span>
       </div>
       <div className="actions">
+        <button type="button" onClick={onBackHome}>
+          <ArrowLeft size={16} aria-hidden="true" />
+          我的草稿
+        </button>
         <button type="button" onClick={onUndo} disabled={!canUndo}>
           <Undo2 size={16} aria-hidden="true" />
           撤销
@@ -51,6 +57,10 @@ export function Header({
         <button type="button" onClick={onSave}>
           <Save size={16} aria-hidden="true" />
           保存草稿
+        </button>
+        <button type="button" onClick={onNewDesign}>
+          <FilePlus2 size={16} aria-hidden="true" />
+          新建设计
         </button>
         <button type="button" className="primary-action" onClick={onExportPackage}>
           <Download size={16} aria-hidden="true" />

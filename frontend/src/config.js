@@ -52,7 +52,7 @@ export function createInitialDesign(activeTemplate = template) {
     // 导出 JSON 的 schema 版本。
     schemaVersion: 1,
     // 默认订单编号。
-    orderId: "ORDER-20260805-001",
+    orderId: createOrderId(),
     // 当前产品 ID。
     productId: activeTemplate.productId,
     // 当前模板 ID。
@@ -74,4 +74,10 @@ export function createInitialDesign(activeTemplate = template) {
       Object.entries(activeTemplate.panels).map(([panelId, panel]) => [panelId, createPanelState(panel)]),
     ),
   };
+}
+
+export function createOrderId() {
+  const stamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
+  const random = Math.random().toString(36).slice(2, 7).toUpperCase();
+  return `ORDER-${stamp}-${random}`;
 }

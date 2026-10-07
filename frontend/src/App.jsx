@@ -9,10 +9,11 @@ import { ToolsSidebar } from "./components/ToolsSidebar.jsx";
 import { PanelTabs, BottomPanels } from "./components/EditorPanels.jsx";
 import { PanelStage } from "./components/PanelStage.jsx";
 import { PreviewPane } from "./components/PreviewPane.jsx";
-import { resolveTemplateId, templateSelectionStorageKey } from "../templates/index.js";
+import { activeTemplateId, resolveTemplateId, selectedTemplateIdFromLocation, templateSelectionStorageKey } from "../templates/index.js";
 import { LoginPrototype } from "./pages/LoginPrototype.jsx";
 import { RegisterPrototype } from "./pages/RegisterPrototype.jsx";
-import { clearAccessToken, getAccessToken, getCurrentUser, getDesignDraft, logoutUser } from "./api.js";
+import { PersonalHome } from "./pages/PersonalHome.jsx";
+import { clearAccessToken, getAccessToken, getCurrentUser, getDesignDraft, listDesignDrafts, logoutUser } from "./api.js";
 
 // 应用根组件，负责连接状态仓库、编辑器和预览区域。
 export function App() {
@@ -24,6 +25,37 @@ export function App() {
   const [authScreen, setAuthScreen] = React.useState("login");
   // 注册完成后带回的用户名，用于登录页预填。
   const [pendingUsername, setPendingUsername] = React.useState("");
+  // 登录后默认进入个人草稿首页，只有打开或新建后才进入编辑工作台。
+  const [workspace, setWorkspace] = React.useState(() => readInitialWorkspace());
+
+  const openWorkspace = React.useCallback((draft, options = {}) => {
+    const targetTemplateId = resolveTemplateId(draft?.template_id || selectedTemplateIdFromLocation() || activeTemplateId);
+    const currentTemplateId = selectedTemplateIdFromLocation();
+    const nextWorkspace = {
+      orderId: draft?.order_id || null,
+      isNewDesign: Boolean(options.newDesign),
+    };
+    if (targetTemplateId !== currentTemplateId) {
+      localStorage.setItem(templateSelectionStorageKey, targetTemplateId);
+      sessionStorage.setItem("sds-pending-workspace", JSON.stringify({ ...nextWorkspace, templateId: targetTemplateId }));
+      const url = new URL(window.location.href);
+      url.searchParams.set("template", targetTemplateId);
+      window.location.assign(url.toString());
+      return;
+    }
+    // 同模板的新建设计先在内存中生成全新的订单号和空白状态，
+    // 再进入工作台；这样首屏不会短暂显示旧草稿，也不会覆盖旧订单。
+    if (options.newDesign) {
+      const newDesign = useDesignStore.getState().startNewDesign();
+      nextWorkspace.orderId = newDesign.orderId;
+      nextWorkspace.isNewDesign = false;
+    }
+    const url = new URL(window.location.href);
+    url.searchParams.set("screen", "editor");
+    url.searchParams.set("template", targetTemplateId);
+    window.history.replaceState(null, "", url.toString());
+    setWorkspace(nextWorkspace);
+  }, []);
 
   React.useEffect(() => {
     if (auth.status !== "checking") return undefined;
@@ -67,9 +99,30 @@ export function App() {
           setAuthScreen("register");
         }}
         onLogin={({ user }) => {
-          openEditor();
           setAuth({ status: "authenticated", user });
         }}
+      />
+    );
+  }
+
+  const signOut = async () => {
+    try {
+      await logoutUser();
+    } catch {
+      clearAccessToken();
+    }
+    setWorkspace(null);
+    returnToHome();
+    setAuth({ status: "anonymous", user: null });
+  };
+
+  if (!workspace) {
+    return (
+      <PersonalHome
+        user={auth.user}
+        onOpenDraft={(draft) => openWorkspace(draft)}
+        onNewDesign={() => openWorkspace(null, { newDesign: true })}
+        onSignOut={signOut}
       />
     );
   }
@@ -77,17 +130,35 @@ export function App() {
   return (
     <EditorApp
       user={auth.user}
-      onSignOut={async () => {
-        try {
-          await logoutUser();
-        } catch {
-          clearAccessToken();
-        }
-        returnToLogin();
-        setAuth({ status: "anonymous", user: null });
+      draftOrderId={workspace.orderId}
+      isNewDesign={workspace.isNewDesign}
+      onBackHome={async () => {
+        await useDesignStore.getState().saveNow();
+        returnToHome();
+        setWorkspace(null);
       }}
+      onSignOut={signOut}
     />
   );
+}
+
+function readPendingWorkspace() {
+  try {
+    const raw = sessionStorage.getItem("sds-pending-workspace");
+    if (!raw) return null;
+    sessionStorage.removeItem("sds-pending-workspace");
+    const pending = JSON.parse(raw);
+    return pending?.templateId === selectedTemplateIdFromLocation() ? pending : null;
+  } catch {
+    return null;
+  }
+}
+
+function readInitialWorkspace() {
+  const pending = readPendingWorkspace();
+  if (pending) return pending;
+  const screen = new URLSearchParams(window.location.search).get("screen");
+  return screen === "editor" ? { orderId: null, isNewDesign: false } : null;
 }
 
 function openEditor() {
@@ -96,22 +167,37 @@ function openEditor() {
   window.history.replaceState(null, "", url.toString());
 }
 
-function returnToLogin() {
+function returnToHome() {
   const url = new URL(window.location.href);
   url.searchParams.delete("screen");
   window.history.replaceState(null, "", url.toString());
 }
 
-function EditorApp({ user, onSignOut }) {
+function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
   // 从全局 store 读取设计数据、选择状态和操作方法。
-  const { design, selectedId, status, past, commit, undo, select, saveNow, hydrateDesign } = useDesignStore();
+  const { design, selectedId, status, past, commit, undo, select, saveNow, hydrateDesign, startNewDesign } = useDesignStore();
   const templateId = design.templateId;
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+  const [drafts, setDrafts] = React.useState([]);
+
+  const refreshDrafts = React.useCallback(() => {
+    return listDesignDrafts(templateId)
+      .then((items) => setDrafts(Array.isArray(items) ? items : []))
+      .catch(() => setDrafts([]));
+  }, [templateId]);
 
   React.useEffect(() => {
     let cancelled = false;
     useDesignStore.setState({ status: "正在加载云端设计..." });
-    getDesignDraft(templateId)
+    if (isNewDesign) {
+      startNewDesign();
+      void saveNow();
+      void refreshDrafts();
+      return () => {
+        cancelled = true;
+      };
+    }
+    getDesignDraft(templateId, draftOrderId)
       .then((draft) => {
         if (cancelled) return;
         if (draft?.design) {
@@ -123,10 +209,11 @@ function EditorApp({ user, onSignOut }) {
       .catch(() => {
         if (!cancelled) useDesignStore.setState({ status: "云端读取失败，使用本地草稿" });
       });
+    void refreshDrafts();
     return () => {
       cancelled = true;
     };
-  }, [templateId, hydrateDesign, saveNow]);
+  }, [templateId, draftOrderId, isNewDesign, hydrateDesign, saveNow, startNewDesign, refreshDrafts]);
   // 当前设计的校验结果。
   const validation = validateDesign(design);
   // 当前选中的元素对象。
@@ -139,6 +226,22 @@ function EditorApp({ user, onSignOut }) {
   const canUndo = past.length > 0;
   // 是否有可清空的画布元素。
   const canReset = totalElements > 0;
+
+  const handleSave = async () => {
+    await saveNow();
+    await refreshDrafts();
+  };
+
+  const handleNewDesign = async () => {
+    startNewDesign();
+    await saveNow();
+    await refreshDrafts();
+  };
+
+  const handleOpenDraft = async (orderId) => {
+    const draft = await getDesignDraft(templateId, orderId);
+    if (draft?.design) hydrateDesign(draft.design);
+  };
 
   const switchTemplate = (templateId) => {
     const nextTemplateId = resolveTemplateId(templateId);
@@ -359,7 +462,9 @@ function EditorApp({ user, onSignOut }) {
         canReset={canReset}
         onUndo={undo}
         onReset={resetDesign}
-        onSave={saveNow}
+        onSave={handleSave}
+        onNewDesign={handleNewDesign}
+        onBackHome={onBackHome}
         onExportPackage={() => downloadZip(design, exportJson)}
         onTemplateChange={switchTemplate}
         onSignOut={onSignOut}
@@ -377,6 +482,9 @@ function EditorApp({ user, onSignOut }) {
           applyAllPanelColors={applyAllPanelColors}
           collapsed={sidebarCollapsed}
           onExpandSidebar={() => setSidebarCollapsed(false)}
+          drafts={drafts}
+          onOpenDraft={handleOpenDraft}
+          onRefreshDrafts={refreshDrafts}
         />
         {!sidebarCollapsed && (
           <button

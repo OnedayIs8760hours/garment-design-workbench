@@ -87,8 +87,14 @@ export async function logoutUser() {
   }
 }
 
-export function getDesignDraft(templateId) {
-  return requestJson(`/designs/${encodeURIComponent(templateId)}`);
+export function listDesignDrafts(templateId) {
+  const query = templateId ? `?template_id=${encodeURIComponent(templateId)}` : "";
+  return requestJson(`/designs${query}`);
+}
+
+export function getDesignDraft(templateId, orderId) {
+  const query = orderId ? `?order_id=${encodeURIComponent(orderId)}` : "";
+  return requestJson(`/designs/${encodeURIComponent(templateId)}${query}`);
 }
 
 export function saveDesignDraft(templateId, design) {

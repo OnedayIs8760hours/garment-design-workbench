@@ -14,7 +14,7 @@ class DesignDraft(Base):
     """按用户和模板保存的设计草稿。"""
 
     __tablename__ = "design_drafts"
-    __table_args__ = (UniqueConstraint("user_id", "template_id", name="uq_design_drafts_user_template"),)
+    __table_args__ = (UniqueConstraint("user_id", "template_id", "order_id", name="uq_design_drafts_user_template_order"),)
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
     user_id: Mapped[int] = mapped_column(
@@ -24,6 +24,7 @@ class DesignDraft(Base):
         index=True,
     )
     template_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    order_id: Mapped[str] = mapped_column(String(128), nullable=False)
     template_version: Mapped[int] = mapped_column(nullable=False, default=1)
     design_data: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())

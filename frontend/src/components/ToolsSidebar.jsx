@@ -26,6 +26,9 @@ export function ToolsSidebar({
   applyAllPanelColors,
   collapsed,
   onExpandSidebar,
+  drafts,
+  onOpenDraft,
+  onRefreshDrafts,
 }) {
   const [activeTool, setActiveTool] = React.useState("fill");
   const [applyToAll, setApplyToAll] = React.useState(false);
@@ -248,7 +251,20 @@ export function ToolsSidebar({
           {["saved", "clipart", "quick"].includes(activeTool) && (
             <section className="tool-panel">
               <h2>{tools.find(([id]) => id === activeTool)?.[2]}</h2>
-              <p className="muted">暂无内容。</p>
+              {activeTool === "saved" ? (
+                <>
+                  <button type="button" onClick={onRefreshDrafts}>刷新草稿箱</button>
+                  <div className="asset-list compact-list">
+                    {drafts.map((draft) => (
+                      <button key={`${draft.template_id}:${draft.order_id}`} type="button" onClick={() => onOpenDraft(draft.order_id)}>
+                        <strong>{draft.order_id}</strong>
+                        <span>{draft.template_id} · {formatDraftDate(draft.updated_at)}</span>
+                      </button>
+                    ))}
+                    {!drafts.length && <span className="muted">暂无已保存草稿。</span>}
+                  </div>
+                </>
+              ) : <p className="muted">暂无内容。</p>}
             </section>
           )}
 
@@ -267,6 +283,12 @@ export function ToolsSidebar({
       )}
     </aside>
   );
+}
+
+function formatDraftDate(value) {
+  if (!value) return "未记录时间";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "未记录时间" : date.toLocaleString();
 }
 
 function clampRgb(value) {

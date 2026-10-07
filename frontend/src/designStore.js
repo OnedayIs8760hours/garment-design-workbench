@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createInitialDesign, draftKey, normalizeDesignColors, template } from "./config.js";
+import { clampElement } from "./model.js";
 import { getAccessToken, saveDesignDraft } from "./api.js";
 
 const removedSampleAssetId = "asset-sample-mark";
@@ -16,15 +17,56 @@ function readDraft() {
     // localStorage 中保存的上一次草稿。
     const rawDraft = localStorage.getItem(draftKey);
     if (!rawDraft || rawDraft.length > maxDraftBytes) return null;
-    const draft = JSON.parse(rawDraft);
-    if (!draft || draft.templateId !== template.templateId || !template.panels[draft.currentPanelId]) return null;
-    draft.assets = (draft.assets ?? []).filter((asset) => asset.assetId !== removedSampleAssetId);
-    Object.values(draft.panels).forEach((panel) => {
-      panel.elements = (panel.elements ?? [])
-        .filter((element) => element.assetId !== removedSampleAssetId)
-        .map((element, index) => ({ ...element, zIndex: index + 1 }));
+    return deserializeDesignState(rawDraft);
+  } catch {
+    return null;
+  }
+}
+
+// 将设计状态转成可持久化的 JSON 快照，切断 Zustand 状态对象与请求体之间的引用。
+export function serializeDesignState(design) {
+  return JSON.parse(JSON.stringify(design));
+}
+
+// 将 localStorage/PostgreSQL/Redis 中的 JSON 快照恢复成可供工作台使用的状态。
+// 同时按当前模板补齐固定元数据，并过滤已移除素材，避免脏数据破坏编辑器。
+export function deserializeDesignState(payload) {
+  try {
+    const parsed = typeof payload === "string" ? JSON.parse(payload) : payload;
+    if (!parsed || typeof parsed !== "object" || parsed.templateId !== template.templateId) return null;
+    if (!parsed.currentPanelId || !template.panels[parsed.currentPanelId]) return null;
+
+    const base = createInitialDesign(template);
+    const restored = {
+      ...base,
+      ...clone(parsed),
+      assets: Array.isArray(parsed.assets)
+        ? parsed.assets.filter((asset) => asset && asset.assetId !== removedSampleAssetId)
+        : [],
+      panels: {},
+    };
+
+    Object.entries(template.panels).forEach(([panelId, templatePanel]) => {
+      const savedPanel = parsed.panels?.[panelId] ?? {};
+      const elements = Array.isArray(savedPanel.elements)
+        ? savedPanel.elements
+            .filter((element) => element && element.assetId !== removedSampleAssetId)
+            .map((element, index) => ({ ...clampElement(element), zIndex: index + 1 }))
+        : [];
+      restored.panels[panelId] = {
+        ...base.panels[panelId],
+        ...savedPanel,
+        logicalSize: templatePanel.logicalSize,
+        templateImage: templatePanel.templateImage,
+        maskImage: templatePanel.maskImage,
+        sourceFile: templatePanel.sourceFile,
+        bounds: templatePanel.bounds,
+        guides: templatePanel.guides,
+        elements,
+      };
     });
-    return normalizeDesignColors(draft);
+
+    return normalizeDesignColors(restored);
   } catch {
     return null;
   }
@@ -81,22 +123,36 @@ export const useDesignStore = create((set, get) => ({
   },
   // 恢复服务端返回的设计，并清空当前撤销历史。
   hydrateDesign(remoteDesign) {
-    if (!remoteDesign || remoteDesign.templateId !== template.templateId || !template.panels[remoteDesign.currentPanelId]) {
+    const restored = deserializeDesignState(remoteDesign);
+    if (!restored) {
       return false;
     }
-    const normalized = normalizeDesignColors(clone(remoteDesign));
-    set({ design: normalized, past: [], selectedId: null, status: "已从服务器恢复" });
+    set({ design: restored, past: [], selectedId: null, status: "已从服务器恢复" });
     try {
-      localStorage.setItem(draftKey, JSON.stringify(normalized));
+      localStorage.setItem(draftKey, JSON.stringify(serializeDesignState(restored)));
     } catch {
       // 本地缓存只是兜底，写入失败不影响服务端数据。
     }
     return true;
   },
+  // 创建同一模板下的新设计，保留旧设计在服务端的独立订单草稿中。
+  startNewDesign() {
+    // 新工作台必须切断旧设计尚未执行的延迟保存，避免旧数据在新设计创建后回写。
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    const next = createInitialDesign(template);
+    set({ design: next, past: [], selectedId: null, status: "新设计未保存" });
+    try {
+      localStorage.setItem(draftKey, JSON.stringify(serializeDesignState(next)));
+    } catch {
+      // 本地缓存只是兜底，写入失败不影响后续云端保存。
+    }
+    return next;
+  },
   // 立即保存本地兜底，并在已登录时保存到 PostgreSQL/Redis。
   async saveNow() {
     // 带最新保存时间的设计对象。
-    const design = { ...get().design, savedAt: new Date().toISOString() };
+    const design = serializeDesignState({ ...get().design, savedAt: new Date().toISOString() });
     try {
       localStorage.setItem(draftKey, JSON.stringify(design));
     } catch {
@@ -109,7 +165,7 @@ export const useDesignStore = create((set, get) => ({
     }
     try {
       const response = await saveDesignDraft(design.templateId, design);
-      const savedDesign = response?.design ?? design;
+      const savedDesign = deserializeDesignState(response?.design ?? design) ?? design;
       set({ design: savedDesign, status: `已保存云端 ${new Date(response.updated_at ?? design.savedAt).toLocaleTimeString()}` });
       return savedDesign;
     } catch {

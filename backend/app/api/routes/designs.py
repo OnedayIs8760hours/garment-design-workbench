@@ -1,12 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.auth import get_current_user
 from app.config.db import get_async_db, get_redis
 from app.models.users import User
-from app.schemas.designs import DesignDraftResponse, DesignDraftUpsertRequest
-from app.services.design_service import DesignServiceError, load_design_draft, save_design_draft
+from app.schemas.designs import DesignDraftResponse, DesignDraftSummary, DesignDraftUpsertRequest
+from app.services.design_service import (
+    DesignServiceError,
+    list_user_design_drafts,
+    load_design_draft,
+    save_design_draft,
+)
 
 
 router = APIRouter()
@@ -22,9 +27,25 @@ def design_service_exception(error: DesignServiceError) -> HTTPException:
     return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Design request failed")
 
 
+@router.get("", response_model=list[DesignDraftSummary])
+async def list_designs(
+    template_id: str | None = Query(default=None, min_length=1, max_length=128),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+) -> list[dict]:
+    """读取当前用户的个人草稿箱摘要列表。
+
+    输入：可选模板 ID 和 Bearer token。
+    输出：按最近更新时间倒序排列的订单号、模板和更新时间列表。
+    功能：只返回轻量摘要，打开具体草稿时再读取完整 JSON。
+    """
+    return await list_user_design_drafts(db, current_user.id, template_id)
+
+
 @router.get("/{template_id}", response_model=DesignDraftResponse | None)
 async def get_design(
     template_id: str,
+    order_id: str | None = Query(default=None, min_length=1, max_length=128),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_db),
     redis: Redis = Depends(get_redis),
@@ -33,9 +54,9 @@ async def get_design(
 
     输入：路径参数 ``template_id`` 和 Bearer token。
     输出：已有草稿时返回设计 JSON 和保存时间；没有草稿时返回 ``null``。
-    功能：优先读取 Redis，缓存未命中时查询 PostgreSQL 并回填缓存。
+    功能：按订单号读取指定草稿；不传订单号时读取该模板最近更新的草稿。
     """
-    return await load_design_draft(db, redis, current_user.id, template_id)
+    return await load_design_draft(db, redis, current_user.id, template_id, order_id)
 
 
 @router.put("/{template_id}", response_model=DesignDraftResponse)
@@ -50,11 +71,14 @@ async def put_design(
 
     输入：路径参数 ``template_id``、包含完整设计 JSON 的请求体和 Bearer token。
     输出：保存后的设计 JSON、模板版本和 PostgreSQL 创建/更新时间。
-    功能：以用户和模板为唯一键 upsert 到 PostgreSQL，再更新 Redis 缓存。
+    功能：以用户、模板和订单号为唯一键 upsert 到 PostgreSQL，再更新 Redis 缓存。
     """
     design = payload.design
     if design.get("templateId") != template_id:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Template ID does not match design")
+    order_id = str(design.get("orderId") or "").strip()
+    if not order_id:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Design order ID is required")
 
     try:
         return await save_design_draft(
@@ -62,6 +86,7 @@ async def put_design(
             redis,
             current_user.id,
             template_id,
+            order_id,
             int(design.get("templateVersion") or 1),
             design,
         )
