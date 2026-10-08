@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 from typing import Any
 
 from redis.asyncio import Redis
@@ -14,6 +15,7 @@ from app.crud.designs import (
     upsert_design_draft,
 )
 from app.models.designs import DesignDraft
+from app.services.object_storage import ObjectStorageError, create_download_url
 
 
 class DesignServiceError(Exception):
@@ -68,7 +70,7 @@ async def load_design_draft(
     try:
         cached = await redis.get(cache_key)
         if cached:
-            return json.loads(cached)
+            return await attach_runtime_asset_urls(json.loads(cached), user_id)
     except (RedisError, json.JSONDecodeError):
         # 缓存不可用或内容损坏时继续读取数据库，不能阻塞设计恢复。
         pass
@@ -82,7 +84,7 @@ async def load_design_draft(
         await redis.set(cache_key, json.dumps(payload, default=_json_default), ex=Config.DESIGN_CACHE_TTL_SECONDS)
     except RedisError:
         pass
-    return payload
+    return await attach_runtime_asset_urls(payload, user_id)
 
 
 async def save_design_draft(
@@ -95,13 +97,14 @@ async def save_design_draft(
     design_data: dict[str, Any],
 ) -> dict[str, Any]:
     """先写入 PostgreSQL，再更新 Redis 缓存，返回持久化后的草稿。"""
+    persistent_design_data = strip_runtime_asset_data(design_data)
     draft = await upsert_design_draft(
         db,
         user_id=user_id,
         template_id=template_id,
         order_id=order_id,
         template_version=template_version,
-        design_data=design_data,
+        design_data=persistent_design_data,
     )
     payload = serialize_draft(draft)
     try:
@@ -113,7 +116,42 @@ async def save_design_draft(
     except RedisError:
         # 数据库已经保存成功，下一次读取会回源数据库并尝试回填缓存。
         pass
-    return payload
+    return await attach_runtime_asset_urls(payload, user_id)
+
+
+def strip_runtime_asset_data(design_data: dict[str, Any]) -> dict[str, Any]:
+    """移除不应写入 PostgreSQL/Redis 的图片内容和临时签名 URL。
+
+    输入：前端提交的完整设计状态。
+    输出：适合写入 JSONB 的独立副本。
+    功能：对象存储素材只保留 ``objectKey`` 等引用；内部纯色素材只保留颜色和尺寸，
+    从而保证 ``design_data`` 不再包含 Base64 图片或会过期的 URL。
+    """
+    persistent = deepcopy(design_data)
+    for asset in persistent.get("assets") or []:
+        if not isinstance(asset, dict):
+            continue
+        asset.pop("dataUrl", None)
+        asset.pop("url", None)
+    return persistent
+
+
+async def attach_runtime_asset_urls(payload: dict[str, Any], user_id: int) -> dict[str, Any]:
+    """为数据库中的 RustFS 对象引用附加临时 URL，仅用于本次 API 响应。"""
+    hydrated = deepcopy(payload)
+    design = hydrated.get("design") or {}
+    for asset in design.get("assets") or []:
+        if not isinstance(asset, dict):
+            continue
+        object_key = asset.get("objectKey") or asset.get("object_key")
+        if not object_key:
+            continue
+        try:
+            asset["dataUrl"] = await create_download_url(user_id, str(object_key))
+        except ObjectStorageError:
+            # 单个素材不可用不应阻止整份草稿恢复；前端会显示该素材缺失。
+            asset["storageUnavailable"] = True
+    return hydrated
 
 
 async def remove_design_draft(

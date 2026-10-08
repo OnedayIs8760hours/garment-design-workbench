@@ -12,6 +12,7 @@ SDS Design 是一个基于 Vite + React 的球衣裁片定制工作台，用于�
 - 裁片底色：使用色板或 RGB 取色器设置当前裁片底色，也可以一键应用到所有裁片。
 - 图层管理：查看当前裁片图层，支持调整图层上下顺序和删除选中元素。
 - 草稿保存：登录后自动保存到 PostgreSQL，Redis 缓存最近草稿；草稿箱可列出并打开个人历史草稿继续编辑；浏览器 `localStorage` 仅作为网络异常时的兜底。
+- RustFS 素材接口：后端通过 S3 兼容 API 上传、读取、生成临时下载地址和删除用户图片；草稿可以只保存 `assetId`、`objectKey` 等素材引用。
 - 导出设计包：导出 `manifest.json` 和素材文件，供后续 Photoshop 脚本还原。
 - 预览：提供裁片预览、快速成衣预览和基于 GLB/UV 映射的 3D 预览。
 
@@ -288,6 +289,21 @@ npm run dev -- --port 5173
 ### 刷新后旧设计还在
 
 登录用户的草稿保存在后端 PostgreSQL，Redis 用于加速读取；浏览器 `localStorage` 仅作为网络异常时的本地兜底。可以在页面内重做/清空，也可以通过后端设计草稿接口管理数据。
+
+### RustFS 图片存储接口
+
+后端使用 RustFS 的 S3 兼容接口保存设计图片。先将 `backend/.env.example` 复制为本地环境配置，并填写 `RUSTFS_ACCESS_KEY`、`RUSTFS_SECRET_KEY`；默认地址为 `http://127.0.0.1:9000`，默认桶为 `sds-design`。
+
+受保护的接口如下：
+
+- `POST /api/assets`：上传 PNG/JPEG/WebP/GIF，表单字段为 `file` 和可选 `order_id`。
+- `GET /api/assets/info?object_key=...`：读取素材元数据和临时 URL。
+- `GET /api/assets/download-url?object_key=...`：生成临时下载 URL。
+- `GET /api/assets/content?object_key=...`：通过后端鉴权后流式读取图片。
+- `DELETE /api/assets?object_key=...`：删除当前用户的图片。
+- `GET /api/assets/health`：检查 RustFS 桶是否可访问。
+
+对象键固定在 `users/{user_id}/designs/{order_id}/assets/` 下，后端会拒绝访问其他用户目录。核心实现位于 `backend/app/services/object_storage.py`，同步 S3 SDK 调用会放入线程池，不阻塞 FastAPI 异步请求。
 
 ### Photoshop 找不到 JSON
 

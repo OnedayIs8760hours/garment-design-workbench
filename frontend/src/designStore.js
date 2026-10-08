@@ -25,7 +25,9 @@ function readDraft() {
 
 // 将设计状态转成可持久化的 JSON 快照，切断 Zustand 状态对象与请求体之间的引用。
 export function serializeDesignState(design) {
-  return JSON.parse(JSON.stringify(design));
+  const snapshot = JSON.parse(JSON.stringify(design));
+  snapshot.assets = (snapshot.assets ?? []).map(({ dataUrl, url, storageUnavailable, ...asset }) => asset);
+  return snapshot;
 }
 
 // 将 localStorage/PostgreSQL/Redis 中的 JSON 快照恢复成可供工作台使用的状态。
@@ -41,7 +43,9 @@ export function deserializeDesignState(payload) {
       ...base,
       ...clone(parsed),
       assets: Array.isArray(parsed.assets)
-        ? parsed.assets.filter((asset) => asset && asset.assetId !== removedSampleAssetId)
+        ? parsed.assets
+            .filter((asset) => asset && asset.assetId !== removedSampleAssetId)
+            .map(restoreRuntimeAssetData)
         : [],
       panels: {},
     };
@@ -151,29 +155,41 @@ export const useDesignStore = create((set, get) => ({
   },
   // 立即保存本地兜底，并在已登录时保存到 PostgreSQL/Redis。
   async saveNow() {
-    // 带最新保存时间的设计对象。
-    const design = serializeDesignState({ ...get().design, savedAt: new Date().toISOString() });
+    // runtimeDesign 保留本次会话的临时图片 URL；snapshot 才是持久化 JSON。
+    const runtimeDesign = { ...get().design, savedAt: new Date().toISOString() };
+    const snapshot = serializeDesignState(runtimeDesign);
     try {
-      localStorage.setItem(draftKey, JSON.stringify(design));
+      localStorage.setItem(draftKey, JSON.stringify(snapshot));
     } catch {
       // 大图片素材可能超过浏览器配额，服务端保存仍可继续。
     }
-    set({ design, status: "保存中..." });
+    set({ design: runtimeDesign, status: "保存中..." });
     if (!getAccessToken()) {
-      set({ status: `已保存本地草稿 ${new Date(design.savedAt).toLocaleTimeString()}` });
-      return design;
+      set({ status: `已保存本地草稿 ${new Date(runtimeDesign.savedAt).toLocaleTimeString()}` });
+      return runtimeDesign;
     }
     try {
-      const response = await saveDesignDraft(design.templateId, design);
-      const savedDesign = deserializeDesignState(response?.design ?? design) ?? design;
-      set({ design: savedDesign, status: `已保存云端 ${new Date(response.updated_at ?? design.savedAt).toLocaleTimeString()}` });
+      const response = await saveDesignDraft(snapshot.templateId, snapshot);
+      const savedDesign = deserializeDesignState(response?.design ?? runtimeDesign) ?? runtimeDesign;
+      set({ design: savedDesign, status: `已保存云端 ${new Date(response.updated_at ?? runtimeDesign.savedAt).toLocaleTimeString()}` });
       return savedDesign;
     } catch {
       set({ status: "本地已保存，云端保存失败" });
-      return design;
+      return runtimeDesign;
     }
   },
 }));
+
+function restoreRuntimeAssetData(asset) {
+  if (asset.dataUrl || !asset.internal || !asset.color || typeof document === "undefined") return asset;
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Number(asset.originalWidth) || 1);
+  canvas.height = Math.max(1, Number(asset.originalHeight) || 1);
+  const context = canvas.getContext("2d");
+  context.fillStyle = asset.color;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  return { ...asset, dataUrl: canvas.toDataURL("image/png") };
+}
 
 // 获取当前正在编辑的裁片状态。
 export function currentPanel(design) {

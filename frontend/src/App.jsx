@@ -13,7 +13,16 @@ import { activeTemplateId, resolveTemplateId, selectedTemplateIdFromLocation, te
 import { LoginPrototype } from "./pages/LoginPrototype.jsx";
 import { RegisterPrototype } from "./pages/RegisterPrototype.jsx";
 import { PersonalHome } from "./pages/PersonalHome.jsx";
-import { clearAccessToken, getAccessToken, getCurrentUser, getDesignDraft, listDesignDrafts, logoutUser } from "./api.js";
+import {
+  clearAccessToken,
+  deleteDesignAsset,
+  getAccessToken,
+  getCurrentUser,
+  getDesignDraft,
+  listDesignDrafts,
+  logoutUser,
+  uploadDesignAsset,
+} from "./api.js";
 
 // 应用根组件，负责连接状态仓库、编辑器和预览区域。
 export function App() {
@@ -363,29 +372,26 @@ function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
 
   const applyAllPanelColors = (color) => applyPanelColor(color, Object.keys(design.panels));
 
-  // 处理图片上传，将文件读成 dataUrl 后加入素材清单。
-  const onUpload = (event) => {
+  // 处理图片上传：原文件写入 RustFS，设计状态只保留对象键和临时预览 URL。
+  const onUpload = async (event) => {
     // 上传控件选中的第一个文件。
     const file = event.target.files?.[0];
     if (!file) return;
-    // 浏览器文件读取器。
-    const reader = new FileReader();
-    reader.onload = () => {
-      // 临时图片对象，用于读取原始宽高。
-      const image = new Image();
-      image.onload = () => {
-        // 上传后写入素材清单的素材对象。
-        const asset = createUploadedAsset(file, reader.result, image);
-        addImage(asset);
-      };
-      image.onerror = () => {
-        // 读取宽高失败时仍然保留素材内容。
-        const asset = createUploadedAsset(file, reader.result);
-        addImage(asset);
-      };
-      image.src = reader.result;
-    };
-    reader.readAsDataURL(file);
+    event.target.value = "";
+    const localUrl = URL.createObjectURL(file);
+    useDesignStore.setState({ status: "正在上传图片到 RustFS..." });
+    try {
+      const [storage, image] = await Promise.all([
+        uploadDesignAsset(file, design.orderId),
+        loadBrowserImage(localUrl).catch(() => null),
+      ]);
+      addImage(createUploadedAsset(file, storage, image));
+      useDesignStore.setState({ status: "图片已保存到 RustFS" });
+    } catch (error) {
+      useDesignStore.setState({ status: error?.message || "图片上传失败" });
+    } finally {
+      URL.revokeObjectURL(localUrl);
+    }
   };
 
   // 更新指定元素的属性。
@@ -423,8 +429,9 @@ function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
   };
 
   // 清空素材清单，并删除画布上所有图片元素。
-  const clearAssets = () => {
-    if (!design.assets.some((asset) => !asset.internal)) return;
+  const clearAssets = async () => {
+    const removedAssets = design.assets.filter((asset) => !asset.internal);
+    if (!removedAssets.length) return;
     commit((draft) => {
       draft.assets = draft.assets.filter((asset) => asset.internal);
       Object.values(draft.panels).forEach((panel) => {
@@ -435,6 +442,9 @@ function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
       });
     });
     select(null);
+    await Promise.allSettled(
+      removedAssets.filter((asset) => asset.objectKey).map((asset) => deleteDesignAsset(asset.objectKey)),
+    );
   };
 
   // 调整图层顺序，direction 为 1 表示上移，-1 表示下移。
@@ -522,10 +532,10 @@ function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
 }
 
 // 根据上传文件生成素材对象。
-function createUploadedAsset(file, dataUrl, image) {
+function createUploadedAsset(file, storage, image) {
   return {
     // 素材唯一 ID。
-    assetId: `asset-${Date.now()}`,
+    assetId: storage.asset_id,
     // 素材类型。
     type: "image",
     // 原始文件名。
@@ -534,8 +544,14 @@ function createUploadedAsset(file, dataUrl, image) {
     previewFile: file.name,
     // 导出时使用的源文件名。
     sourceFile: file.name,
-    // 浏览器里保存的图片内容。
-    dataUrl,
+    // RustFS 对象引用；dataUrl 是本次会话使用的临时签名 URL，不会写入数据库。
+    objectKey: storage.object_key,
+    bucket: storage.bucket,
+    storageProvider: "rustfs",
+    contentType: storage.content_type,
+    size: storage.size,
+    etag: storage.etag,
+    dataUrl: storage.url,
     // 原图宽度，用于初始等比缩放。
     originalWidth: image?.naturalWidth,
     // 原图高度，用于初始等比缩放。
@@ -543,6 +559,15 @@ function createUploadedAsset(file, dataUrl, image) {
     // 上传时间。
     uploadedAt: new Date().toISOString(),
   };
+}
+
+function loadBrowserImage(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = src;
+  });
 }
 
 function createColorCanvasDataUrl(color, width, height) {

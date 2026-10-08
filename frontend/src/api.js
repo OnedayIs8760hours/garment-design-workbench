@@ -19,7 +19,8 @@ function storeAccessToken(token, remember) {
 
 async function requestJson(path, options = {}) {
   const headers = new Headers(options.headers);
-  if (options.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
+  if (options.body && !isFormData && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
 
   const token = getAccessToken();
   if (token && !headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
@@ -102,6 +103,21 @@ export function saveDesignDraft(templateId, design) {
     method: "PUT",
     body: JSON.stringify({ design }),
   });
+}
+
+export function uploadDesignAsset(file, orderId) {
+  const form = new FormData();
+  form.append("file", file);
+  if (orderId) form.append("order_id", orderId);
+  return requestJson("/assets", { method: "POST", body: form });
+}
+
+export function getDesignAssetInfo(objectKey) {
+  return requestJson(`/assets/info?object_key=${encodeURIComponent(objectKey)}`);
+}
+
+export function deleteDesignAsset(objectKey) {
+  return requestJson(`/assets?object_key=${encodeURIComponent(objectKey)}`, { method: "DELETE" });
 }
 
 export function deleteDesignDraft(templateId, orderId) {
