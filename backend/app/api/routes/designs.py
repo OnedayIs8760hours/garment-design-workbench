@@ -5,11 +5,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.dependencies.auth import get_current_user
 from app.config.db import get_async_db, get_redis
 from app.models.users import User
-from app.schemas.designs import DesignDraftResponse, DesignDraftSummary, DesignDraftUpsertRequest
+from app.schemas.designs import (
+    DesignDraftBatchDeleteRequest,
+    DesignDraftBatchDeleteResponse,
+    DesignDraftResponse,
+    DesignDraftSummary,
+    DesignDraftUpsertRequest,
+)
 from app.services.design_service import (
     DesignServiceError,
     list_user_design_drafts,
     load_design_draft,
+    remove_design_draft,
+    remove_design_drafts,
     save_design_draft,
 )
 
@@ -25,6 +33,19 @@ def design_service_exception(error: DesignServiceError) -> HTTPException:
             detail="Design cache service is unavailable",
         )
     return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Design request failed")
+
+
+@router.delete("", response_model=DesignDraftBatchDeleteResponse)
+async def delete_designs(
+    payload: DesignDraftBatchDeleteRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+    redis: Redis = Depends(get_redis),
+) -> dict[str, int]:
+    """批量删除当前用户选中的草稿，最多一次删除 100 份。"""
+    draft_keys = [(draft.template_id, draft.order_id) for draft in payload.drafts]
+    deleted_count = await remove_design_drafts(db, redis, current_user.id, draft_keys)
+    return {"deleted_count": deleted_count}
 
 
 @router.get("", response_model=list[DesignDraftSummary])
@@ -92,3 +113,17 @@ async def put_design(
         )
     except DesignServiceError as error:
         raise design_service_exception(error) from error
+
+
+@router.delete("/{template_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_design(
+    template_id: str,
+    order_id: str = Query(min_length=1, max_length=128),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+    redis: Redis = Depends(get_redis),
+) -> None:
+    """永久删除当前用户指定模板和订单号的草稿。"""
+    deleted = await remove_design_draft(db, redis, current_user.id, template_id, order_id)
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Design draft not found")

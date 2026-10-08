@@ -28,3 +28,22 @@ class DesignDraftSummary(BaseModel):
     order_id: str
     template_version: int
     updated_at: datetime
+
+
+class DesignDraftDeleteItem(BaseModel):
+    """批量删除时用于定位一份草稿。"""
+
+    template_id: str = Field(min_length=1, max_length=128)
+    order_id: str = Field(min_length=1, max_length=128)
+
+
+class DesignDraftBatchDeleteRequest(BaseModel):
+    """批量删除草稿的请求体。"""
+
+    drafts: list[DesignDraftDeleteItem] = Field(min_length=1, max_length=100)
+
+
+class DesignDraftBatchDeleteResponse(BaseModel):
+    """批量删除草稿的结果。"""
+
+    deleted_count: int

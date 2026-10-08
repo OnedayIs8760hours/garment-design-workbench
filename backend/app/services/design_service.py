@@ -6,7 +6,13 @@ from redis.exceptions import RedisError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config.config import Config
-from app.crud.designs import get_design_draft, list_design_drafts, upsert_design_draft
+from app.crud.designs import (
+    delete_design_draft,
+    delete_design_drafts,
+    get_design_draft,
+    list_design_drafts,
+    upsert_design_draft,
+)
 from app.models.designs import DesignDraft
 
 
@@ -108,6 +114,51 @@ async def save_design_draft(
         # 数据库已经保存成功，下一次读取会回源数据库并尝试回填缓存。
         pass
     return payload
+
+
+async def remove_design_draft(
+    db: AsyncSession,
+    redis: Redis,
+    user_id: int,
+    template_id: str,
+    order_id: str,
+) -> bool:
+    """删除数据库草稿，并清除订单缓存和该模板的最近草稿缓存。"""
+    deleted = await delete_design_draft(db, user_id, template_id, order_id)
+    try:
+        await redis.delete(
+            Config.get_design_draft_key(str(user_id), template_id, order_id),
+            Config.get_design_draft_key(str(user_id), template_id),
+        )
+    except RedisError:
+        # 数据库删除已经成功，缓存会在到期后自然失效。
+        pass
+    return deleted
+
+
+async def remove_design_drafts(
+    db: AsyncSession,
+    redis: Redis,
+    user_id: int,
+    draft_keys: list[tuple[str, str]],
+) -> int:
+    """批量删除数据库草稿并清除涉及的订单缓存和最近草稿缓存。"""
+    unique_draft_keys = list(dict.fromkeys(draft_keys))
+    deleted_count = await delete_design_drafts(db, user_id, unique_draft_keys)
+    cache_keys = {
+        cache_key
+        for template_id, order_id in unique_draft_keys
+        for cache_key in (
+            Config.get_design_draft_key(str(user_id), template_id, order_id),
+            Config.get_design_draft_key(str(user_id), template_id),
+        )
+    }
+    if cache_keys:
+        try:
+            await redis.delete(*cache_keys)
+        except RedisError:
+            pass
+    return deleted_count
 
 
 def _json_default(value: Any) -> str:

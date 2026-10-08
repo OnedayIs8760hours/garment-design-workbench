@@ -103,3 +103,19 @@ export function saveDesignDraft(templateId, design) {
     body: JSON.stringify({ design }),
   });
 }
+
+export function deleteDesignDraft(templateId, orderId) {
+  const query = `?order_id=${encodeURIComponent(orderId)}`;
+  return requestJson(`/designs/${encodeURIComponent(templateId)}${query}`, {
+    method: "DELETE",
+  });
+}
+
+export function deleteDesignDrafts(drafts) {
+  return requestJson("/designs", {
+    method: "DELETE",
+    body: JSON.stringify({
+      drafts: drafts.map((draft) => ({ template_id: draft.template_id, order_id: draft.order_id })),
+    }),
+  });
+}
