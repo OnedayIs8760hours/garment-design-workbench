@@ -6,3 +6,4 @@ frontend/dist/
 backend/target/
 output/
 *.log
+graphify-out/
