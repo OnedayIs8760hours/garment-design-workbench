@@ -25,7 +25,7 @@ S:\ps-save\SDS-design\photoshop\export-psd-json.jsx
 源脚本：
 
 ```text
-C:\Users\Woda\Downloads\111.jsx
+S:\ps-save\SDS-design\photoshop\export-psd-json.jsx
 ```
 
 运行位置：
