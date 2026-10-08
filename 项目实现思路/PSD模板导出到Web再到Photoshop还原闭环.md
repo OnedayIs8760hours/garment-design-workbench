@@ -9,7 +9,7 @@
 ## 当前已验证链路
 
 ```text
-C:\Users\Woda\Downloads\111.jsx
+S:\ps-save\SDS-design\photoshop\export-psd-json.jsx
   -> Photoshop 中运行
   -> 生成 S:\ps工作目录\外链智能对象实验
   -> 把模板数据接入 Web 代码
