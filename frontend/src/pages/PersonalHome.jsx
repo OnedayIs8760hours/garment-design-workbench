@@ -82,7 +82,7 @@ export function PersonalHome({ user, onOpenDraft, onNewDesign, onSignOut }) {
       <header className="personal-nav">
         <div className="personal-brand">
           <span className="personal-brand-mark" aria-hidden="true"><i /><i /><i /></span>
-          <span>SDS Design</span>
+          <span>woda Design</span>
         </div>
         <div className="personal-user">
           <span className="personal-avatar" aria-hidden="true">{(user?.username || "D").slice(0, 1).toUpperCase()}</span>
@@ -169,7 +169,7 @@ function DraftCard({ draft, index, selected, deleting, onToggle, onOpen, onDelet
         <span className="sr-only">选择草稿 {draft.order_id}</span>
       </label>
       <button type="button" className="draft-preview" onClick={onOpen} aria-label={`打开草稿 ${draft.order_id}`}>
-        {preview ? <img src={preview} alt="" /> : <span className="draft-preview-placeholder">SDS</span>}
+        {preview ? <img src={preview} alt="" /> : <span className="draft-preview-placeholder">woda</span>}
         <span className="draft-open-indicator"><ArrowRight size={17} aria-hidden="true" /></span>
       </button>
       <div className="draft-card-body">

@@ -1,6 +1,6 @@
-﻿# SDS Design
+﻿# woda Design
 
-SDS Design 是一个基于 Vite + React 的球衣裁片定制工作台，用于在浏览器里编辑服装裁片、上传图片素材、添加姓名/号码文字、设置裁片底色、预览 2D/3D 效果，并导出可供 Photoshop 脚本还原的设计包。
+woda Design 是一个基于 Vite + React 的球衣裁片定制工作台，用于在浏览器里编辑服装裁片、上传图片素材、添加姓名/号码文字、设置裁片底色、预览 2D/3D 效果，并导出可供 Photoshop 脚本还原的设计包。
 
 当前项目内置 `M-2XL` 模板，包含前片、后片、领条、左右袖、左右袖条、肩片等裁片资源，以及对应的 3D UV 映射数据。
 
@@ -98,7 +98,7 @@ uv run pytest
 ## 项目结构
 
 ```text
-SDS-design/
+woda-design/
 ├─ backend/                      # FastAPI 后端服务
 │  ├─ app/                       # Python 应用源码
 │  ├─ tests/                     # 后端测试
@@ -167,7 +167,7 @@ design-package-ORDER-xxxx/
 先解压 Web 端导出的 zip，然后运行：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File S:\ps-save\SDS-design\photoshop\run-restore-front.ps1 -PickFolder
+powershell -ExecutionPolicy Bypass -File <项目根目录>\photoshop\run-restore-front.ps1 -PickFolder
 ```
 
 在弹窗中选择已经解压的设计包目录，例如：
@@ -186,7 +186,7 @@ assets\
 ### 方式二：直接传入设计包目录
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File S:\ps-save\SDS-design\photoshop\run-restore-front.ps1 -PackageFolder "E:\download\design-package-ORDER-xxxx"
+powershell -ExecutionPolicy Bypass -File <项目根目录>\photoshop\run-restore-front.ps1 -PackageFolder "E:\download\design-package-ORDER-xxxx"
 ```
 
 这种方式适合重复运行同一个设计包。
@@ -292,7 +292,7 @@ npm run dev -- --port 5173
 
 ### RustFS 图片存储接口
 
-后端使用 RustFS 的 S3 兼容接口保存设计图片。先将 `backend/.env.example` 复制为本地环境配置，并填写 `RUSTFS_ACCESS_KEY`、`RUSTFS_SECRET_KEY`；默认地址为 `http://127.0.0.1:9000`，默认桶为 `sds-design`。
+后端使用 RustFS 的 S3 兼容接口保存设计图片。先将 `backend/.env.example` 复制为本地环境配置，并填写 `RUSTFS_ACCESS_KEY`、`RUSTFS_SECRET_KEY`；默认地址为 `http://127.0.0.1:9000`，默认桶为 `woda-design`。
 
 受保护的接口如下：
 

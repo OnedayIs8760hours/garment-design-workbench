@@ -63,7 +63,7 @@ assert.equal(createExportJson(design).panels.front.elements[1].fontFamily, "\"NF
 assert.equal(textFonts["font-nfl-seahawks-flat"].label, "NFL Seattle Seahawks Flat");
 assert.equal(createExportJson(design).panels.front.guides[1].id, "center_line");
 assert.equal(template.productId, "PRODUCT-M-2XL");
-assert.equal(template.draftKey, "sds-design-M-2XL-panels-v1");
+assert.equal(template.draftKey, "woda-design-M-2XL-panels-v1");
 assert.equal(template.threeD.defaultModelUrl, "/models/football-jersey.glb");
 assert.deepEqual(template.threeD.uvRects.front, [0.450439453125, 0.5546875, 0.88720703125, 0.9921875]);
 assert.equal(Object.keys(template.panels).length, 8);

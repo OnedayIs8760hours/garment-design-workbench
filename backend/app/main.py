@@ -7,7 +7,7 @@ from app.api.router import router
 from app.config.config import Config
 
 
-app = FastAPI(title="SDS Design Backend", version="0.1.0")
+app = FastAPI(title="woda Design Backend", version="0.1.0")
 app.add_middleware(
   CORSMiddleware,
   allow_origins=Config.CORS_ORIGINS,
@@ -28,6 +28,6 @@ def health() -> dict[str, str]:
   """
   return {
     "status": "ok",
-    "service": "sds-design-backend",
+    "service": "woda-design-backend",
     "time": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
   }

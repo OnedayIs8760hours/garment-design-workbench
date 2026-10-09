@@ -37,7 +37,7 @@ class Config:
     RUSTFS_ENDPOINT_URL = os.getenv("RUSTFS_ENDPOINT_URL", "http://127.0.0.1:9000").rstrip("/")
     RUSTFS_ACCESS_KEY = os.getenv("RUSTFS_ACCESS_KEY")
     RUSTFS_SECRET_KEY = os.getenv("RUSTFS_SECRET_KEY")
-    RUSTFS_BUCKET = os.getenv("RUSTFS_BUCKET", "sds-design")
+    RUSTFS_BUCKET = os.getenv("RUSTFS_BUCKET", "woda-design")
     RUSTFS_REGION = os.getenv("RUSTFS_REGION", "us-east-1")
     RUSTFS_ADDRESSING_STYLE = os.getenv("RUSTFS_ADDRESSING_STYLE", "path")
     RUSTFS_PRESIGNED_URL_EXPIRES_SECONDS = int(os.getenv("RUSTFS_PRESIGNED_URL_EXPIRES_SECONDS", 900))

@@ -9,7 +9,7 @@
 ## 当前已验证链路
 
 ```text
-S:\ps-save\SDS-design\photoshop\export-psd-json.jsx
+<项目根目录>\photoshop\export-psd-json.jsx
   -> Photoshop 中运行
   -> 生成 S:\ps工作目录\外链智能对象实验
   -> 把模板数据接入 Web 代码
@@ -25,7 +25,7 @@ S:\ps-save\SDS-design\photoshop\export-psd-json.jsx
 源脚本：
 
 ```text
-S:\ps-save\SDS-design\photoshop\export-psd-json.jsx
+<项目根目录>\photoshop\export-psd-json.jsx
 ```
 
 运行位置：
@@ -85,13 +85,13 @@ front-mask.png  2796 x 2800
 Web 项目目录：
 
 ```text
-S:\ps-save\SDS-design
+<项目根目录>
 ```
 
 模板资源复制到：
 
 ```text
-S:\ps-save\SDS-design\public\templates\M-2XL
+<项目根目录>\public\templates\M-2XL
   panels\front.png
   masks\front-mask.png
 ```
@@ -99,14 +99,14 @@ S:\ps-save\SDS-design\public\templates\M-2XL
 模板 JSON 复制到：
 
 ```text
-S:\ps-save\SDS-design\src\templates\M-2XL.template.json
+<项目根目录>\src\templates\M-2XL.template.json
 ```
 
 前端配置入口：
 
 ```text
-S:\ps-save\SDS-design\src\model.js
-S:\ps-save\SDS-design\src\config.js
+<项目根目录>\src\model.js
+<项目根目录>\src\config.js
 ```
 
 当前做法：
@@ -123,7 +123,7 @@ S:\ps-save\SDS-design\src\config.js
 中间编辑画布：
 
 ```text
-S:\ps-save\SDS-design\src\components\PanelStage.jsx
+<项目根目录>\src\components\PanelStage.jsx
 ```
 
 负责：
@@ -136,7 +136,7 @@ S:\ps-save\SDS-design\src\components\PanelStage.jsx
 右侧预览：
 
 ```text
-S:\ps-save\SDS-design\src\components\QuickGarmentPreview.jsx
+<项目根目录>\src\components\QuickGarmentPreview.jsx
 ```
 
 负责：
@@ -231,19 +231,19 @@ E:\download\order-design (1).json
 脚本目录：
 
 ```text
-S:\ps-save\SDS-design\photoshop
+<项目根目录>\photoshop
 ```
 
 主脚本：
 
 ```text
-S:\ps-save\SDS-design\photoshop\restore-front-smart-object.jsx
+<项目根目录>\photoshop\restore-front-smart-object.jsx
 ```
 
 运行脚本：
 
 ```text
-S:\ps-save\SDS-design\photoshop\run-restore-front.ps1
+<项目根目录>\photoshop\run-restore-front.ps1
 ```
 
 当前固定输入：
@@ -257,7 +257,7 @@ JSON: E:\download\order-design (1).json
 运行命令：
 
 ```powershell
-S:\ps-save\SDS-design\photoshop\run-restore-front.ps1
+<项目根目录>\photoshop\run-restore-front.ps1
 ```
 
 脚本执行流程：
@@ -523,18 +523,18 @@ S:\ps工作目录\外链智能对象实验\masks\front-mask.png
 Web 模板数据：
 
 ```text
-S:\ps-save\SDS-design\src\templates\M-2XL.template.json
-S:\ps-save\SDS-design\public\templates\M-2XL\panels\front.png
-S:\ps-save\SDS-design\public\templates\M-2XL\masks\front-mask.png
+<项目根目录>\src\templates\M-2XL.template.json
+<项目根目录>\public\templates\M-2XL\panels\front.png
+<项目根目录>\public\templates\M-2XL\masks\front-mask.png
 ```
 
 Web 关键代码：
 
 ```text
-S:\ps-save\SDS-design\src\model.js
-S:\ps-save\SDS-design\src\config.js
-S:\ps-save\SDS-design\src\components\PanelStage.jsx
-S:\ps-save\SDS-design\src\components\QuickGarmentPreview.jsx
+<项目根目录>\src\model.js
+<项目根目录>\src\config.js
+<项目根目录>\src\components\PanelStage.jsx
+<项目根目录>\src\components\QuickGarmentPreview.jsx
 ```
 
 订单 JSON：
@@ -546,8 +546,8 @@ E:\download\order-design (1).json
 Photoshop 还原脚本：
 
 ```text
-S:\ps-save\SDS-design\photoshop\restore-front-smart-object.jsx
-S:\ps-save\SDS-design\photoshop\run-restore-front.ps1
+<项目根目录>\photoshop\restore-front-smart-object.jsx
+<项目根目录>\photoshop\run-restore-front.ps1
 ```
 
 目标 PSD：

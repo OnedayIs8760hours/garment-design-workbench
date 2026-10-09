@@ -48,7 +48,7 @@ export const templateOptions = Object.entries(templateDefinitions).map(([templat
   label: definition.label ?? templateId,
 }));
 
-export const templateSelectionStorageKey = "sds-design-active-template-id";
+export const templateSelectionStorageKey = "woda-design-active-template-id";
 
 export function resolveTemplateId(templateId) {
   return templateDefinitions[templateId] ? templateId : activeTemplateId;

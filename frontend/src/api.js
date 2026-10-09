@@ -1,6 +1,6 @@
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
-const ACCESS_TOKEN_KEY = "sds_design_access_token";
-const SESSION_TOKEN_KEY = "sds_design_session_token";
+const ACCESS_TOKEN_KEY = "woda_design_access_token";
+const SESSION_TOKEN_KEY = "woda_design_session_token";
 
 export function getAccessToken() {
   return localStorage.getItem(ACCESS_TOKEN_KEY) || sessionStorage.getItem(SESSION_TOKEN_KEY);

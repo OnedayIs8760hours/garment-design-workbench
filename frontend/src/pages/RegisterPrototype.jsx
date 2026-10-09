@@ -48,15 +48,15 @@ export function RegisterPrototype({ onBackToLogin, initialUsername = "" }) {
 
   return (
     <main className="login-page">
-      <section className="login-hero" aria-label="SDS Design register">
+      <section className="login-hero" aria-label="woda Design register">
         <div className="login-copy">
-          <a className="login-brand" href="./" aria-label="SDS Design editor">
+          <a className="login-brand" href="./" aria-label="woda Design editor">
             <span className="brand-mark" aria-hidden="true">
               <span />
               <span />
               <span />
             </span>
-            <span>SDS Design</span>
+            <span>woda Design</span>
           </a>
 
           <div className="login-title-block">
@@ -80,7 +80,7 @@ export function RegisterPrototype({ onBackToLogin, initialUsername = "" }) {
 
         <form className="login-panel" onSubmit={handleSubmit}>
           <div className="panel-header">
-            <p>SDS Design register</p>
+            <p>woda Design register</p>
             <h2>Get started</h2>
           </div>
 
@@ -89,7 +89,7 @@ export function RegisterPrototype({ onBackToLogin, initialUsername = "" }) {
             <input
               type="text"
               autoComplete="username"
-              placeholder="designer@sds.local"
+              placeholder="designer@woda.local"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
             />

@@ -46,7 +46,7 @@ export function App() {
     };
     if (targetTemplateId !== currentTemplateId) {
       localStorage.setItem(templateSelectionStorageKey, targetTemplateId);
-      sessionStorage.setItem("sds-pending-workspace", JSON.stringify({ ...nextWorkspace, templateId: targetTemplateId }));
+      sessionStorage.setItem("woda-pending-workspace", JSON.stringify({ ...nextWorkspace, templateId: targetTemplateId }));
       const url = new URL(window.location.href);
       url.searchParams.set("template", targetTemplateId);
       window.location.assign(url.toString());
@@ -153,9 +153,9 @@ export function App() {
 
 function readPendingWorkspace() {
   try {
-    const raw = sessionStorage.getItem("sds-pending-workspace");
+    const raw = sessionStorage.getItem("woda-pending-workspace");
     if (!raw) return null;
-    sessionStorage.removeItem("sds-pending-workspace");
+    sessionStorage.removeItem("woda-pending-workspace");
     const pending = JSON.parse(raw);
     return pending?.templateId === selectedTemplateIdFromLocation() ? pending : null;
   } catch {

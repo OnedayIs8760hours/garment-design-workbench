@@ -18,7 +18,7 @@ export function createTemplate(definition = activeTemplateDefinition) {
     name: `${exportedTemplate.templateId} garment panels`,
     sizes: definition.sizes ?? [exportedTemplate.templateId],
     productId: definition.productId ?? `PRODUCT-${exportedTemplate.templateId}`,
-    draftKey: definition.draftKey ?? `sds-design-${exportedTemplate.templateId}-panels-v${exportedTemplate.templateVersion}`,
+    draftKey: definition.draftKey ?? `woda-design-${exportedTemplate.templateId}-panels-v${exportedTemplate.templateVersion}`,
     defaultPanelId: definition.defaultPanelId ?? panelIds[0],
     threeD: {
       // 3D 预览默认模型地址。

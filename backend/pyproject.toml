@@ -1,7 +1,7 @@
 [project]
-name = "sds-design-backend"
+name = "woda-design-backend"
 version = "0.1.0"
-description = "SDS Design FastAPI backend services"
+description = "woda Design FastAPI backend services"
 requires-python = ">=3.13"
 dependencies = [
   "asyncpg>=0.30.0",
