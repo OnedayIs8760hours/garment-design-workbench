@@ -94,13 +94,30 @@ async def ensure_rustfs_bucket() -> None:
     def ensure() -> None:
         try:
             client.head_bucket(Bucket=Config.RUSTFS_BUCKET)
-            return
         except ClientError as error:
             code = str(error.response.get("Error", {}).get("Code", ""))
             status = error.response.get("ResponseMetadata", {}).get("HTTPStatusCode")
             if code not in {"404", "NoSuchBucket", "NotFound"} and status != 404:
                 raise
-        client.create_bucket(Bucket=Config.RUSTFS_BUCKET)
+            client.create_bucket(Bucket=Config.RUSTFS_BUCKET)
+        try:
+            client.put_bucket_cors(
+                Bucket=Config.RUSTFS_BUCKET,
+                CORSConfiguration={
+                    "CORSRules": [
+                        {
+                            "AllowedOrigins": Config.CORS_ORIGINS,
+                            "AllowedMethods": ["GET", "HEAD"],
+                            "AllowedHeaders": ["*"],
+                            "ExposeHeaders": ["ETag"],
+                            "MaxAgeSeconds": 3600,
+                        }
+                    ]
+                },
+            )
+        except (ClientError, BotoCoreError, OSError):
+            # CORS 写入失败不阻断上传，但 3D 预览跨域读取素材会退化。
+            pass
 
     await _run_storage_call(ensure)
 

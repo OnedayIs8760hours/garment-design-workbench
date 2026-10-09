@@ -7,6 +7,7 @@ import { createTemplate } from "../model.js";
 import { templateDefinitionFor } from "../../templates/index.js";
 import { textFontFor } from "../fontMap.js";
 import { textFontSizeForBox } from "../textMetrics.js";
+import { fetchDesignAssetBlob } from "../api.js";
 
 // 图片加载缓存，避免 3D 贴图生成时重复解码同一素材。
 const imageCache = new Map();
@@ -262,7 +263,7 @@ async function drawElement(ctx, element, assets, rect) {
     // 图片元素引用的素材。
     const asset = assets.find((item) => item.assetId === element.assetId);
     // 已加载的图片对象。
-    const image = await loadImage(asset?.dataUrl);
+    const image = await loadImage(asset?.dataUrl, asset?.objectKey);
     if (image) ctx.drawImage(image, -width / 2, -height / 2, width, height);
   } else {
     const font = textFontFor(element);
@@ -280,19 +281,29 @@ async function drawElement(ctx, element, assets, rect) {
 }
 
 // 加载图片并缓存 Promise。
-function loadImage(src) {
-  if (!src) return Promise.resolve(null);
-  if (imageCache.has(src)) return imageCache.get(src);
+function loadImage(src, objectKey) {
+  if (!src && !objectKey) return Promise.resolve(null);
+  // RustFS 预签名 URL 可能没有允许当前开发端口的 CORS 响应；
+  // 先经同源后端流式读取为 Blob，再交给 Image 解码，Canvas 不会被跨域污染。
+  const cacheKey = objectKey ? `object:${objectKey}` : src;
+  if (imageCache.has(cacheKey)) return imageCache.get(cacheKey);
   // 当前图片加载任务。
   const promise = new Promise((resolve) => {
-    // 浏览器图片对象。
-    const image = new Image();
-    image.crossOrigin = "anonymous";
-    image.onload = () => resolve(image);
-    image.onerror = () => resolve(null);
-    image.src = src;
+    const decode = (imageSrc) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => resolve(null);
+      image.src = imageSrc;
+    };
+    if (objectKey) {
+      fetchDesignAssetBlob(objectKey)
+        .then((blob) => decode(URL.createObjectURL(blob)))
+        .catch(() => resolve(null));
+    } else {
+      decode(src);
+    }
   });
-  imageCache.set(src, promise);
+  imageCache.set(cacheKey, promise);
   return promise;
 }
 

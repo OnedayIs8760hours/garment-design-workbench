@@ -23,6 +23,16 @@ class Config:
     JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
 
+    # 允许跨域访问后端的来源，同时用于 RustFS 桶 CORS，保证 3D 预览能跨域读取素材。
+    CORS_ORIGINS = [
+        origin.strip()
+        for origin in os.getenv(
+            "CORS_ORIGINS",
+            "http://127.0.0.1:1234,http://localhost:1234,http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:5000,http://localhost:5000",
+        ).split(",")
+        if origin.strip()
+    ]
+
     # RustFS 兼容标准 S3 API；访问密钥必须通过环境变量提供，不能写入源码。
     RUSTFS_ENDPOINT_URL = os.getenv("RUSTFS_ENDPOINT_URL", "http://127.0.0.1:9000").rstrip("/")
     RUSTFS_ACCESS_KEY = os.getenv("RUSTFS_ACCESS_KEY")

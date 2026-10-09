@@ -116,6 +116,16 @@ export function getDesignAssetInfo(objectKey) {
   return requestJson(`/assets/info?object_key=${encodeURIComponent(objectKey)}`);
 }
 
+// 通过同源后端读取私有素材，避免 3D Canvas 直接读取 RustFS 预签名 URL 时触发 CORS。
+export async function fetchDesignAssetBlob(objectKey) {
+  const headers = new Headers();
+  const token = getAccessToken();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  const response = await fetch(`${API_BASE_URL}/assets/content?object_key=${encodeURIComponent(objectKey)}`, { headers });
+  if (!response.ok) throw new Error(`素材读取失败（${response.status}）`);
+  return response.blob();
+}
+
 export function deleteDesignAsset(objectKey) {
   return requestJson(`/assets?object_key=${encodeURIComponent(objectKey)}`, { method: "DELETE" });
 }
