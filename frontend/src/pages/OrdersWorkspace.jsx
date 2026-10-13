@@ -1,14 +1,26 @@
 import React from "react";
-import { ArrowRight, ClipboardList, RefreshCw, Search } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 import { listDesignDrafts } from "../api.js";
-import { templateDefinitions } from "../../templates/index.js";
-import { formatWorkspaceDate } from "../workspaceData.js";
+import {
+  countDraftsUpdatedToday,
+  countDraftsUpdatedWithinDays,
+  filterOrderDrafts,
+  getDraftTemplateCounts,
+  orderTemplateChoiceById,
+  orderTemplateChoices,
+} from "../ordersWorkspaceModel.js";
+import { OrderDraftTable } from "../components/orders/OrderDraftTable.jsx";
+import { OrdersWorkspaceFilters } from "../components/orders/OrdersWorkspaceFilters.jsx";
+import { OrdersWorkspaceSummary } from "../components/orders/OrdersWorkspaceSummary.jsx";
 
 export function OrdersWorkspace({ onOpenDraft }) {
   const [drafts, setDrafts] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
   const [search, setSearch] = React.useState("");
+  const [selectedTemplate, setSelectedTemplate] = React.useState("");
+  const [dateView, setDateView] = React.useState("all");
+  const [customDate, setCustomDate] = React.useState("");
   const [reloadKey, setReloadKey] = React.useState(0);
 
   React.useEffect(() => {
@@ -27,42 +39,97 @@ export function OrdersWorkspace({ onOpenDraft }) {
     return () => { cancelled = true; };
   }, [reloadKey]);
 
-  const filteredDrafts = drafts.filter((draft) => {
-    const name = templateDefinitions[draft.template_id]?.label || "";
-    return `${draft.order_id} ${draft.template_id} ${name}`.toLowerCase().includes(search.trim().toLowerCase());
-  });
+  const filteredDrafts = React.useMemo(() => filterOrderDrafts(drafts, {
+    search,
+    templateId: selectedTemplate,
+    dateView,
+    customDate,
+  }), [drafts, search, selectedTemplate, dateView, customDate]);
+  const templateCounts = React.useMemo(() => getDraftTemplateCounts(drafts), [drafts]);
+  const todayCount = React.useMemo(() => countDraftsUpdatedToday(drafts), [drafts]);
+  const recentCount = React.useMemo(() => countDraftsUpdatedWithinDays(drafts, 7), [drafts]);
+  const usedTemplateCount = templateCounts.filter((item) => item.count > 0).length;
+  const hasActiveFilters = Boolean(search.trim() || selectedTemplate || dateView !== "all" || customDate);
+
+  const selectDateView = (view) => {
+    setDateView(view);
+    setCustomDate("");
+  };
+
+  const clearFilters = () => {
+    setSearch("");
+    setSelectedTemplate("");
+    setDateView("all");
+    setCustomDate("");
+  };
 
   return (
-    <main className="workspace-page" aria-labelledby="ordersWorkspaceTitle">
-      <header className="workspace-page-heading">
-        <div><p className="workspace-eyebrow">ORDER REFERENCES</p><h1 id="ordersWorkspaceTitle">订单与设计记录</h1><p>当前显示设计草稿关联的单号，订单状态与客户信息尚未接入。</p></div>
-        <div className="workspace-heading-stat"><strong>{loading ? "…" : error ? "—" : drafts.length}</strong><span>份设计记录</span></div>
+    <main className="workspace-page orders-center" aria-labelledby="ordersWorkspaceTitle">
+      <header className="workspace-page-heading orders-center-heading">
+        <div>
+          <p className="workspace-eyebrow">ORDER CENTER</p>
+          <h1 id="ordersWorkspaceTitle">订单中心</h1>
+          <p>按订单号和产品模板查找已保存的设计，继续编辑或核对最近更新。</p>
+        </div>
+        <div className="workspace-heading-stat">
+          <strong>{loading ? "…" : error ? "—" : drafts.length}</strong>
+          <span>份设计记录</span>
+        </div>
       </header>
 
-      <div className="orders-data-note"><ClipboardList size={17} aria-hidden="true" /><span>列表仅来自真实草稿接口。这里的单号用于定位设计，不代表生产、付款或履约状态。</span></div>
-      <div className="asset-library-toolbar">
-        <label className="workspace-search"><Search size={17} aria-hidden="true" /><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="搜索订单号或模板" aria-label="搜索设计单号" />{search && <button type="button" onClick={() => setSearch("")} aria-label="清空搜索">清除</button>}</label>
-        <button className="workspace-button secondary" type="button" disabled={loading} onClick={() => setReloadKey((key) => key + 1)}><RefreshCw size={15} aria-hidden="true" />刷新</button>
+      <div className="orders-data-note" role="note">
+        <ClipboardList size={17} aria-hidden="true" />
+        <span>订单号用于定位设计草稿。ERP 美工任务状态、生产批次、工艺和生产图尚未接入此工作台。</span>
       </div>
 
-      {error && <div className="workspace-inline-error" role="alert"><span>{error}</span><button type="button" onClick={() => setReloadKey((key) => key + 1)}>重试</button></div>}
-      {loading ? <div className="workspace-loading" role="status">正在读取真实设计记录…</div> : filteredDrafts.length ? (
-        <div className="orders-table-wrap">
-          <table className="orders-table">
-            <thead><tr><th scope="col">订单号</th><th scope="col">产品模板</th><th scope="col">版本</th><th scope="col">最近更新</th><th scope="col"><span className="sr-only">操作</span></th></tr></thead>
-            <tbody>{filteredDrafts.map((draft) => (
-              <tr key={`${draft.template_id}:${draft.order_id}`}>
-                <td><strong>{draft.order_id}</strong></td>
-                <td><span>{templateDefinitions[draft.template_id]?.label || draft.template_id}</span><small>{draft.template_id}</small></td>
-                <td>V{draft.template_version ?? "—"}</td>
-                <td><time dateTime={draft.updated_at || undefined}>{formatWorkspaceDate(draft.updated_at)}</time></td>
-                <td><button className="workspace-text-action" type="button" onClick={() => onOpenDraft(draft)}>打开设计<ArrowRight size={15} aria-hidden="true" /></button></td>
-              </tr>
-            ))}</tbody>
-          </table>
+      <OrdersWorkspaceFilters
+        search={search}
+        onSearchChange={setSearch}
+        selectedTemplate={selectedTemplate}
+        onTemplateChange={setSelectedTemplate}
+        dateView={dateView}
+        customDate={customDate}
+        onDateViewChange={selectDateView}
+        onCustomDateChange={(value) => { setCustomDate(value); setDateView("all"); }}
+        templateChoices={orderTemplateChoices}
+        templateCounts={templateCounts}
+        totalCount={drafts.length}
+        todayCount={todayCount}
+        recentCount={recentCount}
+        loading={loading}
+        onRefresh={() => setReloadKey((key) => key + 1)}
+      />
+
+      <OrdersWorkspaceSummary
+        total={drafts.length}
+        updatedToday={todayCount}
+        usedTemplates={usedTemplateCount}
+        loading={loading}
+        error={error}
+      />
+
+      {error && (
+        <div className="workspace-inline-error" role="alert">
+          <span>{error}</span>
+          <button type="button" onClick={() => setReloadKey((key) => key + 1)}>重试</button>
         </div>
+      )}
+
+      {loading ? (
+        <div className="workspace-loading" role="status">正在读取已保存的设计记录…</div>
+      ) : filteredDrafts.length ? (
+        <OrderDraftTable
+          drafts={filteredDrafts}
+          templateChoiceById={orderTemplateChoiceById}
+          onOpenDraft={onOpenDraft}
+        />
       ) : !error ? (
-        <section className="workspace-empty-state" role="status"><div className="workspace-empty-icon"><ClipboardList size={21} aria-hidden="true" /></div><h2>{search ? "没有匹配的设计记录" : "还没有设计记录"}</h2><p>{search ? "调整搜索内容后重试。" : "保存设计草稿后，关联单号会显示在这里。"}</p>{search && <button className="workspace-button secondary" type="button" onClick={() => setSearch("")}>清除搜索</button>}</section>
+        <section className="workspace-empty-state orders-center-empty" role="status">
+          <div className="workspace-empty-icon"><ClipboardList size={21} aria-hidden="true" /></div>
+          <h2>{hasActiveFilters ? "没有符合筛选条件的记录" : "还没有设计记录"}</h2>
+          <p>{hasActiveFilters ? "调整订单号、模板或更新时间后再试。" : "保存设计草稿后，关联订单会显示在这里。"}</p>
+          {hasActiveFilters && <button className="workspace-button secondary" type="button" onClick={clearFilters}>清除筛选</button>}
+        </section>
       ) : null}
     </main>
   );
