@@ -167,7 +167,7 @@ export function App() {
             onNavigate={setActiveSection}
           />
         ) : activeSection === "orders" ? (
-          <OrdersWorkspace onOpenDraft={(draft) => openWorkspace(draft)} />
+          <OrdersWorkspace />
         ) : (
           <FinishedWorkspace onNavigate={setActiveSection} />
         )}
