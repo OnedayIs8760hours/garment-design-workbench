@@ -130,6 +130,64 @@ export function deleteDesignAsset(objectKey) {
   return requestJson(`/assets?object_key=${encodeURIComponent(objectKey)}`, { method: "DELETE" });
 }
 
+// ---------------- PSD 分片上传 ----------------
+
+export function initPsdUpload({ filename, size, content_type, order_id, part_size }) {
+  return requestJson("/psd/uploads", {
+    method: "POST",
+    body: JSON.stringify({
+      filename,
+      size,
+      content_type: content_type || null,
+      order_id: order_id || null,
+      part_size: part_size || null,
+    }),
+  });
+}
+
+export function getPsdUploadStatus(sessionId) {
+  return requestJson(`/psd/uploads/${encodeURIComponent(sessionId)}`);
+}
+
+export function completePsdUpload(sessionId) {
+  return requestJson(`/psd/uploads/${encodeURIComponent(sessionId)}/complete`, { method: "POST" });
+}
+
+export function abortPsdUpload(sessionId) {
+  return requestJson(`/psd/uploads/${encodeURIComponent(sessionId)}`, { method: "DELETE" });
+}
+
+// 上传单个分片：body 是原始字节而非 JSON，不能用 requestJson，单独用 fetch 走鉴权头。
+export async function uploadPsdPartRaw(sessionId, partNumber, blob) {
+  const headers = new Headers();
+  const token = getAccessToken();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  headers.set("Content-Type", "application/octet-stream");
+
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}/psd/uploads/${encodeURIComponent(sessionId)}/parts/${partNumber}`, {
+      method: "PUT",
+      headers,
+      body: blob,
+    });
+  } catch {
+    throw new Error("上传分片时网络中断，请重试。");
+  }
+
+  if (!response.ok) {
+    let detail = `上传失败（${response.status}）`;
+    try {
+      const payload = await response.json();
+      if (typeof payload?.detail === "string") detail = payload.detail;
+    } catch {
+      // 忽略非 JSON 错误体
+    }
+    throw new Error(detail);
+  }
+  return response.json();
+}
+
 export function deleteDesignDraft(templateId, orderId) {
   const query = `?order_id=${encodeURIComponent(orderId)}`;
   return requestJson(`/designs/${encodeURIComponent(templateId)}${query}`, {

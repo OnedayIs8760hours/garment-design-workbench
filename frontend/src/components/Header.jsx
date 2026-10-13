@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowLeft, Download, FilePlus2, LogOut, RotateCcw, Save, Undo2 } from "lucide-react";
+import { ArrowLeft, Download, FilePlus2, LogOut, RotateCcw, Save, Undo2, Upload } from "lucide-react";
 import { firstPanel, template } from "../config.js";
 import { templateOptions } from "../../templates/index.js";
 
@@ -15,6 +15,7 @@ export function Header({
   onNewDesign,
   onBackHome,
   onExportPackage,
+  onImportPsd,
   onTemplateChange,
   onSignOut,
   user,
@@ -65,6 +66,10 @@ export function Header({
         <button type="button" className="primary-action" onClick={onExportPackage}>
           <Download size={16} aria-hidden="true" />
           导出压缩包
+        </button>
+        <button type="button" onClick={onImportPsd}>
+          <Upload size={16} aria-hidden="true" />
+          导入 PSD
         </button>
         <button type="button" onClick={onSignOut}>
           <LogOut size={16} aria-hidden="true" />
