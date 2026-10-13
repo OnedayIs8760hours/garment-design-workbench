@@ -1,0 +1,99 @@
+# 单机全栈编排：frontend(nginx) + backend(FastAPI) + postgres + redis + S3 兼容对象存储。
+# 后端配置通过 ../backend/.env 注入（复制 .env.example 生成）。生产可把 objectstore 换成真实 RustFS。
+#
+# 用法：
+#   cd backend && cp .env.example .env   # 填写 DB/Redis/RustFS/JWT
+#   cd ../deploy && docker compose up -d
+
+name: woda-design
+
+services:
+  frontend:
+    image: ghcr.io/woda-custom/woda-design-frontend:latest # TODO: 换成你的镜像命名空间
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - woda_net
+
+  backend:
+    image: ghcr.io/woda-custom/woda-design-backend:latest # TODO: 换成你的镜像命名空间
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ../backend/.env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://woda:woda@db:5432/woda_design}
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      RUSTFS_ENDPOINT_URL: http://objectstore:9000
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:-minioadmin}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:-minioadmin}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      objectstore:
+        condition: service_started
+    networks:
+      - woda_net
+
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: woda
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-woda}
+      POSTGRES_DB: woda_design
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../backend/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U woda -d woda_design"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - woda_net
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-}"]
+    volumes:
+      - redisdata:/data
+    networks:
+      - woda_net
+
+  # 本地/演示用的 S3 兼容对象存储；生产切回真实 RustFS 时改 RUSTFS_ENDPOINT_URL。
+  objectstore:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${RUSTFS_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${RUSTFS_SECRET_KEY:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+    networks:
+      - woda_net
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:
+
+networks:
+  woda_net:
+    driver: bridge
