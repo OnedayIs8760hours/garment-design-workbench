@@ -5,7 +5,7 @@ import { templateDefinitions } from "../../templates/index.js";
 import { deleteDesignDraft, deleteDesignDrafts, listDesignDrafts } from "../api.js";
 import "../styles/personal-home.css";
 
-export function PersonalHome({ user, onOpenDraft, onNewDesign, onSignOut }) {
+export function PersonalHome({ user, onOpenDraft, onNewDesign, onSignOut, embedded = false }) {
   const [drafts, setDrafts] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
@@ -78,20 +78,22 @@ export function PersonalHome({ user, onOpenDraft, onNewDesign, onSignOut }) {
   };
 
   return (
-    <main className="personal-home">
-      <header className="personal-nav">
-        <div className="personal-brand">
-          <span className="personal-brand-mark" aria-hidden="true"><i /><i /><i /></span>
-          <span>woda Design</span>
-        </div>
-        <div className="personal-user">
-          <span className="personal-avatar" aria-hidden="true">{(user?.username || "D").slice(0, 1).toUpperCase()}</span>
-          <span>{user?.username || "设计师"}</span>
-          <button type="button" className="personal-icon-button" onClick={onSignOut} title="退出登录" aria-label="退出登录">
-            <LogOut size={16} aria-hidden="true" />
-          </button>
-        </div>
-      </header>
+    <section className={`personal-home${embedded ? " workspace-drafts" : ""}`} aria-label="设计草稿">
+      {!embedded && (
+        <header className="personal-nav">
+          <div className="personal-brand">
+            <span className="personal-brand-mark" aria-hidden="true"><i /><i /><i /></span>
+            <span>woda Design</span>
+          </div>
+          <div className="personal-user">
+            <span className="personal-avatar" aria-hidden="true">{(user?.username || "D").slice(0, 1).toUpperCase()}</span>
+            <span>{user?.username || "设计师"}</span>
+            <button type="button" className="personal-icon-button" onClick={onSignOut} title="退出登录" aria-label="退出登录">
+              <LogOut size={16} aria-hidden="true" />
+            </button>
+          </div>
+        </header>
+      )}
 
       <section className="personal-hero">
         <div>
@@ -154,7 +156,7 @@ export function PersonalHome({ user, onOpenDraft, onNewDesign, onSignOut }) {
           </>
         )}
       </section>
-    </main>
+    </section>
   );
 }
 

@@ -15,6 +15,12 @@ import { activeTemplateId, resolveTemplateId, selectedTemplateIdFromLocation, te
 import { LoginPrototype } from "./pages/LoginPrototype.jsx";
 import { RegisterPrototype } from "./pages/RegisterPrototype.jsx";
 import { PersonalHome } from "./pages/PersonalHome.jsx";
+import { WorkspaceShell } from "./components/WorkspaceShell.jsx";
+import { WorkspaceOverview } from "./pages/WorkspaceOverview.jsx";
+import { TemplateLibrary } from "./pages/TemplateLibrary.jsx";
+import { AssetLibrary } from "./pages/AssetLibrary.jsx";
+import { OrdersWorkspace } from "./pages/OrdersWorkspace.jsx";
+import { FinishedWorkspace } from "./pages/FinishedWorkspace.jsx";
 import {
   clearAccessToken,
   deleteDesignAsset,
@@ -38,9 +44,11 @@ export function App() {
   const [pendingUsername, setPendingUsername] = React.useState("");
   // 登录后默认进入个人草稿首页，只有打开或新建后才进入编辑工作台。
   const [workspace, setWorkspace] = React.useState(() => readInitialWorkspace());
+  // 工作台内的模块导航与编辑器独立，避免影响现有编辑器 URL 和状态。
+  const [activeSection, setActiveSection] = React.useState("home");
 
   const openWorkspace = React.useCallback((draft, options = {}) => {
-    const targetTemplateId = resolveTemplateId(draft?.template_id || selectedTemplateIdFromLocation() || activeTemplateId);
+    const targetTemplateId = resolveTemplateId(options.templateId || draft?.template_id || selectedTemplateIdFromLocation() || activeTemplateId);
     const currentTemplateId = selectedTemplateIdFromLocation();
     const nextWorkspace = {
       orderId: draft?.order_id || null,
@@ -123,18 +131,47 @@ export function App() {
       clearAccessToken();
     }
     setWorkspace(null);
+    setActiveSection("home");
     returnToHome();
     setAuth({ status: "anonymous", user: null });
   };
 
   if (!workspace) {
     return (
-      <PersonalHome
+      <WorkspaceShell
+        activeSection={activeSection}
+        onNavigate={setActiveSection}
         user={auth.user}
-        onOpenDraft={(draft) => openWorkspace(draft)}
-        onNewDesign={() => openWorkspace(null, { newDesign: true })}
         onSignOut={signOut}
-      />
+      >
+        {activeSection === "home" ? (
+          <WorkspaceOverview
+            user={auth.user}
+            onNavigate={setActiveSection}
+            onOpenDraft={(draft) => openWorkspace(draft)}
+            onNewDesign={() => openWorkspace(null, { newDesign: true })}
+          />
+        ) : activeSection === "products" ? (
+          <TemplateLibrary onStartDesign={(templateId) => openWorkspace(null, { newDesign: true, templateId })} />
+        ) : activeSection === "design" ? (
+          <PersonalHome
+            user={auth.user}
+            embedded
+            onOpenDraft={(draft) => openWorkspace(draft)}
+            onNewDesign={() => openWorkspace(null, { newDesign: true })}
+            onSignOut={signOut}
+          />
+        ) : activeSection === "assets" ? (
+          <AssetLibrary
+            onOpenDraft={(draft) => openWorkspace(draft)}
+            onNavigate={setActiveSection}
+          />
+        ) : activeSection === "orders" ? (
+          <OrdersWorkspace onOpenDraft={(draft) => openWorkspace(draft)} />
+        ) : (
+          <FinishedWorkspace onNavigate={setActiveSection} />
+        )}
+      </WorkspaceShell>
     );
   }
 
@@ -146,6 +183,7 @@ export function App() {
       onBackHome={async () => {
         await useDesignStore.getState().saveNow();
         returnToHome();
+        setActiveSection("design");
         setWorkspace(null);
       }}
       onSignOut={signOut}
