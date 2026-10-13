@@ -44,6 +44,7 @@ uv run pytest
 - `npm run build` verifies the production frontend bundle.
 - `uv run pytest` verifies the FastAPI backend.
 - `photoshop/run-restore-front.ps1` runs the current Photoshop restoration script.
+- GitHub Actions CI lives in `.github/workflows/ci.yml`: it runs the frontend `npm ci && npm run build && npm test` and backend `uv sync --locked && uv run pytest` on push/PR. CD (image builds, Dockerfiles, compose) is in `.github/workflows/cd.yml` and `deploy/` — see `项目实现思路/CI-CD搭建实现思路.md`.
 
 ## Coding Style & Naming Conventions
 

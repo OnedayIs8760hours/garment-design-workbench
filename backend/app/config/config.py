@@ -43,6 +43,13 @@ class Config:
     RUSTFS_PRESIGNED_URL_EXPIRES_SECONDS = int(os.getenv("RUSTFS_PRESIGNED_URL_EXPIRES_SECONDS", 900))
     RUSTFS_MAX_UPLOAD_BYTES = int(os.getenv("RUSTFS_MAX_UPLOAD_BYTES", 25 * 1024 * 1024))
 
+    # PSD 大文件分片上传：最大文件字节数、默认分片大小、会话过期时间。
+    RUSTFS_MAX_PSD_UPLOAD_BYTES = int(os.getenv("RUSTFS_MAX_PSD_UPLOAD_BYTES", 500 * 1024 * 1024))
+    RUSTFS_PSD_PART_SIZE = int(os.getenv("RUSTFS_PSD_PART_SIZE", 8 * 1024 * 1024))
+    RUSTFS_PSD_MIN_PART_SIZE = 5 * 1024 * 1024  # S3 非末分片大小下限
+    RUSTFS_PSD_MAX_PARTS = 10000  # S3 Multipart 分片数量上限
+    PSD_UPLOAD_SESSION_TTL_SECONDS = int(os.getenv("PSD_UPLOAD_SESSION_TTL_SECONDS", 24 * 3600))
+
     @classmethod
     def get_database_url(cls):
         return cls.DATABASE_URL

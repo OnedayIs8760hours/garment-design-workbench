@@ -9,6 +9,8 @@ import { ToolsSidebar } from "./components/ToolsSidebar.jsx";
 import { PanelTabs, BottomPanels } from "./components/EditorPanels.jsx";
 import { PanelStage } from "./components/PanelStage.jsx";
 import { PreviewPane } from "./components/PreviewPane.jsx";
+import { PsdUploadDialog } from "./components/PsdUploadDialog.jsx";
+import { uploadPsdFile } from "./psdUpload.js";
 import { activeTemplateId, resolveTemplateId, selectedTemplateIdFromLocation, templateSelectionStorageKey } from "../templates/index.js";
 import { LoginPrototype } from "./pages/LoginPrototype.jsx";
 import { RegisterPrototype } from "./pages/RegisterPrototype.jsx";
@@ -191,6 +193,8 @@ function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
   const templateId = design.templateId;
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [drafts, setDrafts] = React.useState([]);
+  const [psdUpload, setPsdUpload] = React.useState(null);
+  const psdFileInputRef = React.useRef(null);
 
   const refreshDrafts = React.useCallback(() => {
     return listDesignDrafts(templateId)
@@ -394,6 +398,30 @@ function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
     }
   };
 
+  // 打开 PSD 文件选择框。
+  const onImportPsd = () => {
+    psdFileInputRef.current?.click();
+  };
+
+  // 处理 PSD 大文件：分片并发上传到 RustFS，用弹窗展示进度。
+  const onUploadPsd = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setPsdUpload({ phase: "uploading", uploaded: 0, total: 0, message: "正在初始化 PSD 上传会话..." });
+    try {
+      const result = await uploadPsdFile({
+        file,
+        orderId: design.orderId,
+        onProgress: (uploaded, total) =>
+          setPsdUpload((state) => ({ ...state, phase: "uploading", uploaded, total, message: `正在分片上传 ${file.name}...` })),
+      });
+      setPsdUpload({ phase: "done", uploaded: result.size || 0, total: 1, message: `PSD 上传并合并完成`, result });
+    } catch (error) {
+      setPsdUpload({ phase: "error", message: error?.message || "PSD 上传失败" });
+    }
+  };
+
   // 更新指定元素的属性。
   const updateElement = (id, patch) => {
     commit((draft) => {
@@ -479,6 +507,7 @@ function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
         onNewDesign={handleNewDesign}
         onBackHome={onBackHome}
         onExportPackage={() => downloadZip(design, exportJson)}
+        onImportPsd={onImportPsd}
         onTemplateChange={switchTemplate}
         onSignOut={onSignOut}
         user={user}
@@ -527,6 +556,15 @@ function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
         </section>
         <PreviewPane design={design} validation={validation} />
       </main>
+
+      <input
+        ref={psdFileInputRef}
+        type="file"
+        accept=".psd"
+        hidden
+        onChange={onUploadPsd}
+      />
+      {psdUpload && <PsdUploadDialog state={psdUpload} onClose={() => setPsdUpload(null)} />}
     </div>
   );
 }
