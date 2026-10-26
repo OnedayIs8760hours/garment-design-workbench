@@ -13,6 +13,7 @@ This repository is now a frontend/backend workspace for garment panel customizat
 - `frontend/public/models/` stores browser-served GLB models.
 - `backend/` contains the FastAPI service.
 - `photoshop/` contains Photoshop automation scripts (`.jsx`) and runner scripts (`.ps1`).
+- `jenkins/` contains the Jenkins pipeline, image/deployment scripts, and setup instructions; configure the Jenkins SCM Script Path as `jenkins/Jenkinsfile`.
 - `项目实现思路/` contains design notes and implementation process documentation.
 - `规范/` contains project conventions that should be followed for future category and asset changes.
 - `frontend/src/model.test.js` is the current frontend test entry point.

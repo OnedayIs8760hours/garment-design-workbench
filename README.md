@@ -294,6 +294,12 @@ npm run build
 
 当前前端测试入口是 `frontend/src/model.test.js`，主要覆盖模板结构、导出 JSON、坐标校验和回归用例。项目暂未接入完整测试框架。
 
+## Jenkins CI/CD
+
+Jenkins 相关文件集中在 [`jenkins/`](jenkins/README.md)。创建 Pipeline from SCM 任务时，
+将 Script Path 设置为 `jenkins/Jenkinsfile`。默认执行三个服务的 CI，
+可通过参数启用镜像构建、推送和 SSH 部署。节点、凭据和服务器准备步骤见该目录说明。
+
 ## 常见问题
 
 ### 页面打不开
