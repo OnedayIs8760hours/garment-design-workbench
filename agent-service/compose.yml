@@ -1,3 +1,4 @@
+# 仅用于 Agent 独立开发。云端前后端一体部署使用 ../deploy/docker-compose.yml 和 ../deploy/.env。
 name: woda-design-agent
 
 services:

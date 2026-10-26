@@ -1,0 +1,2 @@
+# 云端 Bash 脚本始终使用 LF，避免 Windows 检出后在 Linux 上出现 CRLF 错误。
+deploy/*.sh text eol=lf

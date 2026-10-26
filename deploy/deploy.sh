@@ -1,26 +1,34 @@
 #!/usr/bin/env bash
-# 一键部署脚本：在目标服务器上拉取最新镜像并重启服务。
-# 用法：在服务器项目目录下运行  deploy/deploy.sh
-# 前置：已把仓库同步到服务器、backend/.env 已配置、已 `docker compose build` 或镜像已推送。
+# 在服务器仓库中运行 bash deploy/deploy.sh [build|pull]。
 set -euo pipefail
 
 cd "$(dirname "$0")"
 
-echo "==> 拉取最新镜像"
-docker compose pull frontend backend || true
+if [[ ! -f .env ]]; then
+  echo "请先复制 deploy/.env.example 为 deploy/.env，并填写域名、密钥和对象存储配置。" >&2
+  exit 1
+fi
 
-echo "==> 启动服务"
-docker compose up -d
+mode="${1:-build}"
+if [[ $# -gt 1 || ( "$mode" != build && "$mode" != pull ) ]]; then
+  echo "用法：bash deploy/deploy.sh [build|pull]" >&2
+  exit 1
+fi
 
-echo "==> 健康检查（后端）"
-for i in $(seq 1 20); do
-  if curl -fsS http://127.0.0.1:8957/api/health >/dev/null 2>&1; then
-    echo "==> 后端健康检查通过"
-    exit 0
-  fi
-  sleep 2
-done
+compose=(docker compose --env-file .env -f docker-compose.yml)
+"${compose[@]}" config --quiet
 
-echo "==> 后端健康检查超时" >&2
-docker compose ps
-exit 1
+if [[ "$mode" == pull ]]; then
+  # 三个应用镜像必须已发布，且 .env 中的 IMAGE 指向对应版本；拉取失败立即停止。
+  "${compose[@]}" pull
+  "${compose[@]}" up -d --no-build --wait --wait-timeout 180
+else
+  "${compose[@]}" up -d --build --wait --wait-timeout 180
+fi
+
+# 从已启动的前端容器检查反向代理，不依赖宿主机开放后端端口或安装 curl。
+"${compose[@]}" exec -T frontend wget -q -O /dev/null http://127.0.0.1/api/health
+"${compose[@]}" exec -T frontend wget -q -O /dev/null http://127.0.0.1/api/agent/health
+"${compose[@]}" exec -T backend python -c 'import asyncio; from app.services.object_storage import check_rustfs_health; asyncio.run(check_rustfs_health())'
+"${compose[@]}" ps
+echo "部署完成：前端、后端、Agent 与对象存储连接检查通过。"

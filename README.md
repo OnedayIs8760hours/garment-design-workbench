@@ -262,12 +262,25 @@ downloadZip() 导出 manifest.json + assets
 Photoshop JSX 按 manifest.json 还原到 PSD
 ```
 
+## 云端 Docker 部署
+
+前端、后端、Agent、PostgreSQL 和两套 Redis 统一由 `deploy/docker-compose.yml` 启动，
+仅需填写 `deploy/.env`。对象存储接入独立的 S3/RustFS 服务。
+
+```bash
+cp deploy/.env.example deploy/.env
+# 填写域名、数据库/Redis/JWT 密钥、对象存储与模型供应商配置。
+bash deploy/deploy.sh
+```
+
+完整配置、HTTPS、更新与数据卷说明见 [云端部署说明](deploy/README.md)。
+
 ## CI/CD
 
 仓库通过 GitHub Actions 做持续集成与持续交付（详见 `项目实现思路/CI-CD搭建实现思路.md` 与 `.github/workflows/`）。
 
 - **CI**（`ci.yml`）：push 到 `main`/`dev` 或开 PR 时，并行构建并测试前端（`npm ci`、`npm run build`、`npm test`）与后端（`uv sync --locked`、`uv run pytest`）。单测全 mock，无需外部服务。
-- **CD**（`cd.yml`，预留）：手动触发或打 `v*` 标签时构件前后端镜像并推送 GHCR。配套 `frontend/Dockerfile`、`backend/Dockerfile`、`deploy/docker-compose.yml` 与 `deploy/deploy.sh`，确定部署目标后补全 Secret 启用。
+- **CD**（`cd.yml`）：手动触发或打 `v*` 标签时构建前端、后端和 Agent 镜像并推送 GHCR。服务器使用统一 `deploy/.env` 和 `deploy/deploy.sh`；SSH 自动部署仍为预留步骤。
 
 ## 测试与构建
 

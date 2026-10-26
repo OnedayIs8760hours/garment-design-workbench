@@ -1,76 +1,164 @@
-# 单机全栈编排：frontend(nginx) + backend(FastAPI) + postgres + redis + S3 兼容对象存储。
-# 后端配置通过 ../backend/.env 注入（复制 .env.example 生成）。生产可把 objectstore 换成真实 RustFS。
-#
-# 用法：
-#   cd backend && cp .env.example .env   # 填写 DB/Redis/RustFS/JWT
-#   cd ../deploy && docker compose up -d
+# 云端统一入口：cd deploy && docker compose --env-file .env up --build -d --wait
+# 所有配置来自 deploy/.env；对象存储使用独立的 S3/RustFS 服务。
+name: ${COMPOSE_PROJECT_NAME:-woda-design}
 
-name: woda-design
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-service: &service
+  restart: unless-stopped
+  logging: *logging
+  networks:
+    - woda_net
 
 services:
   frontend:
-    image: ghcr.io/woda-custom/woda-design-frontend:latest # TODO: 换成你的镜像命名空间
+    <<: *service
+    image: ${FRONTEND_IMAGE:-woda-design-frontend:local}
     build:
       context: ../frontend
-      dockerfile: Dockerfile
-    restart: unless-stopped
     ports:
-      - "8080:80"
+      - "${HTTP_BIND_ADDRESS:-0.0.0.0}:${HTTP_PORT:-8080}:80"
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
     depends_on:
-      - backend
-    networks:
-      - woda_net
+      backend:
+        condition: service_healthy
+      agent:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1/]
+      interval: 15s
+      timeout: 5s
+      retries: 5
 
   backend:
-    image: ghcr.io/woda-custom/woda-design-backend:latest # TODO: 换成你的镜像命名空间
+    <<: *service
+    image: ${BACKEND_IMAGE:-woda-design-backend:local}
     build:
       context: ../backend
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    env_file:
-      - ../backend/.env
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://woda:woda@db:5432/woda_design}
+      TZ: ${TZ:-Asia/Shanghai}
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-woda}:${DB_PASSWORD:?请填写 deploy/.env 中的 DB_PASSWORD}@db:5432/${DB_NAME:-woda_design}
+      DATABASE_ECHO: "false"
       REDIS_HOST: redis
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-      RUSTFS_ENDPOINT_URL: http://objectstore:9000
-      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:-minioadmin}
-      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:-minioadmin}
+      REDIS_PORT: "6379"
+      REDIS_DB: "0"
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?请填写 deploy/.env 中的 REDIS_PASSWORD}
+      REDIS_KEY_PREFIX: ${REDIS_KEY_PREFIX:-woda:prod}
+      SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-604800}
+      DESIGN_CACHE_TTL_SECONDS: ${DESIGN_CACHE_TTL_SECONDS:-604800}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?请填写 deploy/.env 中的 JWT_SECRET_KEY}
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      CORS_ORIGINS: ${PUBLIC_URL:?请填写 deploy/.env 中的 PUBLIC_URL}
+      RUSTFS_ENDPOINT_URL: ${RUSTFS_ENDPOINT_URL:?请填写云端 S3/RustFS 地址}
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:?请填写对象存储 Access Key}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:?请填写对象存储 Secret Key}
+      RUSTFS_BUCKET: ${RUSTFS_BUCKET:-woda-design}
+      RUSTFS_REGION: ${RUSTFS_REGION:-us-east-1}
+      RUSTFS_ADDRESSING_STYLE: ${RUSTFS_ADDRESSING_STYLE:-path}
+      RUSTFS_PRESIGNED_URL_EXPIRES_SECONDS: ${RUSTFS_PRESIGNED_URL_EXPIRES_SECONDS:-900}
+      RUSTFS_MAX_UPLOAD_BYTES: ${RUSTFS_MAX_UPLOAD_BYTES:-26214400}
+      RUSTFS_MAX_PSD_UPLOAD_BYTES: ${RUSTFS_MAX_PSD_UPLOAD_BYTES:-524288000}
+      RUSTFS_PSD_PART_SIZE: ${RUSTFS_PSD_PART_SIZE:-8388608}
+      PSD_UPLOAD_SESSION_TTL_SECONDS: ${PSD_UPLOAD_SESSION_TTL_SECONDS:-86400}
     depends_on:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
-      objectstore:
-        condition: service_started
-    networks:
-      - woda_net
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8957/api/health', timeout=3).read()"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   agent:
-    profiles: [generation]
+    <<: *service
+    image: ${AGENT_IMAGE:-woda-design-agent:local}
     build:
       context: ../agent-service
-    restart: unless-stopped
-    env_file:
-      - path: ../agent-service/.env
-        required: false
+    # 会话 checkpoint 和锁在进程内，必须保持单 worker、单副本。
+    command: [uvicorn, agent_app.main:app, --host, 0.0.0.0, --port, "8958", --workers, "1"]
     environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      AGENT_CHAT_BASE_URL: ${AGENT_CHAT_BASE_URL:?请填写对话 API 根地址}
+      AGENT_CHAT_API_KEY: ${AGENT_CHAT_API_KEY:?请填写对话 API Key}
+      AGENT_CHAT_MODEL: ${AGENT_CHAT_MODEL:?请填写支持 tool calling 的对话模型名}
+      AGENT_CHAT_TIMEOUT_SECONDS: ${AGENT_CHAT_TIMEOUT_SECONDS:-60}
+      AGENT_IMAGE_BASE_URL: ${AGENT_IMAGE_BASE_URL:?请填写生图 API 根地址}
+      AGENT_IMAGE_API_KEY: ${AGENT_IMAGE_API_KEY:-}
+      AGENT_IMAGE_MODEL: ${AGENT_IMAGE_MODEL:?请填写生图模型名}
+      AGENT_IMAGE_SIZE: ${AGENT_IMAGE_SIZE:-1024x1024}
+      AGENT_IMAGE_RESPONSE_FORMAT: ${AGENT_IMAGE_RESPONSE_FORMAT:-}
+      AGENT_IMAGE_TIMEOUT_SECONDS: ${AGENT_IMAGE_TIMEOUT_SECONDS:-180}
+      AGENT_IMAGE_DOWNLOAD_ALLOWED_HOSTS: ${AGENT_IMAGE_DOWNLOAD_ALLOWED_HOSTS:-[]}
+      AGENT_IMAGE_MAX_BYTES: ${AGENT_IMAGE_MAX_BYTES:-26214400}
       AGENT_AUTH_ME_URL: http://backend:8957/api/auth/me
       AGENT_ASSET_API_URL: http://backend:8957/api/assets
-      AGENT_REDIS_URL: redis://agent-redis:6379/0
+      AGENT_AUTH_TIMEOUT_SECONDS: ${AGENT_AUTH_TIMEOUT_SECONDS:-5}
+      AGENT_STORAGE_TIMEOUT_SECONDS: ${AGENT_STORAGE_TIMEOUT_SECONDS:-60}
+      AGENT_REDIS_URL: redis://:${REDIS_PASSWORD:?请填写 REDIS_PASSWORD}@agent-redis:6379/0
+      AGENT_QUOTA_KEY_PREFIX: ${AGENT_QUOTA_KEY_PREFIX:-woda:agent:quota}
+      AGENT_QUOTA_TIMEZONE: ${TZ:-Asia/Shanghai}
+      AGENT_MEMORY_TTL_SECONDS: ${AGENT_MEMORY_TTL_SECONDS:-3600}
+      AGENT_MEMORY_MAX_CONVERSATIONS: ${AGENT_MEMORY_MAX_CONVERSATIONS:-1000}
+      AGENT_MEMORY_MAX_TURNS: ${AGENT_MEMORY_MAX_TURNS:-10}
+      AGENT_CORS_ORIGINS: '["${PUBLIC_URL:?请填写 PUBLIC_URL}"]'
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy
       agent-redis:
         condition: service_healthy
-    networks:
-      - woda_net
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8958/api/agent/health', timeout=3).read()"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  db:
+    <<: *service
+    image: ${POSTGRES_IMAGE:-postgres:16}
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      POSTGRES_USER: ${DB_USER:-woda}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?请填写 DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-woda_design}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../backend/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    <<: *service
+    image: ${REDIS_IMAGE:-redis:7-alpine}
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?请填写 REDIS_PASSWORD}
+    command: [sh, -c, 'exec redis-server --appendonly yes --requirepass "$$REDISCLI_AUTH"']
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   agent-redis:
-    profiles: [generation]
-    image: redis:7-alpine
-    restart: unless-stopped
-    command: [redis-server, --appendonly, "yes"]
+    <<: *service
+    image: ${REDIS_IMAGE:-redis:7-alpine}
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?请填写 REDIS_PASSWORD}
+    command: [sh, -c, 'exec redis-server --appendonly yes --requirepass "$$REDISCLI_AUTH"']
     volumes:
       - agentquota:/data
     healthcheck:
@@ -78,57 +166,11 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
-    networks:
-      - woda_net
-
-  db:
-    image: postgres:16
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: woda
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-woda}
-      POSTGRES_DB: woda_design
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ../backend/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U woda -d woda_design"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    networks:
-      - woda_net
-
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-}"]
-    volumes:
-      - redisdata:/data
-    networks:
-      - woda_net
-
-  # 本地/演示用的 S3 兼容对象存储；生产切回真实 RustFS 时改 RUSTFS_ENDPOINT_URL。
-  objectstore:
-    image: minio/minio:latest
-    restart: unless-stopped
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${RUSTFS_ACCESS_KEY:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${RUSTFS_SECRET_KEY:-minioadmin}
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - miniodata:/data
-    networks:
-      - woda_net
 
 volumes:
-  agentquota:
   pgdata:
   redisdata:
-  miniodata:
+  agentquota:
 
 networks:
   woda_net:

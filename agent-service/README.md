@@ -164,9 +164,9 @@ Vite 默认将 `/api/agent` 代理到 `http://127.0.0.1:8958`，其他 `/api` �
 独立运行：在本目录填写 `.env` 后执行 `docker compose up --build -d`。
 主后端在宿主机 `8957` 时，容器通过 `host.docker.internal` 访问认证和素材接口。
 
-全栈运行：在 `deploy/` 执行 `docker compose --profile generation up --build -d`。
-启用 Agent 与专用 Redis，Nginx 代理 `/api/agent/`。需要提前填写 `agent-service/.env`。
-未启用 profile 时仍可运行原有前后端；Agent 环境文件可选加载，但启用服务后的必填配置仍会在启动时校验。
+云端全栈运行：统一填写 `deploy/.env`，从仓库根目录执行 `bash deploy/deploy.sh`。
+Agent 与专用 Redis 默认启动，Nginx 代理 `/api/agent/`，无需 `generation` profile，
+也不读取本目录的 `.env`。详见 [云端统一部署说明](../deploy/README.md)。
 
 ## 验证
 
