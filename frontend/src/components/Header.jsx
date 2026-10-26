@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowLeft, Download, FilePlus2, LogOut, RotateCcw, Save, Undo2, Upload } from "lucide-react";
+import { ArrowLeft, Download, FilePlus2, LogOut, RotateCcw, Save, Undo2, Upload, WandSparkles } from "lucide-react";
 import { firstPanel, template } from "../config.js";
 import { templateOptions } from "../../templates/index.js";
 
@@ -16,6 +16,7 @@ export function Header({
   onBackHome,
   onExportPackage,
   onImportPsd,
+  onGenerateMaterial,
   onTemplateChange,
   onSignOut,
   user,
@@ -43,6 +44,9 @@ export function Header({
         <span className={validation.passed ? "metric-ok" : "metric-error"}>{validation.passed ? "可导出" : "需检查"}</span>
       </div>
       <div className="actions">
+        <button type="button" onClick={onGenerateMaterial}>
+          <WandSparkles size={16} aria-hidden="true" />素材生成
+        </button>
         <button type="button" onClick={onBackHome}>
           <ArrowLeft size={16} aria-hidden="true" />
           我的草稿

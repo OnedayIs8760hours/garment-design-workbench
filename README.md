@@ -15,6 +15,10 @@ woda Design 是一个基于 Vite + React 的球衣裁片定制工作台，用于
 - RustFS 素材接口：后端通过 S3 兼容 API 上传、读取、生成临时下载地址和删除用户图片；草稿可以只保存 `assetId`、`objectKey` 等素材引用。
 - 导出设计包：导出 `manifest.json` 和素材文件，供后续 Photoshop 脚本还原。
 - 预览：提供裁片预览、快速成衣预览和基于 GLB/UV 映射的 3D 预览。
+- 素材生图 Agent：`agent-service/` 是独立的 LangGraph 多 Agent 服务，提供对话/生图意图识别、
+  生图工具调用、每用户每日 5 次额度和隔离的短期记忆。顶部“素材生成”和 2D 编辑器素材面板
+  均可调用，生成图片自动保存到对象存储，支持预览、下载、单张及批量删除。
+  分层结构、配置与启动方法详见 [服务说明](agent-service/README.md)。
 
 ## 技术栈
 
@@ -304,6 +308,8 @@ npm run dev -- --port 5173
 受保护的接口如下：
 
 - `POST /api/assets`：上传 PNG/JPEG/WebP/GIF，表单字段为 `file` 和可选 `order_id`。
+- `GET /api/assets?limit=24&cursor=...`：分页读取当前用户的生成素材库。
+- `POST /api/assets/batch-delete`：以 `{"object_keys":["..."]}` 批量删除，最多 100 张，返回成功和失败项。
 - `GET /api/assets/info?object_key=...`：读取素材元数据和临时 URL。
 - `GET /api/assets/download-url?object_key=...`：生成临时下载 URL。
 - `GET /api/assets/content?object_key=...`：通过后端鉴权后流式读取图片。

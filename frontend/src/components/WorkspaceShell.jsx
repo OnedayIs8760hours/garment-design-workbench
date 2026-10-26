@@ -8,6 +8,7 @@ import {
   Menu,
   PencilRuler,
   Shirt,
+  WandSparkles,
   X,
 } from "lucide-react";
 import "../styles/workspace.css";
@@ -17,6 +18,7 @@ const NAV_ITEMS = [
   { id: "products", label: "产品", icon: Shirt },
   { id: "design", label: "设计", icon: PencilRuler },
   { id: "assets", label: "素材", icon: Images },
+  { id: "generate", label: "素材生成", icon: WandSparkles },
   { id: "orders", label: "订单", icon: ClipboardList },
   { id: "finished", label: "成品", icon: CheckCircle2 },
 ];

@@ -46,6 +46,41 @@ services:
     networks:
       - woda_net
 
+  agent:
+    profiles: [generation]
+    build:
+      context: ../agent-service
+    restart: unless-stopped
+    env_file:
+      - path: ../agent-service/.env
+        required: false
+    environment:
+      AGENT_AUTH_ME_URL: http://backend:8957/api/auth/me
+      AGENT_ASSET_API_URL: http://backend:8957/api/assets
+      AGENT_REDIS_URL: redis://agent-redis:6379/0
+    depends_on:
+      backend:
+        condition: service_started
+      agent-redis:
+        condition: service_healthy
+    networks:
+      - woda_net
+
+  agent-redis:
+    profiles: [generation]
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: [redis-server, --appendonly, "yes"]
+    volumes:
+      - agentquota:/data
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - woda_net
+
   db:
     image: postgres:16
     restart: unless-stopped
@@ -90,6 +125,7 @@ services:
       - woda_net
 
 volumes:
+  agentquota:
   pgdata:
   redisdata:
   miniodata:

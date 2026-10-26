@@ -1,4 +1,7 @@
-from pydantic import BaseModel, Field
+from datetime import datetime
+from typing import Annotated
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AssetUploadResponse(BaseModel):
@@ -40,3 +43,24 @@ class StorageHealthResponse(BaseModel):
     status: str = Field(description="ok 表示 RustFS 可连接且目标桶存在")
     endpoint: str
     bucket: str
+
+
+class GeneratedAssetResponse(AssetUploadResponse):
+    created_at: datetime | None = None
+
+
+class GeneratedAssetListResponse(BaseModel):
+    items: list[GeneratedAssetResponse]
+    next_cursor: str | None = None
+
+
+class AssetBatchDeleteRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    object_keys: list[Annotated[str, Field(min_length=1, max_length=1024)]] = Field(
+        min_length=1, max_length=100
+    )
+
+
+class AssetBatchDeleteResponse(BaseModel):
+    deleted: list[str]
+    failed: list[str]

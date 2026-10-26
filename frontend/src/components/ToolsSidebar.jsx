@@ -11,6 +11,7 @@ import {
   Pipette,
   PenLine,
   Upload,
+  WandSparkles,
 } from "lucide-react";
 import { garmentColors, normalizeColor } from "../config.js";
 import { currentElements } from "../designStore.js";
@@ -22,6 +23,7 @@ export function ToolsSidebar({
   addText,
   onUpload,
   clearAssets,
+  onGenerateMaterial,
   applyPanelColor,
   applyAllPanelColors,
   collapsed,
@@ -136,6 +138,9 @@ export function ToolsSidebar({
                 上传图片
                 <input type="file" accept="image/*" onChange={onUpload} />
               </label>
+              <button type="button" className="material-picker-trigger" onClick={onGenerateMaterial}>
+                <WandSparkles size={16} aria-hidden="true" />生成 / 选择云端素材
+              </button>
               <div className="asset-list">
                 {visibleAssets.map((asset) => (
                   <button key={asset.assetId} onClick={() => addImage(asset)}>{asset.name}</button>

@@ -21,12 +21,16 @@ import { TemplateLibrary } from "./pages/TemplateLibrary.jsx";
 import { AssetLibrary } from "./pages/AssetLibrary.jsx";
 import { OrdersWorkspace } from "./pages/OrdersWorkspace.jsx";
 import { FinishedWorkspace } from "./pages/FinishedWorkspace.jsx";
+import { MaterialStudio, MaterialDialog } from "./components/MaterialStudio.jsx";
+import { MaterialSessionProvider } from "./components/MaterialSession.jsx";
+import { materialToDesignAsset, removeMaterialReferences } from "./materialAssets.js";
 import {
   clearAccessToken,
   deleteDesignAsset,
   getAccessToken,
   getCurrentUser,
   getDesignDraft,
+  fetchDesignAssetBlob,
   listDesignDrafts,
   logoutUser,
   uploadDesignAsset,
@@ -138,56 +142,62 @@ export function App() {
 
   if (!workspace) {
     return (
-      <WorkspaceShell
-        activeSection={activeSection}
-        onNavigate={setActiveSection}
-        user={auth.user}
-        onSignOut={signOut}
-      >
-        {activeSection === "home" ? (
-          <WorkspaceOverview
-            user={auth.user}
-            onNavigate={setActiveSection}
-            onOpenDraft={(draft) => openWorkspace(draft)}
-            onNewDesign={() => openWorkspace(null, { newDesign: true })}
-          />
-        ) : activeSection === "products" ? (
-          <TemplateLibrary onStartDesign={(templateId) => openWorkspace(null, { newDesign: true, templateId })} />
-        ) : activeSection === "design" ? (
-          <PersonalHome
-            user={auth.user}
-            embedded
-            onOpenDraft={(draft) => openWorkspace(draft)}
-            onNewDesign={() => openWorkspace(null, { newDesign: true })}
-            onSignOut={signOut}
-          />
-        ) : activeSection === "assets" ? (
-          <AssetLibrary
-            onOpenDraft={(draft) => openWorkspace(draft)}
-            onNavigate={setActiveSection}
-          />
-        ) : activeSection === "orders" ? (
-          <OrdersWorkspace />
-        ) : (
-          <FinishedWorkspace onNavigate={setActiveSection} />
-        )}
-      </WorkspaceShell>
+      <MaterialSessionProvider key={auth.user.id}>
+        <WorkspaceShell
+          activeSection={activeSection}
+          onNavigate={setActiveSection}
+          user={auth.user}
+          onSignOut={signOut}
+        >
+          {activeSection === "home" ? (
+            <WorkspaceOverview
+              user={auth.user}
+              onNavigate={setActiveSection}
+              onOpenDraft={(draft) => openWorkspace(draft)}
+              onNewDesign={() => openWorkspace(null, { newDesign: true })}
+            />
+          ) : activeSection === "products" ? (
+            <TemplateLibrary onStartDesign={(templateId) => openWorkspace(null, { newDesign: true, templateId })} />
+          ) : activeSection === "design" ? (
+            <PersonalHome
+              user={auth.user}
+              embedded
+              onOpenDraft={(draft) => openWorkspace(draft)}
+              onNewDesign={() => openWorkspace(null, { newDesign: true })}
+              onSignOut={signOut}
+            />
+          ) : activeSection === "assets" ? (
+            <AssetLibrary
+              onOpenDraft={(draft) => openWorkspace(draft)}
+              onNavigate={setActiveSection}
+            />
+          ) : activeSection === "generate" ? (
+            <main className="workspace-page material-page"><MaterialStudio /></main>
+          ) : activeSection === "orders" ? (
+            <OrdersWorkspace />
+          ) : (
+            <FinishedWorkspace onNavigate={setActiveSection} />
+          )}
+        </WorkspaceShell>
+      </MaterialSessionProvider>
     );
   }
 
   return (
-    <EditorApp
-      user={auth.user}
-      draftOrderId={workspace.orderId}
-      isNewDesign={workspace.isNewDesign}
-      onBackHome={async () => {
-        await useDesignStore.getState().saveNow();
-        returnToHome();
-        setActiveSection("design");
-        setWorkspace(null);
-      }}
-      onSignOut={signOut}
-    />
+    <MaterialSessionProvider key={auth.user.id}>
+      <EditorApp
+        user={auth.user}
+        draftOrderId={workspace.orderId}
+        isNewDesign={workspace.isNewDesign}
+        onBackHome={async () => {
+          await useDesignStore.getState().saveNow();
+          returnToHome();
+          setActiveSection("design");
+          setWorkspace(null);
+        }}
+        onSignOut={signOut}
+      />
+    </MaterialSessionProvider>
   );
 }
 
@@ -232,7 +242,13 @@ function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [drafts, setDrafts] = React.useState([]);
   const [psdUpload, setPsdUpload] = React.useState(null);
+  const [materialOpen, setMaterialOpen] = React.useState(false);
+  const materialUrls = React.useRef(new Set());
   const psdFileInputRef = React.useRef(null);
+
+  React.useEffect(() => () => {
+    materialUrls.current.forEach((url) => URL.revokeObjectURL(url));
+  }, []);
 
   const refreshDrafts = React.useCallback(() => {
     return listDesignDrafts(templateId)
@@ -309,6 +325,7 @@ function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
   React.useEffect(() => {
     // 处理 Ctrl+Z 撤销快捷键。
     const onKeyDown = (event) => {
+      if (materialOpen) return;
       // 当前键盘事件来源元素。
       const target = event.target;
       if (target instanceof HTMLElement && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) return;
@@ -324,7 +341,7 @@ function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [canUndo, undo]);
+  }, [canUndo, undo, materialOpen]);
 
   // 添加任意已经构造好的元素到当前裁片。
   const addElement = (element) => {
@@ -347,7 +364,9 @@ function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
       panel.logicalSize.width / panel.logicalSize.height,
     );
     commit((draft) => {
-      if (!draft.assets.some((item) => item.assetId === asset.assetId)) draft.assets.push(asset);
+      const existing = draft.assets.find((item) => item.assetId === asset.assetId);
+      if (existing) Object.assign(existing, asset);
+      else draft.assets.push(asset);
       // 当前 draft 中正在编辑的裁片。
       const panel = currentPanel(draft);
       panel.elements.push({ ...element, id: `element-${Date.now()}`, zIndex: panel.elements.length + 1 });
@@ -357,6 +376,23 @@ function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
 
   // 添加姓名或号码文字元素。
   const addText = (role) => addElement(createTextElement(role));
+
+  const useGeneratedAsset = async (asset) => {
+    const blob = await fetchDesignAssetBlob(asset.object_key);
+    const url = URL.createObjectURL(blob);
+    try {
+      const image = await loadBrowserImage(url);
+      addImage(materialToDesignAsset({ ...asset, url }, image.naturalWidth, image.naturalHeight));
+      materialUrls.current.add(url);
+      setMaterialOpen(false);
+      useDesignStore.setState({ status: "已将生成素材添加到当前裁片" });
+    } catch (error) { URL.revokeObjectURL(url); throw error; }
+  };
+
+  const removeGeneratedAssets = (keys) => {
+    commit((draft) => removeMaterialReferences(draft, keys));
+    select(null);
+  };
 
   const applyPanelColor = (color, panelIds = [design.currentPanelId]) => {
     const panelColors = panelIds.map((panelId) => {
@@ -546,6 +582,7 @@ function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
         onBackHome={onBackHome}
         onExportPackage={() => downloadZip(design, exportJson)}
         onImportPsd={onImportPsd}
+        onGenerateMaterial={() => setMaterialOpen(true)}
         onTemplateChange={switchTemplate}
         onSignOut={onSignOut}
         user={user}
@@ -558,6 +595,7 @@ function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
           addText={addText}
           onUpload={onUpload}
           clearAssets={clearAssets}
+          onGenerateMaterial={() => setMaterialOpen(true)}
           applyPanelColor={applyPanelColor}
           applyAllPanelColors={applyAllPanelColors}
           collapsed={sidebarCollapsed}
@@ -603,6 +641,9 @@ function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
         onChange={onUploadPsd}
       />
       {psdUpload && <PsdUploadDialog state={psdUpload} onClose={() => setPsdUpload(null)} />}
+      {materialOpen && <MaterialDialog title="素材生成与选用" wide onClose={() => setMaterialOpen(false)}>
+        <MaterialStudio onUse={useGeneratedAsset} onDeleted={removeGeneratedAssets} />
+      </MaterialDialog>}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import { materialToDesignAsset, removeMaterialReferences } from "./materialAssets.js";
 import { createImageElement, createTextElement, fillPanelSize } from "./elements.js";
 import { createInitialDesign, garmentColors, normalizeColor } from "./config.js";
 import { prepareTextRasterManifest, textRasterTargetFromBounds } from "./download.js";
@@ -173,3 +174,24 @@ assert.deepEqual(templateCatalogPaths["W-M"], {
   template: "templates/football-jersey-crop-top-two-tone/W-M.template.json",
   uvMapping: "templates/football-jersey-crop-top-two-tone/W-M.uv_mapping.json",
 });
+
+// 云端生成素材可复用对象引用，删除时只移除对应素材及各裁片上的图片图层。
+const generatedAsset = materialToDesignAsset({
+  asset_id: "ai-1", object_key: "users/7/designs/generated/assets/ai-1.png",
+  bucket: "test", original_name: "老虎.png", content_type: "image/png", size: 100,
+  url: "https://storage.example.com/ai-1.png",
+}, 1024, 512);
+assert.equal(generatedAsset.originalWidth / generatedAsset.originalHeight, 2);
+assert.equal(generatedAsset.storageProvider, "rustfs");
+assert.throws(() => materialToDesignAsset({}, 0, 0), /素材数据不完整/);
+const materialDraft = {
+  assets: [generatedAsset, { assetId: "keep", objectKey: "keep.png" }],
+  panels: {
+    front: { elements: [{ id: "a", assetId: "ai-1" }, { id: "b", assetId: "keep", zIndex: 2 }] },
+    back: { elements: [{ id: "c", assetId: "ai-1" }, { id: "d", type: "text", zIndex: 2 }] },
+  },
+};
+removeMaterialReferences(materialDraft, [generatedAsset.objectKey]);
+assert.deepEqual(materialDraft.assets.map((asset) => asset.assetId), ["keep"]);
+assert.deepEqual(materialDraft.panels.front.elements.map((element) => element.id), ["b"]);
+assert.deepEqual(materialDraft.panels.back.elements, [{ id: "d", type: "text", zIndex: 1 }]);

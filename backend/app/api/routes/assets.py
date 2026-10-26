@@ -6,6 +6,9 @@ from app.config.config import Config
 from app.models.users import User
 from app.schemas.assets import (
     AssetDeleteResponse,
+    AssetBatchDeleteRequest,
+    AssetBatchDeleteResponse,
+    GeneratedAssetListResponse,
     AssetObjectResponse,
     AssetUploadResponse,
     StorageHealthResponse,
@@ -15,6 +18,8 @@ from app.services.object_storage import (
     check_rustfs_health,
     create_download_url,
     delete_image_object,
+    delete_image_objects,
+    list_generated_images,
     get_object_metadata,
     iter_object_chunks,
     open_image_object,
@@ -65,6 +70,7 @@ async def upload_asset(
             file_object=file.file,
             content_type=content_type,
             size=size,
+            original_name=file.filename,
         )
         url = await create_download_url(current_user.id, str(metadata["object_key"]))
     except ObjectStorageError as error:
@@ -78,6 +84,31 @@ async def upload_asset(
         url=url,
         url_expires_in=Config.RUSTFS_PRESIGNED_URL_EXPIRES_SECONDS,
     )
+
+
+@router.get("", response_model=GeneratedAssetListResponse)
+async def list_generated_assets(
+    limit: int = Query(default=24, ge=1, le=100),
+    cursor: str | None = Query(default=None, max_length=2048),
+    current_user: User = Depends(get_current_user),
+) -> GeneratedAssetListResponse:
+    try:
+        result = await list_generated_images(current_user.id, limit, cursor)
+    except ObjectStorageError as error:
+        raise storage_http_exception(error) from error
+    return GeneratedAssetListResponse(**result)
+
+
+@router.post("/batch-delete", response_model=AssetBatchDeleteResponse)
+async def batch_delete_assets(
+    payload: AssetBatchDeleteRequest,
+    current_user: User = Depends(get_current_user),
+) -> AssetBatchDeleteResponse:
+    try:
+        result = await delete_image_objects(current_user.id, payload.object_keys)
+    except ObjectStorageError as error:
+        raise storage_http_exception(error) from error
+    return AssetBatchDeleteResponse(**result)
 
 
 @router.get("/info", response_model=AssetObjectResponse)

@@ -3,7 +3,9 @@ from __future__ import annotations
 import re
 from functools import lru_cache
 from pathlib import PurePosixPath
+from time import time_ns
 from typing import BinaryIO, Iterator
+from urllib.parse import quote, unquote
 from uuid import uuid4
 
 import anyio
@@ -130,6 +132,7 @@ async def upload_image_object(
     content_type: str,
     size: int,
     asset_id: str | None = None,
+    original_name: str | None = None,
 ) -> dict[str, str | int | None]:
     """上传图片到 RustFS 并返回可写入草稿的对象元数据。"""
     if size <= 0:
@@ -137,6 +140,10 @@ async def upload_image_object(
     if size > Config.RUSTFS_MAX_UPLOAD_BYTES:
         raise ObjectStorageError("file_too_large", "Uploaded image exceeds the configured size limit")
 
+    if not asset_id and order_id == "generated":
+        # S3 lists lexicographically. Reverse timestamps put newest generated assets first
+        # while keeping stable continuation-token pagination and collision resistance.
+        asset_id = f"asset-{9_999_999_999_999 - time_ns() // 1_000_000:013d}-{uuid4().hex}"
     asset_id, object_key = build_user_object_key(user_id, order_id, content_type, asset_id)
     await ensure_rustfs_bucket()
     client = get_rustfs_client()
@@ -149,7 +156,11 @@ async def upload_image_object(
             object_key,
             ExtraArgs={
                 "ContentType": content_type,
-                "Metadata": {"asset-id": asset_id, "owner-user-id": str(user_id)},
+                "Metadata": {
+                    "asset-id": asset_id,
+                    "owner-user-id": str(user_id),
+                    "original-name": quote((original_name or asset_id)[:255], safe=""),
+                },
             },
         )
         return client.head_object(Bucket=Config.RUSTFS_BUCKET, Key=object_key)
@@ -221,6 +232,77 @@ async def delete_image_object(user_id: int, object_key: str) -> None:
     await _run_storage_call(
         lambda: client.delete_object(Bucket=Config.RUSTFS_BUCKET, Key=owned_key)
     )
+
+
+async def list_generated_images(user_id: int, limit: int, cursor: str | None = None) -> dict:
+    """从用户专属生成目录分页列出素材，无需依赖草稿或浏览器缓存。"""
+    client = get_rustfs_client()
+    prefix = f"users/{user_id}/designs/generated/assets/"
+
+    def read():
+        arguments = {"Bucket": Config.RUSTFS_BUCKET, "Prefix": prefix, "MaxKeys": limit}
+        if cursor:
+            arguments["ContinuationToken"] = cursor
+        try:
+            page = client.list_objects_v2(**arguments)
+        except ClientError as error:
+            if error.response.get("Error", {}).get("Code") == "NoSuchBucket":
+                return {"items": [], "next_cursor": None}
+            raise
+        items = []
+        for item in page.get("Contents", []):
+            key = item["Key"]
+            if not key.startswith(prefix) or key.endswith("/"):
+                continue
+            try:
+                metadata = client.head_object(Bucket=Config.RUSTFS_BUCKET, Key=key)
+            except ClientError as error:
+                if error.response.get("Error", {}).get("Code") in {"404", "NoSuchKey", "NotFound"}:
+                    continue  # 素材可能刚被另一个页面删除。
+                raise
+            content_type = metadata.get("ContentType", "")
+            if content_type not in ALLOWED_IMAGE_TYPES:
+                continue
+            custom = metadata.get("Metadata", {})
+            items.append({
+                "asset_id": custom.get("asset-id") or PurePosixPath(key).stem,
+                "object_key": key,
+                "bucket": Config.RUSTFS_BUCKET,
+                "original_name": unquote(custom.get("original-name") or PurePosixPath(key).name),
+                "content_type": content_type,
+                "size": int(metadata.get("ContentLength") or item.get("Size") or 0),
+                "etag": _clean_etag(metadata.get("ETag")),
+                "created_at": item.get("LastModified"),
+                "url": client.generate_presigned_url(
+                    "get_object", Params={"Bucket": Config.RUSTFS_BUCKET, "Key": key},
+                    ExpiresIn=Config.RUSTFS_PRESIGNED_URL_EXPIRES_SECONDS,
+                ),
+                "url_expires_in": Config.RUSTFS_PRESIGNED_URL_EXPIRES_SECONDS,
+            })
+        return {"items": items, "next_cursor": page.get("NextContinuationToken")}
+
+    try:
+        return await _run_storage_call(read)
+    except ObjectStorageError as error:
+        if error.code == "not_found":
+            return {"items": [], "next_cursor": None}
+        raise
+
+
+async def delete_image_objects(user_id: int, object_keys: list[str]) -> dict:
+    """整批先校验归属再删除；逐项返回结果，失败对象留给用户重试。"""
+    keys = list(dict.fromkeys(assert_user_object_key(user_id, key) for key in object_keys))
+    client = get_rustfs_client()
+    result = await _run_storage_call(lambda: client.delete_objects(
+        Bucket=Config.RUSTFS_BUCKET,
+        Delete={"Objects": [{"Key": key} for key in keys], "Quiet": False},
+    ))
+    deleted = {item["Key"] for item in result.get("Deleted", [])}
+    errors = {item["Key"] for item in result.get("Errors", [])}
+    return {
+        "deleted": [key for key in keys if key in deleted and key not in errors],
+        "failed": [key for key in keys if key not in deleted or key in errors],
+    }
 
 
 async def check_rustfs_health() -> None:

@@ -50,3 +50,25 @@ jobs:
 
       - name: Run tests
         run: uv run pytest
+
+  agent-service:
+    name: Agent service (pytest + lint)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: agent-service
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Sync dependencies (locked)
+        run: uv sync --locked
+
+      - name: Run tests
+        run: uv run pytest
+
+      - name: Lint
+        run: uv run ruff check .

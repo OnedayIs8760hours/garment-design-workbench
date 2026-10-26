@@ -29,7 +29,7 @@ async function requestJson(path, options = {}) {
   try {
     response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
   } catch {
-    throw new Error("无法连接认证服务，请确认后端已启动。");
+    throw new Error("无法连接服务，请确认后端已启动。");
   }
 
   const text = await response.text();
@@ -41,7 +41,10 @@ async function requestJson(path, options = {}) {
   }
 
   if (!response.ok) {
-    throw new Error(getApiErrorMessage(response.status, payload));
+    const error = new Error(payload?.reply || getApiErrorMessage(response.status, payload));
+    error.status = response.status;
+    error.payload = payload;
+    throw error;
   }
 
   return payload;
@@ -51,12 +54,13 @@ function getApiErrorMessage(status, payload) {
   if (status === 401) return "用户名或密码错误，或登录会话已过期。";
   if (status === 403) return "当前账号已停用。";
   if (status === 409) return "用户名已被占用，请换一个试试。";
-  if (status === 503) return "认证服务暂时不可用，请稍后再试。";
 
   if (Array.isArray(payload?.detail)) {
     return payload.detail.map((item) => item.msg).filter(Boolean).join("；") || "请求参数不正确。";
   }
   if (typeof payload?.detail === "string") return payload.detail;
+  if (status === 503) return "服务暂时不可用，请稍后再试。";
+  if (status === 502) return "生成服务暂时不可用，请确认服务已启动。";
   return "请求失败，请稍后再试。";
 }
 
@@ -128,6 +132,37 @@ export async function fetchDesignAssetBlob(objectKey) {
 
 export function deleteDesignAsset(objectKey) {
   return requestJson(`/assets?object_key=${encodeURIComponent(objectKey)}`, { method: "DELETE" });
+}
+
+export function listGeneratedAssets(cursor) {
+  const query = new URLSearchParams({ limit: "24" });
+  if (cursor) query.set("cursor", cursor);
+  return requestJson(`/assets?${query}`);
+}
+
+export function batchDeleteDesignAssets(objectKeys) {
+  return requestJson("/assets/batch-delete", {
+    method: "POST", body: JSON.stringify({ object_keys: objectKeys }),
+  });
+}
+
+export function getGenerationQuota() {
+  return requestJson("/agent/quota");
+}
+
+export function sendGenerationMessage(message, conversationId) {
+  return requestJson("/agent/chat", {
+    method: "POST",
+    body: JSON.stringify({ message, conversation_id: conversationId || null }),
+  });
+}
+
+export function saveGeneratedImage(image) {
+  return requestJson("/agent/assets/save", { method: "POST", body: JSON.stringify(image) });
+}
+
+export function clearGenerationConversation(conversationId) {
+  return requestJson(`/agent/conversations/${encodeURIComponent(conversationId)}`, { method: "DELETE" });
 }
 
 // ---------------- PSD 分片上传 ----------------
