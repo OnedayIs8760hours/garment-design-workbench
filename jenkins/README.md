@@ -32,4 +32,5 @@ jenkins/
 旧任务若仍显示先前的发布参数，可在任务配置中取消“参数化构建过程”。
 
 确认基础链路成功后，再逐步添加实际测试和部署。
+测试 webhook 时，向 `main` 推送一个小改动，确认 Jenkins 自动启动构建并以 `Finished: SUCCESS` 结束。
 节点语法参考 [Jenkins Pipeline 文档](https://www.jenkins.io/doc/book/pipeline/syntax/#agent)。
