@@ -14,7 +14,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$scriptPath = "S:\ps-save\SDS-design\photoshop\restore-panels-smart-objects.jsx"
+$scriptPath = "<项目根目录>\photoshop\restore-panels-smart-objects.jsx"
 
 if ($PickFolder) {
   Add-Type -AssemblyName System.Windows.Forms

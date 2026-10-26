@@ -1,0 +1,231 @@
+{
+  "format": "uv-atlas-v1",
+  "atlas_size": [
+    4096,
+    4096
+  ],
+  "coordinate_notes": {
+    "atlas_origin": "top-left",
+    "uv_origin": "bottom-left",
+    "uv_rect_order": [
+      "u_min",
+      "v_min",
+      "u_max",
+      "v_max"
+    ],
+    "note": "Generated from GLB material primitives. UV rectangles describe each material island bounds in the model UV space."
+  },
+  "source_model": "football-jersey-crop-top-two-tone.glb",
+  "parts": {
+    "up-front": {
+      "source_file": "front.png",
+      "source_size_px": [
+        2659,
+        939
+      ],
+      "source_alpha_bbox_px": [
+        0,
+        0,
+        2659,
+        939
+      ],
+      "atlas_rect_px": [
+        2203,
+        3323,
+        1656,
+        584
+      ],
+      "uv_rect": [
+        0.537857532501,
+        0.046225443482,
+        0.942080974579,
+        0.188682049513
+      ],
+      "transform": {
+        "scale_x": 0.404223442078,
+        "scale_y": 0.142456606031,
+        "rotation_deg": 0
+      }
+    },
+    "up-back": {
+      "source_file": "back.png",
+      "source_size_px": [
+        2633,
+        909
+      ],
+      "source_alpha_bbox_px": [
+        0,
+        0,
+        2633,
+        909
+      ],
+      "atlas_rect_px": [
+        342,
+        3323,
+        1639,
+        565
+      ],
+      "uv_rect": [
+        0.083484299481,
+        0.05078624934,
+        0.483702898026,
+        0.188682049513
+      ],
+      "transform": {
+        "scale_x": 0.400218598545,
+        "scale_y": 0.137895800173,
+        "rotation_deg": 0
+      }
+    },
+    "under-front": {
+      "source_file": "front.png",
+      "source_size_px": [
+        2303,
+        1204
+      ],
+      "source_alpha_bbox_px": [
+        0,
+        0,
+        2303,
+        1204
+      ],
+      "atlas_rect_px": [
+        275,
+        1658,
+        1434,
+        749
+      ],
+      "uv_rect": [
+        0.067257232964,
+        0.412187665701,
+        0.417323410511,
+        0.595102727413
+      ],
+      "transform": {
+        "scale_x": 0.35006617754700003,
+        "scale_y": 0.18291506171199995,
+        "rotation_deg": 0
+      }
+    },
+    "under-back": {
+      "source_file": "back.png",
+      "source_size_px": [
+        2304,
+        1112
+      ],
+      "source_alpha_bbox_px": [
+        0,
+        0,
+        2304,
+        1112
+      ],
+      "atlas_rect_px": [
+        342,
+        616,
+        1434,
+        692
+      ],
+      "uv_rect": [
+        0.083484239876,
+        0.68073540926,
+        0.433625280857,
+        0.849581122398
+      ],
+      "transform": {
+        "scale_x": 0.35014104098099996,
+        "scale_y": 0.168845713138,
+        "rotation_deg": 0
+      }
+    },
+    "left-sleeve": {
+      "source_file": "left-sleeve.png",
+      "source_size_px": [
+        1751,
+        1068
+      ],
+      "source_alpha_bbox_px": [
+        0,
+        0,
+        1751,
+        1068
+      ],
+      "atlas_rect_px": [
+        1886,
+        2407,
+        1090,
+        665
+      ],
+      "uv_rect": [
+        0.460459828377,
+        0.250017762184,
+        0.726487576962,
+        0.412259787321
+      ],
+      "transform": {
+        "scale_x": 0.26602774858499995,
+        "scale_y": 0.16224202513699998,
+        "rotation_deg": 0
+      }
+    },
+    "right-sleeve": {
+      "source_file": "right-sleeve.png",
+      "source_size_px": [
+        1751,
+        1068
+      ],
+      "source_alpha_bbox_px": [
+        0,
+        0,
+        1751,
+        1068
+      ],
+      "atlas_rect_px": [
+        1941,
+        1139,
+        1090,
+        665
+      ],
+      "uv_rect": [
+        0.473908632994,
+        0.55962318182,
+        0.739936292171,
+        0.72186511755
+      ],
+      "transform": {
+        "scale_x": 0.266027659177,
+        "scale_y": 0.16224193573,
+        "rotation_deg": 0
+      }
+    },
+    "collar": {
+      "source_file": "collar.png",
+      "source_size_px": [
+        2344,
+        279
+      ],
+      "source_alpha_bbox_px": [
+        0,
+        0,
+        2344,
+        279
+      ],
+      "atlas_rect_px": [
+        2072,
+        789,
+        1461,
+        173
+      ],
+      "uv_rect": [
+        0.505748152733,
+        0.765169978142,
+        0.862346112728,
+        0.80748218298
+      ],
+      "transform": {
+        "scale_x": 0.356597959995,
+        "scale_y": 0.04231220483799991,
+        "rotation_deg": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,108 @@
+// 在 Jenkins 的 Pipeline from SCM / Multibranch Pipeline 中设置 Script Path 为 jenkins/Jenkinsfile。
+pipeline {
+  agent { label 'linux && docker' }
+
+  options {
+    skipDefaultCheckout(true)
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '20'))
+    timeout(time: 60, unit: 'MINUTES')
+  }
+
+  parameters {
+    choice(name: 'MODE', choices: ['CI', 'BUILD', 'PUBLISH', 'DEPLOY'], description: 'CI：测试；BUILD：再构建镜像；PUBLISH：再推送；DEPLOY：再部署')
+    string(name: 'REGISTRY', defaultValue: 'ghcr.io', description: '镜像仓库域名，可带端口，不带协议')
+    string(name: 'IMAGE_NAMESPACE', defaultValue: 'woda-custom', description: '镜像命名空间，使用小写')
+    string(name: 'REGISTRY_CREDENTIALS_ID', defaultValue: 'sds-registry', description: '镜像仓库 Username with password 凭据 ID')
+    string(name: 'DEPLOY_HOST', defaultValue: '', description: '部署服务器主机名或 IPv4 地址')
+    string(name: 'DEPLOY_PORT', defaultValue: '22', description: 'SSH 端口')
+    string(name: 'DEPLOY_USER', defaultValue: 'deploy', description: '服务器 SSH 用户')
+    string(name: 'DEPLOY_DIR', defaultValue: '/opt/sds-design', description: '服务器部署目录，须预先配置 deploy/.env')
+    string(name: 'SSH_CREDENTIALS_ID', defaultValue: 'sds-deploy-ssh', description: 'SSH Username with private key 凭据 ID')
+    string(name: 'KNOWN_HOSTS_CREDENTIALS_ID', defaultValue: 'sds-known-hosts', description: '保存已核实服务器公钥的 Secret file 凭据 ID')
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+        script {
+          env.IMAGE_TAG = "${env.BUILD_NUMBER}-${sh(script: 'git rev-parse --short=12 HEAD', returnStdout: true).trim()}"
+        }
+      }
+    }
+
+    stage('Check tools') {
+      steps {
+        sh '''
+          set -eu
+          node --version
+          npm --version
+          uv --version
+          uv python find 3.13
+        '''
+      }
+    }
+
+    stage('Frontend CI') {
+      steps {
+        dir('frontend') {
+          sh 'npm ci && npm run build && npm test'
+        }
+      }
+    }
+
+    stage('Backend CI') {
+      steps {
+        dir('backend') {
+          sh 'rm -f reports/pytest.xml && uv sync --locked --python 3.13 && uv run --frozen pytest --junitxml=reports/pytest.xml'
+        }
+      }
+      post {
+        always {
+          junit testResults: 'backend/reports/pytest.xml', allowEmptyResults: true
+        }
+      }
+    }
+
+    stage('Agent CI') {
+      steps {
+        dir('agent-service') {
+          sh 'rm -f reports/pytest.xml && uv sync --locked --python 3.13 && uv run --frozen pytest --junitxml=reports/pytest.xml && uv run --frozen ruff check .'
+        }
+      }
+      post {
+        always {
+          junit testResults: 'agent-service/reports/pytest.xml', allowEmptyResults: true
+        }
+      }
+    }
+
+    stage('Build images') {
+      when { expression { params.MODE != 'CI' } }
+      steps {
+        sh 'bash jenkins/scripts/images.sh build'
+      }
+    }
+
+    stage('Publish images') {
+      when { expression { params.MODE in ['PUBLISH', 'DEPLOY'] } }
+      steps {
+        withCredentials([usernamePassword(credentialsId: params.REGISTRY_CREDENTIALS_ID, usernameVariable: 'REGISTRY_USER', passwordVariable: 'REGISTRY_PASSWORD')]) {
+          sh 'bash jenkins/scripts/images.sh push'
+        }
+      }
+    }
+
+    stage('Deploy') {
+      when { expression { params.MODE == 'DEPLOY' } }
+      steps {
+        sshagent(credentials: [params.SSH_CREDENTIALS_ID]) {
+          withCredentials([file(credentialsId: params.KNOWN_HOSTS_CREDENTIALS_ID, variable: 'KNOWN_HOSTS_FILE')]) {
+            sh 'bash jenkins/scripts/deploy.sh'
+          }
+        }
+      }
+    }
+  }
+}

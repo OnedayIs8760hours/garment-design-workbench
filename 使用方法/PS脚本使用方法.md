@@ -11,7 +11,7 @@
 运行：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File S:\ps-save\SDS-design\photoshop\run-restore-front.ps1 -PickFolder
+powershell -ExecutionPolicy Bypass -File <项目根目录>\photoshop\run-restore-front.ps1 -PickFolder
 ```
 
 弹窗里选择已经解压好的设计包文件夹，例如：
@@ -30,7 +30,7 @@ assets\
 ## 方式二：直接传文件夹路径
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File S:\ps-save\SDS-design\photoshop\run-restore-front.ps1 -PackageFolder "E:\download\design-package-ORDER-20260805-001"
+powershell -ExecutionPolicy Bypass -File <项目根目录>\photoshop\run-restore-front.ps1 -PackageFolder "E:\download\design-package-ORDER-20260805-001"
 ```
 
 这种方式不会弹窗，适合重复运行同一个设计包。
@@ -55,7 +55,7 @@ var CONFIG = {
 然后运行：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File S:\ps-save\SDS-design\photoshop\run-restore-front.ps1
+powershell -ExecutionPolicy Bypass -File <项目根目录>\photoshop\run-restore-front.ps1
 ```
 
 也可以直接指定 JSON 文件：

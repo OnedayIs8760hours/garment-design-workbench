@@ -1,0 +1,36 @@
+[project]
+name = "woda-design-agent"
+version = "0.1.0"
+description = "Independent LangGraph agents for garment design assets"
+requires-python = ">=3.13"
+dependencies = [
+  "fastapi>=0.116.1,<1",
+  "httpx>=0.28.1,<1",
+  "langchain>=1.0,<2",
+  "langchain-openai>=1.0,<2",
+  "langgraph>=1.0,<2",
+  "pydantic-settings>=2.10,<3",
+  "redis>=6.4,<9",
+  "tzdata>=2025.2",
+  "uvicorn[standard]>=0.35,<1",
+]
+
+[dependency-groups]
+dev = [
+  "fakeredis[lua]>=2.31,<3",
+  "pytest>=8.4,<10",
+  "pytest-asyncio>=1.1,<2",
+  "ruff>=0.13,<1",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]

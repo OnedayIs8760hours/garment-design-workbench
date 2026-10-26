@@ -1,0 +1,34 @@
+# 仅用于 Agent 独立开发。云端前后端一体部署使用 ../deploy/docker-compose.yml 和 ../deploy/.env。
+name: woda-design-agent
+
+services:
+  agent:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8958:8958"
+    env_file: .env
+    environment:
+      AGENT_REDIS_URL: redis://redis:6379/0
+      AGENT_AUTH_ME_URL: http://host.docker.internal:8957/api/auth/me
+      AGENT_ASSET_API_URL: http://host.docker.internal:8957/api/assets
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - agent_quota:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  agent_quota:

@@ -2,47 +2,75 @@
 
 ## Project Structure & Module Organization
 
-This is a Vite + React app for garment panel customization and Photoshop JSON restoration.
+This repository is now a frontend/backend workspace for garment panel customization and Photoshop JSON restoration.
 
-- `src/` contains application code.
-- `src/components/` contains React UI components.
-- `src/model.js`, `src/config.js`, and `src/designStore.js` hold template, order, and state logic.
-- `src/templates/` stores imported template metadata, such as `M-2XL.template.json`.
-- `public/templates/` stores browser-served template images and masks.
-- `public/samples/` stores demo assets.
+- `frontend/` contains the Vite + React web editor.
+- `frontend/src/` contains application code.
+- `frontend/src/components/` contains React UI components.
+- `frontend/src/model.js`, `frontend/src/config.js`, and `frontend/src/designStore.js` hold template, order, and state logic.
+- `frontend/templates/` stores imported template metadata and UV mappings, grouped by English category slug.
+- `frontend/public/templates/` stores browser-served template images and masks, grouped by the same English category slug.
+- `frontend/public/models/` stores browser-served GLB models.
+- `backend/` contains the FastAPI service.
 - `photoshop/` contains Photoshop automation scripts (`.jsx`) and runner scripts (`.ps1`).
+- `jenkins/` contains the Jenkins pipeline, image/deployment scripts, and setup instructions; configure the Jenkins SCM Script Path as `jenkins/Jenkinsfile`.
 - `项目实现思路/` contains design notes and implementation process documentation.
-- `src/model.test.js` is the current test entry point.
+- `规范/` contains project conventions that should be followed for future category and asset changes.
+- `frontend/src/model.test.js` is the current frontend test entry point.
 
 ## Build, Test, and Development Commands
 
-Run from the repository root:
+Frontend commands run from `frontend/`:
 
 ```powershell
+cd frontend
 npm install
 npm run dev -- --port 5000 --strictPort
+npm run dev -- --host 0.0.0.0 --port 5000 --strictPort
 npm test
 npm run build
 ```
 
+Backend commands run from `backend/`:
+
+```powershell
+cd backend
+uv sync
+uv run uvicorn app.main:app --host 127.0.0.1 --port 8957 --reload
+uv run pytest
+```
+
 - `npm run dev` starts the local Vite server. Use port `5000` for current manual testing.
-- `npm test` runs the model self-checks in `src/model.test.js`.
-- `npm run build` verifies the production bundle.
+- `npm test` runs the model self-checks in `frontend/src/model.test.js`.
+- `npm run build` verifies the production frontend bundle.
+- `uv run pytest` verifies the FastAPI backend.
 - `photoshop/run-restore-front.ps1` runs the current Photoshop restoration script.
+- GitHub Actions CI lives in `.github/workflows/ci.yml`: it runs the frontend `npm ci && npm run build && npm test` and backend `uv sync --locked && uv run pytest` on push/PR. CD (image builds, Dockerfiles, compose) is in `.github/workflows/cd.yml` and `deploy/` — see `项目实现思路/CI-CD搭建实现思路.md`.
 
 ## Coding Style & Naming Conventions
 
-Use ES modules, React function components, and plain JavaScript. Keep changes small and close to the existing pattern. Use 2-space indentation in JS/JSX/JSON. Component files use `PascalCase.jsx`; utility modules use `camelCase.js`.
+Use ES modules, React function components, and plain JavaScript in the frontend. Keep changes small and close to the existing pattern. Use 2-space indentation in JS/JSX/JSON. Component files use `PascalCase.jsx`; utility modules use `camelCase.js`.
 
-Do not hard-code garment-specific geometry in React components. Template facts belong in `template.json` or `src/templates/*.template.json`; UI code should render those fields.
+Use Python 3.13 and FastAPI conventions in the backend. Keep route handlers, services, and data access separated as backend scope grows.
+
+Do not hard-code garment-specific geometry in React components. Template facts belong in `template.json` or `frontend/templates/<category>/*.template.json`; UI code should render those fields.
+For template, public asset, GLB, and UV naming rules, follow `规范/模板与资源目录规范.md`.
 
 ## Testing Guidelines
 
-There is no full test framework yet. Keep focused `assert` checks in `src/model.test.js` for template shape, JSON export, coordinate validation, and regression cases. Run both:
+There is no full frontend test framework yet. Keep focused `assert` checks in `frontend/src/model.test.js` for template shape, JSON export, coordinate validation, and regression cases. Run:
 
 ```powershell
+cd frontend
 npm test
 npm run build
+```
+
+For backend changes, add focused pytest tests and run:
+
+```powershell
+cd backend
+uv run pytest
 ```
 
 For Photoshop scripts, verify by checking the target PSD update and expected layer group names, such as `CODEX_ORDER_RESTORE`.
