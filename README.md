@@ -265,7 +265,7 @@ Photoshop JSX 按 manifest.json 还原到 PSD
 ## 云端 Docker 部署
 
 前端、后端、Agent、PostgreSQL 和两套 Redis 统一由 `deploy/docker-compose.yml` 启动，
-仅需填写 `deploy/.env`。对象存储接入独立的 S3/RustFS 服务。
+仅需填写 `deploy/.env`。Compose 同时启动 RustFS 并持久化素材，部署脚本自动创建私有桶。
 
 ```bash
 cp deploy/.env.example deploy/.env

@@ -1,7 +1,7 @@
 # CI/CD 搭建实现思路
 
 > 本文保留最初的 CI/CD 方案记录。当前 CI 已包含 Agent，CD 会构建前端、后端和 Agent 三个镜像；
-> 云端使用 `deploy/docker-compose.yml` 与唯一的 `deploy/.env`，不再使用下文旧的服务级环境文件配置。
+> 云端使用 `deploy/docker-compose.yml` 与唯一的 `deploy/.env`，同时启动 RustFS 并初始化私有桶，不再使用下文旧的服务级环境文件配置。
 > 实际部署、更新、HTTPS 与存储接入请以 [云端统一部署说明](../deploy/README.md) 为准。
 
 ## 背景
