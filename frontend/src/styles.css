@@ -1023,7 +1023,7 @@ h3 {
   }
 }
 
-/* Premium editor surface overrides. Keep these at the end so older editor rules remain easy to trace. */
+/* Existing editor surface overrides; H4 refinements follow below. */
 :root {
   --surface: rgb(255 255 255 / 68%);
   --surface-strong: rgb(255 255 255 / 86%);
@@ -1688,4 +1688,236 @@ select:focus-visible {
 
 .spin {
   animation: psd-spin 1s linear infinite;
+}
+
+/* H4 Creative Fashion Studio. Visual layer only; business controls keep their callbacks. */
+.workspace-app, .app {
+  --h4-ink: #203245;
+  --h4-muted: #4c7182;
+  --h4-quiet: #668b9a;
+  --h4-line: #d4e6e8;
+  --h4-blue: #315f82;
+  --h4-deep: #244966;
+  --h4-primary: #bce9e4;
+  --h4-primary-hover: #a5dfdc;
+  --h4-primary-active: #92d2d1;
+  --h4-primary-ink: #214f64;
+  --h4-teal: #549e9c;
+  --h4-paper: #fff;
+  --h4-soft: #edf6f5;
+  --h4-blue-soft: #eef4f8;
+  --h4-shadow: 0 18px 42px rgba(36, 70, 105, .09);
+  --h4-shadow-small: 0 6px 19px rgba(36, 70, 105, .07);
+}
+
+.workspace-app {
+  --workspace-ink: var(--h4-ink);
+  --workspace-paper: #fafffb;
+  --workspace-line: var(--h4-line);
+  --workspace-muted: var(--h4-muted);
+  --workspace-accent: var(--h4-blue);
+  grid-template-rows: 72px minmax(0, 1fr);
+  background: #fff;
+}
+.workspace-content {
+  background: radial-gradient(ellipse at 77% 12%, rgba(210, 238, 250, .22), transparent 46%),
+    linear-gradient(180deg, #fafffb 0%, #f6f9ff 54%, #fff 100%);
+  background-attachment: local;
+}
+.workspace-app button, .app button { box-shadow: none; }
+.workspace-app button:focus-visible, .workspace-app a:focus-visible,
+.app button:focus-visible, .app select:focus-visible, .app input:focus-visible {
+  outline: 3px solid rgba(84, 158, 156, .42);
+  outline-offset: 2px;
+}
+.workspace-app button:disabled, .app button:disabled { opacity: .58; cursor: not-allowed; }
+
+/* Editor: light peripheral controls; the actual canvas and renderers are untouched. */
+.app {
+  --ink: #203245;
+  --ink-muted: #64798b;
+  --line: #dbe6eb;
+  --line-bright: #edf2f3;
+  --surface: rgba(255, 255, 255, .92);
+  --surface-soft: #f5faf9;
+  --shadow-soft: 0 7px 22px rgba(36, 70, 105, .055);
+  height: 100dvh;
+  min-height: 0;
+  grid-template-rows: 86px minmax(0, 1fr);
+  overflow: hidden;
+  background: linear-gradient(180deg, #fafffb 0%, #f6f9ff 54%, #fff 100%);
+}
+.app .topbar {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 216px minmax(0, 1fr);
+  grid-template-rows: 26px 44px;
+  gap: 0 12px;
+  padding: 7px 14px;
+  border-bottom: 1px solid #e9f0f2;
+  background: rgba(255, 255, 255, .88);
+  box-shadow: none;
+}
+.app .brand-block {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  min-width: 0;
+}
+.app .brand-block p { color: var(--h4-ink); font-size: 13px; }
+.app .brand-block p::before { background: #34c759; box-shadow: 0 0 0 4px rgba(163, 230, 180, .28); }
+.app .template-switcher select {
+  border-color: var(--h4-line);
+  border-radius: 8px;
+  background: #fff;
+}
+.app .top-metrics {
+  grid-column: 2;
+  grid-row: 1;
+  justify-content: flex-end;
+  align-items: center;
+}
+.app .top-metrics span, .app .ribbon-stats span {
+  border: 0;
+  border-radius: 8px;
+  color: var(--h4-muted);
+  background: #e8f5f4;
+}
+.app .actions {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.app .actions button {
+  min-height: 34px;
+  padding: 6px 9px;
+  border-color: transparent;
+  border-radius: 9px;
+  color: #467b8d;
+  background: transparent;
+  white-space: nowrap;
+}
+.app .actions button:hover:not(:disabled) { color: var(--h4-deep); background: #eaf4f4; }
+.app .actions .primary-action { color: var(--h4-primary-ink); background: var(--h4-primary); }
+.app .actions .primary-action:hover:not(:disabled) {
+  color: var(--h4-primary-ink);
+  background: var(--h4-primary-hover);
+}
+.app .workspace {
+  min-height: 0;
+  grid-template-columns: minmax(282px, 306px) 18px minmax(0, 1fr) minmax(240px, 276px);
+  column-gap: 12px;
+  padding: 12px;
+  overflow: hidden;
+}
+.app .workspace.sidebar-collapsed { grid-template-columns: 70px minmax(0, 1fr) minmax(240px, 276px); }
+.app .sidebar, .app .preview, .app .bottom-panels section {
+  border: 0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .88);
+  box-shadow: var(--h4-shadow-small);
+}
+.app .sidebar { background: rgba(255, 255, 255, .80); }
+.app .tool-rail {
+  gap: 4px;
+  border-right-color: #edf2f3;
+  background: #f8fbfb;
+}
+.app .tool-rail-button {
+  min-height: 64px;
+  border-radius: 10px;
+  color: #527b8d;
+}
+.app .tool-rail-button:hover { color: var(--h4-deep); background: #eaf4f4; }
+.app .tool-rail-button.active {
+  color: var(--h4-deep);
+  background: #deeff0;
+  box-shadow: inset 3px 0 #549e9c;
+}
+.app .tool-drawer { background: rgba(255, 255, 255, .55); }
+.app .tool-summary {
+  border: 0;
+  border-radius: 10px;
+  background: #f3f9f8;
+}
+.app .sidebar-tabs .active, .app .panel-tabs .active, .app .segmented .active {
+  color: var(--h4-primary-ink);
+  border-color: var(--h4-primary);
+  background: var(--h4-primary);
+}
+.app .panel-tabs button {
+  border-color: #e2ecee;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, .76);
+}
+.app .canvas-shell {
+  border: 0;
+  border-radius: 13px;
+  background: linear-gradient(rgba(250, 253, 252, .91), rgba(247, 250, 253, .91)),
+    repeating-linear-gradient(0deg, rgba(82, 118, 139, .06) 0 1px, transparent 1px 32px),
+    repeating-linear-gradient(90deg, rgba(82, 118, 139, .06) 0 1px, transparent 1px 32px);
+  box-shadow: var(--h4-shadow-small);
+}
+.app .canvas-shell::before { opacity: .28; }
+.app .canvas-shell canvas { box-shadow: 0 14px 32px rgba(36, 70, 105, .11); }
+.app .bottom-panels { gap: 12px; }
+.app .props input { border-color: var(--h4-line); border-radius: 9px; }
+.app .props input:focus-visible { border-color: #8ab6c3; }
+.app .layer.active button:first-child {
+  color: var(--h4-blue);
+  border-color: #d1e5e8;
+  background: #edf7f6;
+}
+.app .segmented { background: #edf4f6; }
+.app .model-canvas, .app .panel-preview-canvas, .app .garment-preview {
+  border-color: #e1eaee;
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(36, 70, 105, .09);
+}
+.app .model-modal { border-radius: 18px; }
+
+@media (max-width: 1200px) {
+  .app .topbar { grid-template-columns: 190px minmax(0, 1fr); }
+  .app .workspace { grid-template-columns: 270px 16px minmax(0, 1fr) 240px; }
+  .app .workspace.sidebar-collapsed { grid-template-columns: 70px minmax(0, 1fr) 240px; }
+}
+@media (min-width: 841px) and (max-width: 980px) {
+  .app .workspace { grid-template-columns: 270px 16px minmax(0, 1fr); overflow-y: auto; }
+  .app .workspace.sidebar-collapsed { grid-template-columns: 70px minmax(0, 1fr); }
+  .app .preview { grid-column: 3; min-height: 300px; }
+  .app .workspace.sidebar-collapsed .preview { grid-column: 2; }
+}
+@media (max-width: 840px) {
+  .app {
+    height: auto;
+    min-height: 100dvh;
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: visible;
+  }
+  .app .topbar {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    gap: 8px;
+    padding: 12px;
+  }
+  .app .brand-block, .app .top-metrics, .app .actions { grid-column: 1; grid-row: auto; }
+  .app .top-metrics { justify-content: flex-start; }
+  .app .actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    overflow: visible;
+  }
+  .app .workspace, .app .workspace.sidebar-collapsed { grid-template-columns: minmax(0, 1fr); overflow: visible; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-app *, .app * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .workspace-topbar, .app .topbar, .app .sidebar, .app .preview,
+  .material-chat, .material-library, .art-center-board { background: #fff; backdrop-filter: none; }
 }
