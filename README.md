@@ -294,11 +294,13 @@ npm run build
 
 当前前端测试入口是 `frontend/src/model.test.js`，主要覆盖模板结构、导出 JSON、坐标校验和回归用例。项目暂未接入完整测试框架。
 
-## Jenkins 基础流水线测试
+## Jenkins 自动测试与构建
 
 Jenkins 相关文件集中在 [`jenkins/`](jenkins/README.md)。创建 Pipeline from SCM 任务时，
 将分支设置为 `*/main`，Script Path 设置为 `jenkins/Jenkinsfile`。
-当前仅验证拉取代码和输出成功消息，使用任意可用节点，无需 Docker 或部署配置。
+推送触发后依次运行前端测试和生产构建、后端 pytest、Agent pytest 和 Ruff 检查，
+并保存前端压缩包及 Python 测试报告。执行节点使用 Linux + Docker，需安装 JUnit 插件；
+详细环境要求、产物下载和排错见 [Jenkins 配置说明](jenkins/README.md)。
 
 ## 常见问题
 

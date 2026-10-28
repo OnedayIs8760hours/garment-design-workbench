@@ -7,6 +7,7 @@ backend/target/
 output/
 *.log
 graphify-out/
+/artifacts/
 
 # 云端部署密钥仅保存在本机/服务器；示例配置可提交。
 deploy/.env
