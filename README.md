@@ -299,7 +299,8 @@ npm run build
 Jenkins 相关文件集中在 [`jenkins/`](jenkins/README.md)。创建 Pipeline from SCM 任务时，
 将分支设置为 `*/main`，Script Path 设置为 `jenkins/Jenkinsfile`。
 推送触发后依次运行前端测试和生产构建、后端 pytest、Agent pytest 和 Ruff 检查，
-并保存前端压缩包及 Python 测试报告。执行节点使用 Linux + Docker，需安装 JUnit 插件；
+并保存前端压缩包及 Python 测试报告。Linux 执行节点会在工作区自动准备 Node.js、uv 和 Python，
+无需 Docker 或 sudo；Jenkins 需安装 JUnit 插件。
 详细环境要求、产物下载和排错见 [Jenkins 配置说明](jenkins/README.md)。
 
 ## 常见问题

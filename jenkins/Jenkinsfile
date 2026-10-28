@@ -1,5 +1,5 @@
 // Jenkins 任务的 Script Path 设置为 jenkins/Jenkinsfile。
-// 执行节点需要 Linux、Bash、Git 和可用的 Docker CLI，无需 Docker Pipeline 插件。
+// 在 Linux 执行节点的工作区自动准备 Node.js、uv 和 Python，无需 Docker 或 sudo。
 pipeline {
   agent any
 
@@ -12,8 +12,8 @@ pipeline {
 
   environment {
     CI = 'true'
-    NODE_CI_IMAGE = 'node:22-bookworm-slim'
-    PYTHON_CI_IMAGE = 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
+    CI_NODE_VERSION = '22.23.4'
+    CI_UV_VERSION = '0.13.6'
   }
 
   stages {
@@ -27,11 +27,11 @@ pipeline {
       }
     }
 
-    stage('Check environment') {
+    stage('Prepare environment') {
       steps {
         script {
           if (!isUnix()) {
-            error('当前流水线需要 Linux + Docker 执行节点，请在任务中选择对应节点。')
+            error('当前流水线需要 Linux 执行节点。')
           }
         }
         sh 'bash jenkins/scripts/ci.sh check'
