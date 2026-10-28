@@ -1,3 +1,5 @@
+import { clearErpSession } from "./api/erpArt.js";
+
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
 const ACCESS_TOKEN_KEY = "woda_design_access_token";
 const SESSION_TOKEN_KEY = "woda_design_session_token";
@@ -9,6 +11,7 @@ export function getAccessToken() {
 export function clearAccessToken() {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   sessionStorage.removeItem(SESSION_TOKEN_KEY);
+  clearErpSession();
 }
 
 function storeAccessToken(token, remember) {

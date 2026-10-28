@@ -11,6 +11,9 @@ RUN npm run build
 # --- 运行阶段 ---
 FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+ENV ERP_PYTHON_UPSTREAM=http://host.docker.internal:8848 \
+    ERP_JAVA_UPSTREAM=http://host.docker.internal:8080 \
+    NGINX_ENVSUBST_FILTER=^ERP_
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

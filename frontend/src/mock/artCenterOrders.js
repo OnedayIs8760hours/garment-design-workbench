@@ -10,7 +10,7 @@ export const ART_CENTER_CATEGORIES = ["橄榄球衣", "露脐款", "训练背心
 export const ART_CENTER_BATCHES = ["沃达-1013-A", "沃达-1013-B", "返单-1009"];
 export const ART_CENTER_PROCESSES = ["刺绣", "烫画", "漫天", "印染", "印染+logo"];
 
-export const INITIAL_ART_CENTER_ORDERS = [
+const sampleOrders = [
   {
     id: "task-001", sequence: "0001", priority: "加急", tag: "W-041", taskBatch: "沃达任务-1013", productionBatch: ART_CENTER_BATCHES[0],
     artCode: "WD-20261013-001", styleImage: jerseyFront, productionImage: jerseyBack, orderNo: `ORDER-${dayKey}0918-3370C`,
@@ -60,6 +60,12 @@ export const INITIAL_ART_CENTER_ORDERS = [
     product: "露脐橄榄球衣", style: "紫白拼色款", name: "NOVA", number: "09", isMachine: true, machineLogo: false, uploaded: false, wrongImage: true, createdAt: new Date(today.getTime() - 2 * 86400000),
   },
 ];
+
+// 来源仅用于迁移前的页面预览；真实来源由 ERP 任务接口返回。
+export const INITIAL_ART_CENTER_ORDERS = sampleOrders.map((order, index) => ({
+  ...order,
+  source: ["woda", "woda", "woda", "woda", "domestic", "overseas", "alibaba", "bulk"][index],
+}));
 
 export function formatMockDate(value) {
   const date = value instanceof Date ? value : new Date(value);

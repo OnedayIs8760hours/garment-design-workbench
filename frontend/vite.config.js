@@ -9,6 +9,20 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 1234,
       proxy: {
+        "/erp/java-api": {
+          target: env.VITE_ERP_JAVA_PROXY_TARGET || "http://127.0.0.1:8080",
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/erp\/java-api/, ""),
+          timeout: 300000,
+          proxyTimeout: 300000,
+        },
+        "/erp": {
+          target: env.VITE_ERP_PYTHON_PROXY_TARGET || "http://127.0.0.1:8848",
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/erp/, ""),
+          timeout: 300000,
+          proxyTimeout: 300000,
+        },
         "/api/agent": {
           target: env.VITE_AGENT_URL || "http://127.0.0.1:8958",
           changeOrigin: true,

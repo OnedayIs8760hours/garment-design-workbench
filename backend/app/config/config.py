@@ -23,6 +23,21 @@ class Config:
     JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
 
+    # 与 ERP 共用 Nacos TLS 网关；实例地址须填写其他服务器实际可访问的入口。
+    NACOS_ENABLED = os.getenv("NACOS_ENABLED", "false").lower() in {"1", "true", "yes", "on"}
+    NACOS_SERVER_ADDR = os.getenv("NACOS_SERVER_ADDR", "").strip()
+    NACOS_NAMESPACE_ID = os.getenv("NACOS_NAMESPACE_ID", "").strip()
+    NACOS_SERVICE_NAME = os.getenv("NACOS_SERVICE_NAME", "woda-design-backend").strip()
+    NACOS_GROUP_NAME = os.getenv("NACOS_GROUP_NAME", "DEFAULT_GROUP").strip()
+    NACOS_CLUSTER_NAME = os.getenv("NACOS_CLUSTER_NAME", "DEFAULT").strip()
+    NACOS_INSTANCE_IP = os.getenv("NACOS_INSTANCE_IP", "").strip()
+    NACOS_INSTANCE_PORT = int(os.getenv("NACOS_INSTANCE_PORT", "8957"))
+    NACOS_USERNAME = os.getenv("NACOS_USERNAME", "")
+    NACOS_PASSWORD = os.getenv("NACOS_PASSWORD", "")
+    NACOS_TLS_ENABLED = os.getenv("NACOS_TLS_ENABLED", "true").lower() in {"1", "true", "yes", "on"}
+    NACOS_TLS_CA_FILE = os.getenv("NACOS_TLS_CA_FILE", "").strip()
+    NACOS_TIMEOUT_SECONDS = float(os.getenv("NACOS_TIMEOUT_SECONDS", "10"))
+
     # 允许跨域访问后端的来源，同时用于 RustFS 桶 CORS，保证 3D 预览能跨域读取素材。
     CORS_ORIGINS = [
         origin.strip()

@@ -64,6 +64,61 @@ chmod 600 deploy/.env
 预签名下载链接，不能写 `http://objectstore:9000`、`localhost` 或仅容器内部可解析的地址。
 HTTPS 网页应搭配 HTTPS 对象存储地址，以免浏览器拦截混合内容。
 
+### Nacos 服务注册（可选）
+
+后端支持注册到 ERP 使用的独立 Nacos 服务器。默认关闭，不影响现有部署；
+设置 `NACOS_ENABLED=true` 后，首次连接或注册失败会阻止后端启动，避免把未注册的部署误判为成功。
+本次只接入后端注册，不会自动从 Nacos 发现 ERP，也不会改变前端 `/erp/` 的转发地址。
+Agent 仍由本机 Nginx 代理，不单独注册。
+
+在 `deploy/.env` 中设置（地址仅为示例）：
+
+```dotenv
+NACOS_ENABLED=true
+NACOS_SERVER_ADDR=203.0.113.20:18848
+NACOS_NAMESPACE_ID=
+NACOS_SERVICE_NAME=woda-design-backend
+NACOS_GROUP_NAME=DEFAULT_GROUP
+NACOS_CLUSTER_NAME=DEFAULT
+NACOS_INSTANCE_IP=10.0.0.30
+NACOS_USERNAME=replace-with-nacos-username
+NACOS_PASSWORD=replace-with-nacos-password
+NACOS_TLS_ENABLED=true
+```
+
+- `NACOS_SERVER_ADDR` 是 Nacos HTTP 入口，不是控制台地址；可用逗号分隔多个 `host:port`。
+  TLS 网关使用 `18848`，SDK 同时连接 `19848`（HTTP 端口 + 1000）；中间件安全组需允许 SDS-design 服务器访问这两个端口。
+  该示例公网 IP 是占位符，必须替换，且实际地址必须与 TLS 证书中的 IP 或域名匹配。
+- 内网直接连接未启用 TLS 的 Nacos 时使用 `NACOS_SERVER_ADDR=内网IP:8848`、
+  `NACOS_TLS_ENABLED=false`，同时确保 `9848` 可达。
+- `NACOS_NAMESPACE_ID` 填命名空间 ID，留空使用公共命名空间；分组、集群按实际环境填写。
+  启用认证时账号和密码必须同时配置，并具有对应服务的注册权限。
+- `NACOS_INSTANCE_IP` 是 **ERP 等调用方能够访问的 SDS-design 服务器 IP**，不是 Nacos 服务器 IP、
+  `0.0.0.0` 或容器 IP。注册端口 `NACOS_INSTANCE_PORT` 留空时沿用 `HTTP_PORT`（默认 `8080`），
+  通过现有 Nginx 暴露 `/api/`，无需额外发布后端 `8957`。
+  须确保该入口监听在可达的服务器地址，并允许调用方访问；绑定 `127.0.0.1` 的端口不可供其他服务器直连。
+  如果注册外层 HTTPS 入口，填写该入口 IP 和端口（通常 `443`），调用方需明确使用 HTTPS；
+  Nacos 连接的 `NACOS_TLS_ENABLED` 不决定业务接口的协议。
+- `NACOS_TLS_CA_FILE` 留空使用系统信任根。自签名证书需先只读挂载 CA 文件到后端容器，
+  再设置容器内路径；不会跳过证书校验。
+- `NACOS_TIMEOUT_SECONDS` 默认 `10`，限制首次注册和退出注销的等待时间。
+
+客户端复用 ERP 的 `nacos-sdk-python==2.0.11` 和 TLS 适配，支持 Nacos 3.2 的表单认证、
+单向 TLS 和 SDK 后台任务清理。临时实例通过 SDK 的 gRPC 连接维护，断线后由 SDK 自动重连和重新注册，
+应用正常退出时主动注销。实例元数据为 `contextPath=/api`、`healthPath=/api/health`；
+健康检查地址供调用方使用，临时实例的存活由 gRPC 连接维护。
+
+启用后重新构建并启动后端（首次部署仍按下文启动全部服务）：
+
+```bash
+cd deploy
+docker compose --env-file .env up -d --build --wait backend
+```
+
+检查 Nacos 控制台对应命名空间和分组中的 `woda-design-backend` 实例；
+还要从 ERP 服务器访问 `http://注册IP:注册端口/api/health`（HTTPS 入口使用 `https://`），
+确认注册的业务地址确实可达。注册成功不代表服务器间网络已经自动打通。
+
 ## 2. 启动
 
 推荐从仓库根目录运行部署脚本：
