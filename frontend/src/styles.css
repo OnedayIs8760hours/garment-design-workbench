@@ -1725,12 +1725,13 @@ select:focus-visible {
   background-attachment: local;
 }
 .workspace-app button, .app button { box-shadow: none; }
-.workspace-app button:focus-visible, .workspace-app a:focus-visible,
+.workspace-app button:focus-visible:where(:not(.art-center-page *)),
+.workspace-app a:focus-visible:where(:not(.art-center-page *)),
 .app button:focus-visible, .app select:focus-visible, .app input:focus-visible {
   outline: 3px solid rgba(84, 158, 156, .42);
   outline-offset: 2px;
 }
-.workspace-app button:disabled, .app button:disabled { opacity: .58; cursor: not-allowed; }
+.workspace-app button:disabled:where(:not(.art-center-page *)), .app button:disabled { opacity: .58; cursor: not-allowed; }
 
 /* Editor: light peripheral controls; the actual canvas and renderers are untouched. */
 .app {
