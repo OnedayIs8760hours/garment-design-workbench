@@ -1,0 +1,28 @@
+# Base paths resolve relative to deploy/docker-compose.yml.
+services:
+  frontend:
+    mem_limit: 64m
+    cpus: 0.5
+    volumes:
+      - ./test/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - /opt/jenkins/certbot/conf:/etc/letsencrypt:ro
+    healthcheck:
+      test: [CMD, wget, --no-check-certificate, -q, -O, /dev/null, https://127.0.0.1:80/]
+  backend:
+    mem_limit: 256m
+    cpus: 0.5
+  agent:
+    mem_limit: 256m
+    cpus: 0.5
+  db:
+    mem_limit: 192m
+    cpus: 0.5
+  redis:
+    mem_limit: 64m
+    cpus: 0.25
+  agent-redis:
+    mem_limit: 64m
+    cpus: 0.25
+  rustfs:
+    mem_limit: 384m
+    cpus: 0.5

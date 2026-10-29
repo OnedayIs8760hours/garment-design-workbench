@@ -5,7 +5,7 @@
 
 ```text
 Checkout → Prepare environment → Frontend test and build
-         → Backend tests → Agent tests and lint → Archive frontend → Deploy main
+         → Backend tests → Agent tests and lint → Archive frontend → Deploy environment
 ```
 
 | 阶段 | 实际执行 |
@@ -16,11 +16,13 @@ Checkout → Prepare environment → Frontend test and build
 | Backend tests | `uv sync --locked --python 3.13` → pytest，生成 JUnit XML |
 | Agent tests and lint | 锁定安装 → pytest → `uv run --frozen ruff check .` |
 | Archive frontend | 全部通过后归档 `artifacts/frontend-dist.tar.gz` |
-| Deploy main | 仅 main：通过 SSH 传输本次已测试的 Git 提交，在生产服务器构建、启动并验证 HTTPS 和存储 |
+| Deploy environment | dev 部署测试环境；main 部署生产：通过各自 SSH 密钥传输已测试的提交，构建、启动并验证 HTTPS 和存储 |
 
 任一步失败停止后续阶段；失败时也保存已生成的 Python 测试报告。
 测试使用 mock，无需生产 `.env`、数据库、Redis、对象存储或真实模型密钥。
-main 分支全部测试通过后自动部署；其他分支只做 CI。部署失败会使本次构建失败。
+main 分支全部测试通过后部署生产；dev 分支通过后部署独立测试环境；其他分支只做 CI。
+部署失败会使本次构建失败。云端测试配置、隔离规则和维护入口见
+[测试环境说明](../deploy/test/README.md)。
 
 ## 当前生产部署
 

@@ -4,14 +4,15 @@ set -euo pipefail
 cd "$(dirname -- "${BASH_SOURCE[0]}")/../.."
 
 case "${GIT_BRANCH:-}" in
-  origin/main|main) ;;
-  *) echo '只有 main 分支允许部署。' >&2; exit 1 ;;
+  origin/main|main) default_key=$HOME/.ssh/sds_design_deploy ;;
+  origin/dev|dev) default_key=$HOME/.ssh/sds_design_deploy_dev ;;
+  *) echo '只有 main 和 dev 分支允许部署。' >&2; exit 1 ;;
 esac
 
 revision=$(git rev-parse HEAD)
 [[ "$revision" == "${GIT_COMMIT:-}" ]] || { echo '待部署提交与本次测试提交不一致。' >&2; exit 1; }
 git diff --exit-code HEAD --
-key=${SDS_DEPLOY_SSH_KEY:-$HOME/.ssh/sds_design_deploy}
+key=${SDS_DEPLOY_SSH_KEY:-$default_key}
 [[ -f "$key" ]] || { echo '缺少 Jenkins 专用部署 SSH 密钥。' >&2; exit 1; }
 mkdir -p artifacts
 bundle=artifacts/deploy.bundle

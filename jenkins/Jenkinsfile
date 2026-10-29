@@ -86,9 +86,9 @@ pipeline {
       }
     }
 
-    stage('Deploy main') {
+    stage('Deploy environment') {
       when {
-        expression { ['origin/main', 'main'].contains(env.GIT_BRANCH) }
+        expression { ['origin/main', 'main', 'origin/dev', 'dev'].contains(env.GIT_BRANCH) }
       }
       steps {
         sh 'bash jenkins/scripts/deploy.sh'
@@ -101,7 +101,7 @@ pipeline {
       archiveArtifacts artifacts: 'artifacts/*-pytest.xml', allowEmptyArchive: true
     }
     success {
-      echo '流水线通过：测试、构建和归档成功；main 分支已完成部署及线上检查，其他分支不部署。'
+      echo '流水线通过：测试、构建和归档成功；dev 部署测试环境，main 部署生产环境，其他分支不部署。'
     }
     failure {
       echo 'CI 失败：请查看失败阶段的 Console Output 和测试报告。'

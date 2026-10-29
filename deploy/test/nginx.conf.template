@@ -1,0 +1,66 @@
+# 前端静态服务：服务 SPA 构建产物，并把 /api 反向代理到后端容器。
+server {
+  listen 80 ssl;
+  ssl_certificate /etc/letsencrypt/live/38.22.234.43/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/38.22.234.43/privkey.pem;
+  ssl_protocols TLSv1.2 TLSv1.3;
+  add_header X-SDS-Environment dev always;
+  server_name _;
+
+  # Test deployments never proxy requests to production ERP.
+  location ^~ /erp/ { return 503; }
+
+  location ~ ^/woda-design-dev(?:/|$) {
+    resolver 127.0.0.11 valid=30s;
+    set $storage_upstream http://rustfs:9000;
+    proxy_pass $storage_upstream;
+    proxy_set_header Host $http_host;
+    proxy_request_buffering off;
+    proxy_buffering off;
+    proxy_read_timeout 300s;
+    client_max_body_size 500m;
+  }
+
+  # 基于 hash 或带版本号的静态资源长缓存
+  location /assets/ {
+    root /usr/share/nginx/html;
+    expires 30d;
+    add_header Cache-Control "public, immutable";
+  }
+
+  # 运行期 DNS：Agent 容器重建后可以重新解析其地址。
+  location /api/agent/ {
+    resolver 127.0.0.11 valid=30s;
+    set $agent_upstream http://agent:8958;
+    proxy_pass $agent_upstream;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_read_timeout 300s;
+    proxy_send_timeout 300s;
+    client_max_body_size 40m;
+  }
+
+  # API 反代到后端服务（compose 内部网络名为 backend）
+  location /api/ {
+    resolver 127.0.0.11 valid=30s;
+    set $backend_upstream http://backend:8957;
+    proxy_pass $backend_upstream;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    # 大文件上传（素材/PSD）放开默认限制
+    client_max_body_size 50m;
+    proxy_read_timeout 300s;
+    proxy_send_timeout 300s;
+    client_body_timeout 300s;
+  }
+
+  # 其余路径回退到 index.html（SPA 路由）
+  location / {
+    root /usr/share/nginx/html;
+    try_files $uri $uri/ /index.html;
+  }
+}
