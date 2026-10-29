@@ -1,11 +1,11 @@
-# Jenkins 自动测试与构建
+# Jenkins 自动测试、构建与部署
 
 现有 Git 推送触发和 SCM 凭据继续使用。流水线在 **Linux 执行节点** 上运行，
 自动把 Node.js、uv、Python 和依赖准备到工作区，**无需 Docker、sudo 或全局安装工具链**。
 
 ```text
 Checkout → Prepare environment → Frontend test and build
-         → Backend tests → Agent tests and lint → Archive frontend
+         → Backend tests → Agent tests and lint → Archive frontend → Deploy main
 ```
 
 | 阶段 | 实际执行 |
@@ -16,10 +16,39 @@ Checkout → Prepare environment → Frontend test and build
 | Backend tests | `uv sync --locked --python 3.13` → pytest，生成 JUnit XML |
 | Agent tests and lint | 锁定安装 → pytest → `uv run --frozen ruff check .` |
 | Archive frontend | 全部通过后归档 `artifacts/frontend-dist.tar.gz` |
+| Deploy main | 仅 main：通过 SSH 传输本次已测试的 Git 提交，在生产服务器构建、启动并验证 HTTPS 和存储 |
 
 任一步失败停止后续阶段；失败时也保存已生成的 Python 测试报告。
 测试使用 mock，无需生产 `.env`、数据库、Redis、对象存储或真实模型密钥。
-本次范围为自动测试和前端生产构建，不发布镜像或部署服务。
+main 分支全部测试通过后自动部署；其他分支只做 CI。部署失败会使本次构建失败。
+
+## 当前生产部署
+
+现有 `batchforge-deploy` 任务通过 GitHub webhook 监听 `main`。推送后自动运行完整流水线。
+无需在 Jenkins 容器安装 Docker，也无需挂载宿主机 Docker socket。
+
+- SSH 目标：`root@38.22.234.43:22`；在 `Jenkinsfile` 的 `SDS_DEPLOY_TARGET` / `SDS_DEPLOY_PORT` 配置。
+- Jenkins 专用密钥：执行用户的 `~/.ssh/sds_design_deploy`；可用 `SDS_DEPLOY_SSH_KEY` 指定其他路径。
+- 执行用户的 `~/.ssh/known_hosts` 必须预先保存并核对服务器主机公钥；脚本强制验证主机身份。
+- 服务器接收器：将 `jenkins/scripts/deploy-receiver.sh` 安装至 `/usr/local/sbin/sds-design-deploy`，root 所有、权限 `700`。
+- 专用公钥在服务器 `/root/.ssh/authorized_keys` 中配置 `restrict,command="/usr/local/sbin/sds-design-deploy"`，仅开放该部署入口。
+
+接收器校验部署包与测试提交一致，只允许快进更新，并使用文件锁串行执行部署。
+部署授权包含运行仓库中的 Dockerfile 和应用代码；能够修改 main 的人员应具有生产发布权限。
+构建前不停止现有服务；部署后的健康检查失败会明确报错，当前流程不自动回滚数据库或应用。
+
+生产目录 `/opt/sds-design`，运行配置 `/opt/sds-design/deploy/.env`，HTTPS 覆盖配置
+`/opt/sds-design/deploy/cloud/` 都留在服务器。流水线不复制本地开发 `.env`，不删除数据卷。
+生产启动入口仍是 `bash /opt/sds-design/deploy/cloud/deploy.sh`，复用 Jenkins 的 IP 证书。
+部署成功后 `/var/lib/sds-design/deployed-revision` 记录实际发布的完整 Git 提交。
+
+在 Jenkins 容器内验证专用连接：
+
+```bash
+ssh -i ~/.ssh/sds_design_deploy -o BatchMode=yes -o IdentitiesOnly=yes root@38.22.234.43 check
+```
+
+返回 `SDS deployment receiver ready` 后即可推送 main。仅首次配置密钥需要服务器管理权限。
 
 ## 执行节点要求
 

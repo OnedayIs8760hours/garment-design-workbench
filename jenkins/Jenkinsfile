@@ -14,6 +14,8 @@ pipeline {
     CI = 'true'
     CI_NODE_VERSION = '22.23.4'
     CI_UV_VERSION = '0.13.6'
+    SDS_DEPLOY_TARGET = 'root@38.22.234.43'
+    SDS_DEPLOY_PORT = '22'
   }
 
   stages {
@@ -23,7 +25,11 @@ pipeline {
         dir('artifacts') {
           deleteDir()
         }
-        checkout scm
+        script {
+          def revision = checkout scm
+          env.GIT_COMMIT = revision.GIT_COMMIT
+          env.GIT_BRANCH = revision.GIT_BRANCH
+        }
       }
     }
 
@@ -79,6 +85,15 @@ pipeline {
         archiveArtifacts artifacts: 'artifacts/frontend-dist.tar.gz', fingerprint: true
       }
     }
+
+    stage('Deploy main') {
+      when {
+        expression { ['origin/main', 'main'].contains(env.GIT_BRANCH) }
+      }
+      steps {
+        sh 'bash jenkins/scripts/deploy.sh'
+      }
+    }
   }
 
   post {
@@ -86,7 +101,7 @@ pipeline {
       archiveArtifacts artifacts: 'artifacts/*-pytest.xml', allowEmptyArchive: true
     }
     success {
-      echo 'CI 通过：前端测试和构建、后端测试、Agent 测试和代码检查全部成功。前端产物见本次构建的 Artifacts。'
+      echo '流水线通过：测试、构建和归档成功；main 分支已完成部署及线上检查，其他分支不部署。'
     }
     failure {
       echo 'CI 失败：请查看失败阶段的 Console Output 和测试报告。'
