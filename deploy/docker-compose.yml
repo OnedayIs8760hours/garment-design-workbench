@@ -1,5 +1,5 @@
 # 云端统一入口：cd deploy && docker compose --env-file .env up --build -d --wait
-# 所有配置来自 deploy/.env；对象存储使用独立的 S3/RustFS 服务。
+# 所有配置来自 deploy/.env；RustFS 与应用一起启动并持久化素材。
 name: ${COMPOSE_PROJECT_NAME:-woda-design}
 
 x-logging: &logging
@@ -24,6 +24,10 @@ services:
       - "${HTTP_BIND_ADDRESS:-0.0.0.0}:${HTTP_PORT:-8080}:80"
     environment:
       TZ: ${TZ:-Asia/Shanghai}
+      ERP_PYTHON_UPSTREAM: ${ERP_PYTHON_UPSTREAM:-http://host.docker.internal:8848}
+      ERP_JAVA_UPSTREAM: ${ERP_JAVA_UPSTREAM:-http://host.docker.internal:8080}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       backend:
         condition: service_healthy
@@ -51,6 +55,19 @@ services:
       REDIS_KEY_PREFIX: ${REDIS_KEY_PREFIX:-woda:prod}
       SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-604800}
       DESIGN_CACHE_TTL_SECONDS: ${DESIGN_CACHE_TTL_SECONDS:-604800}
+      NACOS_ENABLED: ${NACOS_ENABLED:-false}
+      NACOS_SERVER_ADDR: ${NACOS_SERVER_ADDR:-}
+      NACOS_NAMESPACE_ID: ${NACOS_NAMESPACE_ID:-}
+      NACOS_SERVICE_NAME: ${NACOS_SERVICE_NAME:-woda-design-backend}
+      NACOS_GROUP_NAME: ${NACOS_GROUP_NAME:-DEFAULT_GROUP}
+      NACOS_CLUSTER_NAME: ${NACOS_CLUSTER_NAME:-DEFAULT}
+      NACOS_INSTANCE_IP: ${NACOS_INSTANCE_IP:-}
+      NACOS_INSTANCE_PORT: ${NACOS_INSTANCE_PORT:-${HTTP_PORT:-8080}}
+      NACOS_USERNAME: ${NACOS_USERNAME:-}
+      NACOS_PASSWORD: ${NACOS_PASSWORD:-}
+      NACOS_TLS_ENABLED: ${NACOS_TLS_ENABLED:-true}
+      NACOS_TLS_CA_FILE: ${NACOS_TLS_CA_FILE:-}
+      NACOS_TIMEOUT_SECONDS: ${NACOS_TIMEOUT_SECONDS:-10}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?请填写 deploy/.env 中的 JWT_SECRET_KEY}
       JWT_ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
@@ -70,6 +87,8 @@ services:
       db:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      rustfs:
         condition: service_healthy
     healthcheck:
       test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8957/api/health', timeout=3).read()"]
@@ -122,6 +141,32 @@ services:
       retries: 5
       start_period: 30s
 
+  rustfs:
+    <<: *service
+    image: ${RUSTFS_IMAGE:-rustfs/rustfs:1.0.4}
+    command: [/data]
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:?请填写对象存储 Access Key}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:?请填写对象存储 Secret Key}
+      RUSTFS_ADDRESS: "0.0.0.0:9000"
+      RUSTFS_CONSOLE_ADDRESS: "0.0.0.0:9001"
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_OBS_LOG_DIRECTORY: /logs
+      RUSTFS_OBS_LOGGER_LEVEL: info
+    ports:
+      - "${RUSTFS_API_BIND_ADDRESS:-0.0.0.0}:${RUSTFS_API_PORT:-9000}:9000"
+      - "${RUSTFS_CONSOLE_BIND_ADDRESS:-127.0.0.1}:${RUSTFS_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - rustfsdata:/data
+      - rustfslogs:/logs
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, --show-error, http://127.0.0.1:9000/health]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
   db:
     <<: *service
     image: ${POSTGRES_IMAGE:-postgres:16}
@@ -171,6 +216,8 @@ volumes:
   pgdata:
   redisdata:
   agentquota:
+  rustfsdata:
+  rustfslogs:
 
 networks:
   woda_net:

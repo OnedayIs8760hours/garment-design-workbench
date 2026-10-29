@@ -1,104 +1,132 @@
-# Jenkins CI/CD
+# Jenkins 自动测试、构建与部署
 
-流水线入口为 `jenkins/Jenkinsfile`，复用项目现有 Dockerfile、
-`deploy/docker-compose.yml` 和 `deploy/deploy.sh`，包含前端、后端和 Agent 三个服务。
+现有 Git 推送触发和 SCM 凭据继续使用。流水线在 **Linux 执行节点** 上运行，
+自动把 Node.js、uv、Python 和依赖准备到工作区，**无需 Docker、sudo 或全局安装工具链**。
 
 ```text
-jenkins/
-├── Jenkinsfile          # 测试 → 构建镜像 → 推送镜像 → SSH 部署
-├── README.md            # 节点、凭据、任务和部署配置
-└── scripts/
-    ├── images.sh        # 构建或推送三个相同版本的应用镜像
-    └── deploy.sh        # 同步部署文件，拉取镜像并验证服务健康
+Checkout → Prepare environment → Frontend test and build
+         → Backend tests → Agent tests and lint → Archive frontend → Deploy main
 ```
 
-## 1. 准备 Jenkins 节点
+| 阶段 | 实际执行 |
+| --- | --- |
+| Checkout | 清理上次 CI 产物；`checkout scm` 拉取任务配置的提交 |
+| Prepare environment | 准备 Node.js 22、uv、Python 3.13，输出版本与解释器路径 |
+| Frontend test and build | `npm ci` → `npm test` → `npm run build` → 打包 `dist/` |
+| Backend tests | `uv sync --locked --python 3.13` → pytest，生成 JUnit XML |
+| Agent tests and lint | 锁定安装 → pytest → `uv run --frozen ruff check .` |
+| Archive frontend | 全部通过后归档 `artifacts/frontend-dist.tar.gz` |
+| Deploy main | 仅 main：通过 SSH 传输本次已测试的 Git 提交，在生产服务器构建、启动并验证 HTTPS 和存储 |
 
-本目录针对 Linux 执行节点。给节点添加 `linux` 和 `docker` 标签，并安装：
+任一步失败停止后续阶段；失败时也保存已生成的 Python 测试报告。
+测试使用 mock，无需生产 `.env`、数据库、Redis、对象存储或真实模型密钥。
+main 分支全部测试通过后自动部署；其他分支只做 CI。部署失败会使本次构建失败。
 
-- Git、Bash、tar、OpenSSH client（含 ssh-agent）。
-- Node.js 22.12+ 与 npm。
-- uv、Python 3.13，可预先运行 `uv python install 3.13`。
-- Docker Engine，执行 Jenkins 任务的用户可以运行 `docker build` 和 `docker push`。
+## 当前生产部署
 
-Jenkins 安装 Pipeline、Git、Credentials Binding、JUnit 和 SSH Agent 插件。
-Multibranch Pipeline 对接 GitHub 时还需 GitHub Branch Source 插件。
-节点须能访问 npm、Python 依赖源、镜像仓库和部署服务器。
-镜像在当前节点本地构建；节点与部署服务器须使用相同 CPU 架构。
+现有 `batchforge-deploy` 任务通过 GitHub webhook 监听 `main`。推送后自动运行完整流水线。
+无需在 Jenkins 容器安装 Docker，也无需挂载宿主机 Docker socket。
 
-## 2. 创建任务
+- SSH 目标：`root@38.22.234.43:22`；在 `Jenkinsfile` 的 `SDS_DEPLOY_TARGET` / `SDS_DEPLOY_PORT` 配置。
+- Jenkins 专用密钥：执行用户的 `~/.ssh/sds_design_deploy`；可用 `SDS_DEPLOY_SSH_KEY` 指定其他路径。
+- 执行用户的 `~/.ssh/known_hosts` 必须预先保存并核对服务器主机公钥；脚本强制验证主机身份。
+- 服务器接收器：将 `jenkins/scripts/deploy-receiver.sh` 安装至 `/usr/local/sbin/sds-design-deploy`，root 所有、权限 `700`。
+- 专用公钥在服务器 `/root/.ssh/authorized_keys` 中配置 `restrict,command="/usr/local/sbin/sds-design-deploy"`，仅开放该部署入口。
 
-1. 新建 **Pipeline**，Definition 选择 **Pipeline script from SCM**。
-2. SCM 选择 Git，填写仓库地址、拉取凭据与目标分支。
-3. **Script Path 填 `jenkins/Jenkinsfile`**，不是根目录 `Jenkinsfile`。
-4. 保存后运行一次，之后通过 **Build with Parameters** 选择模式。
+接收器校验部署包与测试提交一致，只允许快进更新，并使用文件锁串行执行部署。
+部署授权包含运行仓库中的 Dockerfile 和应用代码；能够修改 main 的人员应具有生产发布权限。
+构建前不停止现有服务；部署后的健康检查失败会明确报错，当前流程不自动回滚数据库或应用。
 
-| MODE | 行为 | 额外配置 |
-| --- | --- | --- |
-| CI（默认） | 前端 `npm ci / build / test`；后端 pytest；Agent pytest / Ruff | 无需发布或 SSH 凭据 |
-| BUILD | CI 通过后构建三个镜像 | 可用的 Docker daemon |
-| PUBLISH | BUILD 后登录并推送三个镜像 | 镜像仓库、命名空间、仓库凭据 |
-| DEPLOY | PUBLISH 后通过 SSH 更新服务器 | 部署参数、SSH 凭据和 known_hosts |
+生产目录 `/opt/sds-design`，运行配置 `/opt/sds-design/deploy/.env`，HTTPS 覆盖配置
+`/opt/sds-design/deploy/cloud/` 都留在服务器。流水线不复制本地开发 `.env`，不删除数据卷。
+生产启动入口仍是 `bash /opt/sds-design/deploy/cloud/deploy.sh`，复用 Jenkins 的 IP 证书。
+部署成功后 `/var/lib/sds-design/deployed-revision` 记录实际发布的完整 Git 提交。
 
-测试失败会阻止后续阶段，pytest 结果会显示在 Jenkins 测试报告中。
-镜像版本为 `<Jenkins构建号>-<Git提交前12位>`，三个服务使用相同版本，不覆盖 `latest`。
-`disableConcurrentBuilds()` 防止同一任务重叠部署；同一环境应只由一个发布任务负责。
-若使用 Multibranch Pipeline，分支/PR 任务保持默认 CI，发布使用受控分支的独立 Pipeline 任务。
-
-推送自动触发需要在 Jenkins 任务及 Git 托管平台配置对应 webhook；提交本目录不会自动创建任务。
-现有 `.github/workflows/` 仍按原规则运行；完成 Jenkins 验证后，可在仓库 Actions 设置中停用重复工作流。
-
-## 3. 配置凭据和发布参数
-
-在 Jenkins Credentials 中创建以下凭据，ID 可通过流水线参数调整：
-
-| 默认 ID | 类型 | 内容 |
-| --- | --- | --- |
-| sds-registry | Username with password | 仓库用户名与可推送镜像的密码/Token；GHCR 使用 PAT |
-| sds-deploy-ssh | SSH Username with private key | 部署用户的 SSH 私钥；用户名与 `DEPLOY_USER` 一致 |
-| sds-known-hosts | Secret file | 已核实服务器主机公钥的 known_hosts 文件 |
-
-`REGISTRY` 默认 `ghcr.io`，`IMAGE_NAMESPACE` 默认 `woda-custom`，发布前改成自己有权限的命名空间。
-`DEPLOY_HOST` 填服务器域名或 IPv4，`DEPLOY_PORT` 默认 `22`，`DEPLOY_USER` 默认 `deploy`，
-`DEPLOY_DIR` 默认 `/opt/sds-design`（只支持无空格的绝对路径）。
-非 22 端口的 known_hosts 条目使用 `[主机]:端口` 格式。
-脚本严格校验 SSH 主机公钥；主机密钥应通过可信渠道核实后再保存。
-
-仓库登录信息由 Credentials Binding 注入，推送时使用临时 Docker 认证目录，结束后删除。
-数据库、对象存储和模型密钥保留在服务器 `deploy/.env`。
-
-## 4. 首次准备服务器
-
-服务器安装 Docker Engine、Docker Compose v2（支持 `up --wait`）、Bash 和 tar。
-部署用户需要目录写入权限与 Docker 使用权限。按 [统一部署说明](../deploy/README.md)
-准备对象存储、域名和生产配置：
-
-1. 在目标目录中创建 `deploy/`，把仓库 `deploy/.env.example` 复制为服务器上的 `deploy/.env`。
-2. 填好全部生产配置并设置文件权限 `600`。已有部署保持原目录及 `COMPOSE_PROJECT_NAME`，以继续使用原数据卷。
-3. 若使用私有镜像，在服务器上以部署用户执行 `docker login <仓库>`，配置只读拉取凭据。
-4. 在 Jenkins 选择 `MODE=DEPLOY` 并填写发布参数。
-
-流水线同步当前提交的 Compose、部署脚本和数据库初始化 SQL，
-通过环境变量指定本次三个镜像，再调用 `bash deploy/deploy.sh pull`。
-它等待容器健康、检查后端/Agent 反向代理和对象存储，失败返回非零状态。
-部署失败可能已有部分服务更新；流水线不自动回滚，也不执行数据库迁移。
-
-## 5. 手动维护与回滚
-
-部署通过后，服务器 `deploy/jenkins-release.env` 记录最近一次成功部署的镜像地址，
-不会自动改写生产 `.env`。手动维护时先加载该文件，防止回到 `.env` 中的旧镜像：
+在 Jenkins 容器内验证专用连接：
 
 ```bash
-cd /opt/sds-design
-set -a
-source deploy/jenkins-release.env
-set +a
-bash deploy/deploy.sh pull
+ssh -i ~/.ssh/sds_design_deploy -o BatchMode=yes -o IdentitiesOnly=yes root@38.22.234.43 check
 ```
 
-回滚时将上述文件中的三个镜像标签都改为目标历史版本，再执行同样命令。
-需要配套旧版部署配置时，从对应 Git 提交恢复 Compose、部署脚本和初始化 SQL。
-数据库数据及表结构不随镜像回滚，变更前按项目部署说明备份。
+返回 `SDS deployment receiver ready` 后即可推送 main。仅首次配置密钥需要服务器管理权限。
 
-配置语法参考 [Jenkins Declarative Pipeline](https://www.jenkins.io/doc/book/pipeline/syntax/)
-和 [SSH Agent Pipeline step](https://www.jenkins.io/doc/pipeline/steps/ssh-agent/)。
+## 执行节点要求
+
+- Linux x86_64 或 ARM64，使用支持官方 Node.js 二进制的 glibc 系统，例如 Debian 12 / Ubuntu 22.04。
+- Bash、Git、tar、gzip、sha256sum，以及 **curl 或 wget 中至少一个**。
+- Jenkins 执行用户对工作区有读写、执行权限；工作区所在文件系统不能以 `noexec` 挂载。
+- 能访问 `nodejs.org`、`astral.sh`、GitHub Release 下载地址，以及锁文件中的 npm/Python 依赖源。
+
+使用官方 Jenkins Linux 镜像时，直接在现有节点执行，无需挂载 Docker socket。
+流水线下载固定版本的 Node.js 和 uv；Node.js 安装前验证官方 SHA-256 校验文件。
+版本由 `Jenkinsfile` 的 `CI_NODE_VERSION` / `CI_UV_VERSION` 设置，脚本内有相同默认值。
+Python 使用 uv 管理的 3.13 版本，安装目录、可执行文件目录和虚拟环境均位于工作区。
+
+```text
+.jenkins-tools/                 # 已忽略，不提交 Git
+├── node-v<version>-linux-<arch>/
+├── uv-<version>/
+├── python/                     # Python 解释器
+├── bin/                        # uv 管理的 Python 可执行文件
+├── venvs/backend/              # 后端 CI 虚拟环境
+├── venvs/agent-service/        # Agent CI 虚拟环境
+├── cache/                      # npm / uv 下载缓存
+└── downloads/                  # 安装包与安装脚本
+```
+
+后续构建复用工具和下载缓存；每次仍执行锁文件检查和依赖同步。
+清空工作区后会重新下载。脚本通过自己的 PATH 使用这些工具，不修改用户 shell 配置。
+测试使用独立 CI 虚拟环境，不复用服务目录已有的 `.venv`。
+首次准备工具和安装依赖需要更多时间；Python 依赖下载超时设置为 120 秒。
+
+## Jenkins 任务配置
+
+1. 在 **Manage Jenkins → Plugins** 确认已启用 **Pipeline**、**Git** 和 **JUnit** 插件。
+2. 保留现有 **Pipeline script from SCM**、仓库地址、Git 凭据及 webhook 配置。
+3. Branch Specifier 设置为实际分支，例如 `*/main`。
+4. **Script Path 设置为 `jenkins/Jenkinsfile`**，保存。
+5. 推送配置后由现有 webhook 触发，或点击 **Build Now** 重试。
+
+`agent any` 使用任意可用节点，不要求特定标签；若有多个节点，候选节点都应满足上述 Linux 要求，
+或将它改成对应节点的真实 label。脚本不额外配置轮询或 webhook。
+
+## 结果与产物
+
+成功时以 `Finished: SUCCESS` 结束。构建页面可查看：
+
+- **Artifacts → artifacts/frontend-dist.tar.gz**：完整前端 `dist/`，包含静态资源；
+- **Test Result**：后端和 Agent 测试结果与历史趋势；
+- **Artifacts → artifacts/backend-pytest.xml / agent-pytest.xml**：原始测试报告。
+
+前端测试完整执行 `package.json` 的 `npm test`，结果显示在控制台。
+前端包仅在整条 CI 通过后归档。后端与 Agent 仍需独立运行，Nginx `/api` 配置见 `deploy/`。
+单任务禁止并发，超时 45 分钟，保留最近 20 次构建记录和最近 5 次构建的归档产物。
+
+## 手动复现
+
+在 Linux 节点的专用 CI 仓库工作区执行：
+
+```bash
+bash jenkins/scripts/ci.sh check
+bash jenkins/scripts/ci.sh frontend
+bash jenkins/scripts/ci.sh backend
+bash jenkins/scripts/ci.sh agent
+```
+
+脚本会自动定位仓库根目录；前端步骤通过 `npm ci` 重建 `frontend/node_modules`。
+
+## 常见问题
+
+| 现象 | 处理 |
+| --- | --- |
+| 旧构建提示缺少 Docker CLI | 确认任务拉到了修复后的提交；新版本不调用 Docker |
+| 缺少 curl / wget / tar 等基础命令 | 由节点管理员补齐提示的基础工具，或使用包含这些工具的 Linux agent |
+| 工具或依赖下载失败 | 查看日志中的下载地址，检查节点网络、代理和 CA 证书；不要关闭 TLS 校验 |
+| 已下载的 Node.js / uv 提示 `Permission denied` | 检查工作区权限及 `noexec` 挂载设置 |
+| `No such DSL method 'junit'` | 安装或启用 JUnit 插件，再重新构建 |
+| `npm ci` 报锁文件不一致 | 在开发机更新并一起提交 `package.json` 和 `package-lock.json` |
+| `uv sync --locked` 失败 | 同步提交对应服务的 `pyproject.toml` 和 `uv.lock`，或检查依赖源网络 |
+
+参考 [uv 官方安装说明](https://docs.astral.sh/uv/getting-started/installation/)、
+[uv 安装目录设置](https://docs.astral.sh/uv/reference/installer/) 和
+[Jenkins JUnit 报告](https://www.jenkins.io/doc/pipeline/steps/junit/)。

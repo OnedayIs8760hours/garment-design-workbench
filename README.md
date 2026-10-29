@@ -265,7 +265,7 @@ Photoshop JSX 按 manifest.json 还原到 PSD
 ## 云端 Docker 部署
 
 前端、后端、Agent、PostgreSQL 和两套 Redis 统一由 `deploy/docker-compose.yml` 启动，
-仅需填写 `deploy/.env`。对象存储接入独立的 S3/RustFS 服务。
+仅需填写 `deploy/.env`。Compose 同时启动 RustFS 并持久化素材，部署脚本自动创建私有桶。
 
 ```bash
 cp deploy/.env.example deploy/.env
@@ -294,11 +294,14 @@ npm run build
 
 当前前端测试入口是 `frontend/src/model.test.js`，主要覆盖模板结构、导出 JSON、坐标校验和回归用例。项目暂未接入完整测试框架。
 
-## Jenkins CI/CD
+## Jenkins 自动测试与构建
 
 Jenkins 相关文件集中在 [`jenkins/`](jenkins/README.md)。创建 Pipeline from SCM 任务时，
-将 Script Path 设置为 `jenkins/Jenkinsfile`。默认执行三个服务的 CI，
-可通过参数启用镜像构建、推送和 SSH 部署。节点、凭据和服务器准备步骤见该目录说明。
+将分支设置为 `*/main`，Script Path 设置为 `jenkins/Jenkinsfile`。
+推送触发后依次运行前端测试和生产构建、后端 pytest、Agent pytest 和 Ruff 检查，
+并保存前端压缩包及 Python 测试报告。Linux 执行节点会在工作区自动准备 Node.js、uv 和 Python，
+无需 Docker 或 sudo；Jenkins 需安装 JUnit 插件。
+详细环境要求、产物下载和排错见 [Jenkins 配置说明](jenkins/README.md)。
 
 ## 常见问题
 

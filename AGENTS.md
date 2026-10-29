@@ -13,7 +13,7 @@ This repository is now a frontend/backend workspace for garment panel customizat
 - `frontend/public/models/` stores browser-served GLB models.
 - `backend/` contains the FastAPI service.
 - `photoshop/` contains Photoshop automation scripts (`.jsx`) and runner scripts (`.ps1`).
-- `jenkins/` contains the Jenkins pipeline, image/deployment scripts, and setup instructions; configure the Jenkins SCM Script Path as `jenkins/Jenkinsfile`.
+- `jenkins/` contains the Jenkins CI pipeline, workspace-local Node.js/uv/Python bootstrap, and setup instructions; configure the Jenkins SCM Script Path as `jenkins/Jenkinsfile`. The Linux execution node needs Bash, Git, tar/gzip, sha256sum, and curl or wget; Docker and sudo are not required. Jenkins also needs the JUnit plugin.
 - `项目实现思路/` contains design notes and implementation process documentation.
 - `规范/` contains project conventions that should be followed for future category and asset changes.
 - `frontend/src/model.test.js` is the current frontend test entry point.
