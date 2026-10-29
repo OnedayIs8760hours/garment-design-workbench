@@ -21,7 +21,7 @@ assert all(str(p["published"]) == "8081" for p in s["frontend"]["ports"]), "æµ‹è
 for service in backend agent frontend; do
   "${compose[@]}" build "$service"
 done
-"${compose[@]}" up -d --no-build --wait --wait-timeout 300
+"${compose[@]}" up -d --no-build --wait --wait-timeout 600
 "${compose[@]}" exec -T backend python -c 'import asyncio
 from app.services.object_storage import ensure_rustfs_bucket, check_rustfs_health
 async def initialize():

@@ -11,9 +11,17 @@ services:
   backend:
     mem_limit: 256m
     cpus: 0.5
+    healthcheck:
+      timeout: 15s
+      start_period: 90s
+      retries: 10
   agent:
     mem_limit: 256m
     cpus: 0.5
+    healthcheck:
+      timeout: 15s
+      start_period: 90s
+      retries: 10
   db:
     mem_limit: 192m
     cpus: 0.5
