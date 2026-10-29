@@ -16,7 +16,11 @@ assert s["backend"]["environment"]["NACOS_ENABLED"] == "false", "测试环境不
 assert all(p["host_ip"] == "127.0.0.1" for p in s["rustfs"]["ports"]), "存储端口仅允许本机访问"
 assert all(str(p["published"]) == "8081" for p in s["frontend"]["ports"]), "测试环境端口必须为 8081"
 '
-COMPOSE_PARALLEL_LIMIT=1 "${compose[@]}" build
+# BuildKit Bake can build services concurrently despite COMPOSE_PARALLEL_LIMIT.
+# Separate invocations also keep builds serial when Compose enables Bake.
+for service in backend agent frontend; do
+  "${compose[@]}" build "$service"
+done
 "${compose[@]}" up -d --no-build --wait --wait-timeout 300
 "${compose[@]}" exec -T backend python -c 'import asyncio
 from app.services.object_storage import ensure_rustfs_bucket, check_rustfs_health
