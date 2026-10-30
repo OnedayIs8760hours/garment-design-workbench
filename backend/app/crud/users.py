@@ -15,7 +15,7 @@ async def get_user_by_username(db: AsyncSession, username: str) -> User | None:
     """
     result = await db.execute(
         select(User).where(
-            func.lower(func.btrim(User.username)) == username.casefold(),
+            func.lower(func.trim(User.username)) == username.casefold(),
         )
     )
     return result.scalar_one_or_none()
@@ -54,6 +54,7 @@ async def create_user(
         username=username,
         password_hash=password_hash,
         job_title=job_title,
+        roles=[],
     )
     db.add(user)
     await db.commit()

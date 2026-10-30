@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config.config import Config
 from app.core.normalizers import normalize_optional_text, normalize_username
+from app.core.rbac import is_system_admin_name
 from app.core.security import create_access_token, hash_password, verify_password
 from app.crud.users import (
     create_user,
@@ -34,6 +35,8 @@ async def register_user(db: AsyncSession, payload: RegisterRequest):
 
     if not username:
         raise AuthServiceError("username_blank")
+    if is_system_admin_name(username):
+        raise AuthServiceError("username_reserved")
 
     existing_user = await get_user_by_username(db, username)
     if existing_user is not None:

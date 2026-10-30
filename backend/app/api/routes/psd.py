@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from redis.asyncio import Redis
 
-from app.api.dependencies.auth import get_current_user
+from app.api.dependencies.auth import get_current_user, require_permission
 from app.config.config import Config
 from app.config.db import get_redis
 from app.models.users import User
@@ -28,7 +28,7 @@ from app.services.psd_upload import (
     upload_psd_part,
 )
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_permission("psd.upload"))])
 
 
 def psd_http_exception(error: PsdUploadError) -> HTTPException:

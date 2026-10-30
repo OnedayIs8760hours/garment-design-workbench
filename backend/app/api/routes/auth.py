@@ -25,6 +25,8 @@ def to_http_exception(error: AuthServiceError) -> HTTPException:
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Username cannot be blank",
         )
+    if error.code == "username_reserved":
+        return HTTPException(status_code=409, detail="admin 是系统初始化专用账号，不能注册")
     if error.code == "username_exists":
         return HTTPException(
             status_code=status.HTTP_409_CONFLICT,

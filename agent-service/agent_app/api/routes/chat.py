@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Response
 
-from agent_app.api.auth import CurrentUser, get_current_user
+from agent_app.api.auth import CurrentUser, get_current_user, get_generation_user
 from agent_app.api.dependencies import get_service
 from agent_app.schemas import ChatRequest, ChatResponse
 from agent_app.services.conversation import AgentService
@@ -15,7 +15,7 @@ router = APIRouter(tags=["conversations"])
 async def chat(
     payload: ChatRequest,
     response: Response,
-    user: CurrentUser = Depends(get_current_user),
+    user: CurrentUser = Depends(get_generation_user),
     service: AgentService = Depends(get_service),
 ):
     result = await service.chat(user.id, payload, access_token=user.access_token)

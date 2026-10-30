@@ -18,7 +18,11 @@ async def api_client(settings, redis, model, *, auth_status=200, image_status=20
             body = (
                 auth_body
                 if auth_body is not None
-                else {"id": 2 if token == "Bearer user-2" else 1, "is_active": True}
+                else {
+                    "id": 2 if token == "Bearer user-2" else 1,
+                    "is_active": True,
+                    "permissions": ["ai.generate", "assets.write"],
+                }
             )
             return httpx.Response(auth_status, json=body)
         if request.url.path == "/v1/images/generations":
@@ -81,6 +85,26 @@ async def test_authenticated_chat_quota_and_limit_http_status(settings, redis, m
         assert (await client.get("/api/agent/quota")).json()["used"] == 5
         client.headers["Authorization"] = "Bearer user-2"
         assert (await client.get("/api/agent/quota")).json()["used"] == 0
+
+
+@pytest.mark.parametrize("permissions", [[], ["assets.read"], ["ai.generate"]])
+async def test_rbac_denies_generation_before_any_model_or_storage_call(
+    settings, redis, model, permissions
+):
+    async with api_client(
+        settings,
+        redis,
+        model,
+        auth_body={
+            "id": 1,
+            "is_active": True,
+            "permissions": permissions,
+        },
+    ) as (client, _, requests):
+        response = await client.post("/api/agent/chat", json={"message": "生成图片"})
+        assert response.status_code == 403
+        assert model.inputs["router"] == []
+        assert all(request.url.path == "/api/auth/me" for request in requests)
 
 
 @pytest.mark.parametrize(

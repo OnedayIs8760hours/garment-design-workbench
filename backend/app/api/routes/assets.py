@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import StreamingResponse
 
-from app.api.dependencies.auth import get_current_user
+from app.api.dependencies.auth import require_permission
 from app.config.config import Config
 from app.models.users import User
 from app.schemas.assets import (
@@ -49,7 +49,7 @@ def storage_http_exception(error: ObjectStorageError) -> HTTPException:
 async def upload_asset(
     file: UploadFile = File(description="PNG、JPEG、WebP 或 GIF 图片"),
     order_id: str | None = Form(default=None, max_length=128),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("assets.write")),
 ) -> AssetUploadResponse:
     """上传一张设计图片到当前用户的 RustFS 私有目录。
 
@@ -90,7 +90,7 @@ async def upload_asset(
 async def list_generated_assets(
     limit: int = Query(default=24, ge=1, le=100),
     cursor: str | None = Query(default=None, max_length=2048),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("assets.read")),
 ) -> GeneratedAssetListResponse:
     try:
         result = await list_generated_images(current_user.id, limit, cursor)
@@ -102,7 +102,7 @@ async def list_generated_assets(
 @router.post("/batch-delete", response_model=AssetBatchDeleteResponse)
 async def batch_delete_assets(
     payload: AssetBatchDeleteRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("assets.write")),
 ) -> AssetBatchDeleteResponse:
     try:
         result = await delete_image_objects(current_user.id, payload.object_keys)
@@ -114,7 +114,7 @@ async def batch_delete_assets(
 @router.get("/info", response_model=AssetObjectResponse)
 async def get_asset_info(
     object_key: str = Query(min_length=1, max_length=1024),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("assets.read")),
 ) -> AssetObjectResponse:
     """读取当前用户图片的 RustFS 元数据并生成临时访问 URL。"""
     try:
@@ -133,7 +133,7 @@ async def get_asset_info(
 async def get_asset_download_url(
     object_key: str = Query(min_length=1, max_length=1024),
     expires_in: int | None = Query(default=None, ge=60, le=604800),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("assets.read")),
 ) -> dict[str, str | int]:
     """为当前用户的私有图片生成限时下载 URL。"""
     try:
@@ -146,7 +146,7 @@ async def get_asset_download_url(
 @router.get("/content")
 async def stream_asset(
     object_key: str = Query(min_length=1, max_length=1024),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("assets.read")),
 ) -> StreamingResponse:
     """通过后端鉴权后从 RustFS 流式返回图片，不把整张图片载入内存。"""
     try:
@@ -168,7 +168,7 @@ async def stream_asset(
 @router.delete("", response_model=AssetDeleteResponse)
 async def delete_asset(
     object_key: str = Query(min_length=1, max_length=1024),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("assets.write")),
 ) -> AssetDeleteResponse:
     """永久删除当前用户 RustFS 目录中的指定图片。"""
     try:
@@ -179,7 +179,7 @@ async def delete_asset(
 
 
 @router.get("/health", response_model=StorageHealthResponse)
-async def storage_health(current_user: User = Depends(get_current_user)) -> StorageHealthResponse:
+async def storage_health(current_user: User = Depends(require_permission("assets.read"))) -> StorageHealthResponse:
     """检查后端能否使用当前配置访问 RustFS 桶。"""
     try:
         await check_rustfs_health()

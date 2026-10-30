@@ -20,6 +20,8 @@ class Config:
     DESIGN_CACHE_TTL_SECONDS = int(os.getenv("DESIGN_CACHE_TTL_SECONDS", 604800))
 
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+    # 由部署初始化文件提供，只在首次创建专有 admin 时使用，不在重启时重置密码。
+    RBAC_ADMIN_PASSWORD = os.getenv("RBAC_ADMIN_PASSWORD", "")
     JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
 

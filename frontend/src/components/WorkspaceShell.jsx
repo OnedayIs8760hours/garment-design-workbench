@@ -8,10 +8,12 @@ import {
   Menu,
   PencilRuler,
   Shirt,
+  ShieldCheck,
   WandSparkles,
   X,
 } from "lucide-react";
 import "../styles/workspace.css";
+import { canAccessSection } from "../permissions.js";
 
 const NAV_ITEMS = [
   { id: "home", label: "工作台", icon: LayoutDashboard },
@@ -21,10 +23,14 @@ const NAV_ITEMS = [
   { id: "generate", label: "素材生成", icon: WandSparkles },
   { id: "orders", label: "订单", icon: ClipboardList },
   { id: "finished", label: "成品", icon: CheckCircle2 },
+  { id: "permissions", label: "权限管理", icon: ShieldCheck },
+  { id: "all_content", label: "全员作品", icon: Images },
 ];
 
 export function WorkspaceShell({ activeSection, onNavigate, user, onSignOut, children }) {
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
+  // 桌面和移动导航共用同一份过滤结果，避免在某个布局中泄漏无权限入口。
+  const visibleNavItems = NAV_ITEMS.filter(({ id }) => canAccessSection(user, id));
 
   React.useEffect(() => {
     if (!mobileNavOpen) return undefined;
@@ -41,7 +47,7 @@ export function WorkspaceShell({ activeSection, onNavigate, user, onSignOut, chi
   };
 
   return (
-    <div className="workspace-app">
+    <div className={`workspace-app${visibleNavItems.some(({ id }) => id === "permissions") ? " has-permissions-nav" : ""}`}>
       <header className="workspace-topbar">
         <div className="workspace-topbar-inner">
           <a className="workspace-brand" href="#workspace" onClick={(event) => { event.preventDefault(); navigate("home"); }} aria-label="woda Design 工作台">
@@ -50,7 +56,7 @@ export function WorkspaceShell({ activeSection, onNavigate, user, onSignOut, chi
           </a>
 
           <nav className="workspace-nav" aria-label="工作区主导航">
-            {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+            {visibleNavItems.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 className={`workspace-nav-link${activeSection === id ? " active" : ""}`}
@@ -85,7 +91,7 @@ export function WorkspaceShell({ activeSection, onNavigate, user, onSignOut, chi
         </div>
 
         <nav id="workspaceMobileNav" className={`workspace-mobile-nav${mobileNavOpen ? " open" : ""}`} aria-label="移动端工作区导航" aria-hidden={!mobileNavOpen}>
-          {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+          {visibleNavItems.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               className={activeSection === id ? "active" : ""}

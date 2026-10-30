@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies.auth import get_current_user
+from app.api.dependencies.auth import require_permission
 from app.config.db import get_async_db, get_redis
 from app.models.users import User
 from app.schemas.designs import (
@@ -38,7 +38,7 @@ def design_service_exception(error: DesignServiceError) -> HTTPException:
 @router.delete("", response_model=DesignDraftBatchDeleteResponse)
 async def delete_designs(
     payload: DesignDraftBatchDeleteRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("designs.write")),
     db: AsyncSession = Depends(get_async_db),
     redis: Redis = Depends(get_redis),
 ) -> dict[str, int]:
@@ -51,7 +51,7 @@ async def delete_designs(
 @router.get("", response_model=list[DesignDraftSummary])
 async def list_designs(
     template_id: str | None = Query(default=None, min_length=1, max_length=128),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("designs.read")),
     db: AsyncSession = Depends(get_async_db),
 ) -> list[dict]:
     """读取当前用户的个人草稿箱摘要列表。
@@ -67,7 +67,7 @@ async def list_designs(
 async def get_design(
     template_id: str,
     order_id: str | None = Query(default=None, min_length=1, max_length=128),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("designs.read")),
     db: AsyncSession = Depends(get_async_db),
     redis: Redis = Depends(get_redis),
 ) -> dict | None:
@@ -84,7 +84,7 @@ async def get_design(
 async def put_design(
     template_id: str,
     payload: DesignDraftUpsertRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("designs.write")),
     db: AsyncSession = Depends(get_async_db),
     redis: Redis = Depends(get_redis),
 ) -> dict:
@@ -119,7 +119,7 @@ async def put_design(
 async def delete_design(
     template_id: str,
     order_id: str = Query(min_length=1, max_length=128),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("designs.write")),
     db: AsyncSession = Depends(get_async_db),
     redis: Redis = Depends(get_redis),
 ) -> None:

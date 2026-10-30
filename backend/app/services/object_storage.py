@@ -234,10 +234,20 @@ async def delete_image_object(user_id: int, object_key: str) -> None:
     )
 
 
-async def list_generated_images(user_id: int, limit: int, cursor: str | None = None) -> dict:
+def generated_image_owner(object_key: str) -> int | None:
+    """从标准生成图片路径确定归属，不信任客户端传入的 owner_id 或对象元数据。"""
+    match = re.fullmatch(r"users/([1-9][0-9]{0,18})/designs/generated/assets/([^/\\]+)", object_key)
+    if match is None or PurePosixPath(match[2]).suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp", ".gif"}:
+        return None
+    owner_id = int(match[1])
+    return owner_id if owner_id <= 2**63 - 1 else None
+
+
+async def list_generated_images(user_id: int | None, limit: int, cursor: str | None = None) -> dict:
     """从用户专属生成目录分页列出素材，无需依赖草稿或浏览器缓存。"""
     client = get_rustfs_client()
-    prefix = f"users/{user_id}/designs/generated/assets/"
+    # None 仅供最高权限者的只读查询服务使用，普通接口始终传入当前登录用户 ID。
+    prefix = "users/" if user_id is None else f"users/{user_id}/designs/generated/assets/"
 
     def read():
         arguments = {"Bucket": Config.RUSTFS_BUCKET, "Prefix": prefix, "MaxKeys": limit}
@@ -253,6 +263,9 @@ async def list_generated_images(user_id: int, limit: int, cursor: str | None = N
         for item in page.get("Contents", []):
             key = item["Key"]
             if not key.startswith(prefix) or key.endswith("/"):
+                continue
+            owner_id = generated_image_owner(key)
+            if owner_id is None or (user_id is not None and owner_id != user_id):
                 continue
             try:
                 metadata = client.head_object(Bucket=Config.RUSTFS_BUCKET, Key=key)
@@ -279,6 +292,8 @@ async def list_generated_images(user_id: int, limit: int, cursor: str | None = N
                 ),
                 "url_expires_in": Config.RUSTFS_PRESIGNED_URL_EXPIRES_SECONDS,
             })
+            if user_id is None:
+                items[-1]["owner_user_id"] = owner_id
         return {"items": items, "next_cursor": page.get("NextContinuationToken")}
 
     try:

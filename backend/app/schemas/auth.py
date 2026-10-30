@@ -5,14 +5,20 @@
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
+from app.schemas.rbac import RoleSummary
 
 
 class RegisterRequest(BaseModel):
     """注册接口输入模型。"""
 
+    model_config = ConfigDict(extra="forbid")
     username: str = Field(min_length=1, max_length=64, description="登录用户名")
-    password: str = Field(min_length=8, max_length=128, description="登录密码，至少 8 位")
-    job_title: str | None = Field(default=None, max_length=100, description="职位，可选")
+    password: str = Field(
+        min_length=8, max_length=128, description="登录密码，至少 8 位"
+    )
+    job_title: str | None = Field(
+        default=None, max_length=100, description="职位，可选"
+    )
 
 
 class LoginRequest(BaseModel):
@@ -34,6 +40,9 @@ class UserResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     last_login_at: datetime | None
+    roles: list[RoleSummary] = Field(default_factory=list)
+    permissions: list[str] = Field(default_factory=list)
+    is_system_admin: bool = False
 
 
 class AuthResponse(BaseModel):

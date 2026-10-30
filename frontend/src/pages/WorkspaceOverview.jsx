@@ -4,6 +4,7 @@ import { listDesignDrafts } from "../api.js";
 import { createTemplate } from "../model.js";
 import { templateDefinitions } from "../../templates/index.js";
 import { formatWorkspaceDate } from "../workspaceData.js";
+import { canAccessSection } from "../permissions.js";
 
 export function WorkspaceOverview({ user, onNavigate, onOpenDraft, onNewDesign }) {
   const [drafts, setDrafts] = React.useState([]);
@@ -40,12 +41,12 @@ export function WorkspaceOverview({ user, onNavigate, onOpenDraft, onNewDesign }
           <h1 id="overviewTitle">让创意成为作品。</h1>
           <p className="overview-intro">{user?.username ? `${user.username}，` : ""}从服装模板开始，继续推进手边的设计。</p>
           <div className="overview-actions">
-            <button className="workspace-button primary" type="button" onClick={onNewDesign}>
+            {onNewDesign && <button className="workspace-button primary" type="button" onClick={onNewDesign}>
               <FilePlus2 size={17} aria-hidden="true" />新建设计
-            </button>
-            <button className="workspace-button secondary" type="button" onClick={() => onNavigate("products")}>
+            </button>}
+            {onNewDesign && <button className="workspace-button secondary" type="button" onClick={() => onNavigate("products")}>
               浏览产品模板<ArrowRight size={16} aria-hidden="true" />
-            </button>
+            </button>}
           </div>
         </div>
         <div className="overview-art" aria-hidden="true">
@@ -85,19 +86,19 @@ export function WorkspaceOverview({ user, onNavigate, onOpenDraft, onNewDesign }
             <div className="overview-empty">
               <div className="overview-empty-mark"><Layers3 size={20} aria-hidden="true" /></div>
               <div><strong>还没有保存的设计</strong><p>新建一份设计后，草稿会显示在这里。</p></div>
-              <button className="workspace-button secondary" type="button" onClick={() => onNavigate("products")}>选择模板<ArrowRight size={15} aria-hidden="true" /></button>
+              {onNewDesign && <button className="workspace-button secondary" type="button" onClick={() => onNavigate("products")}>选择模板<ArrowRight size={15} aria-hidden="true" /></button>}
             </div>
           ) : null}
         </div>
 
         <aside className="overview-shortcuts" aria-label="工作区快捷入口">
           <div className="workspace-section-heading"><div><p className="workspace-eyebrow">QUICK ACCESS</p><h2>快速访问</h2></div></div>
-          <button type="button" className="overview-shortcut" onClick={() => onNavigate("products")}>
+          {onNewDesign && <button type="button" className="overview-shortcut" onClick={() => onNavigate("products")}>
             <span className="overview-shortcut-icon"><Shirt size={18} aria-hidden="true" /></span><span><strong>产品模板</strong><small>查看可用的服装裁片模板</small></span><ArrowRight size={16} aria-hidden="true" />
-          </button>
-          <button type="button" className="overview-shortcut" onClick={() => onNavigate("assets")}>
+          </button>}
+          {canAccessSection(user, "assets") && <button type="button" className="overview-shortcut" onClick={() => onNavigate("assets")}>
             <span className="overview-shortcut-icon"><Layers3 size={18} aria-hidden="true" /></span><span><strong>设计素材</strong><small>浏览已关联到草稿的图片</small></span><ArrowRight size={16} aria-hidden="true" />
-          </button>
+          </button>}
         </aside>
       </section>
     </main>

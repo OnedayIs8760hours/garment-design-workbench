@@ -3,11 +3,11 @@ import { template } from "../config.js";
 import { cssClipPath } from "../geometry.js";
 
 // 单个裁片的小尺寸 2D 预览。
-export function PanelPreview({ title, design, panelId }) {
+export function PanelPreview({ title, design, panelId, templateDefinition = template }) {
   // 当前裁片的编辑状态。
   const panelState = design.panels[panelId];
   // 当前裁片的模板元数据。
-  const panelTemplate = template.panels[panelId];
+  const panelTemplate = templateDefinition.panels[panelId];
   return (
     <div className="panel-preview">
       <h3>{title}</h3>

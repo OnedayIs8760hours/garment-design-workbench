@@ -7,6 +7,7 @@ woda Design 是一个基于 Vite + React 的球衣裁片定制工作台，用于
 ## 功能概览
 
 - 多裁片编辑：按模板裁片切换编辑前片、后片、袖片等区域。
+- RBAC 权限：用户、角色、权限分配和授权记录，内置管理员、设计师及只读成员；初始化与接口见 [权限模块说明](项目实现思路/RBAC权限模块实现说明.md)。
 - 图片素材：上传本地图片，复用已上传素材，并放置到当前裁片。
 - 文字元素：添加姓名、号码文字，并调整位置、大小、旋转、颜色、描边和透明度。
 - 裁片底色：使用色板或 RGB 取色器设置当前裁片底色，也可以一键应用到所有裁片。
@@ -66,6 +67,7 @@ npm run dev
 ```powershell
 cd backend
 uv sync
+uv run python -m app.rbac migrate
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8957 --reload
 ```
 
@@ -93,6 +95,7 @@ npm run build
 
 # 启动后端
 cd ../backend
+uv run python -m app.rbac migrate
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8957 --reload
 
 # 运行后端测试

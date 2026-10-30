@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
-    "test": "node src/model.test.js && node --test src/components/orders/artCenterModel.test.js src/components/orders/erpOrderModel.test.js src/components/orders/erpOrderExport.test.js src/api/erpArt.test.js"
+    "test": "node src/model.test.js && node --test src/permissions.test.js src/components/orders/artCenterModel.test.js src/components/orders/erpOrderModel.test.js src/components/orders/erpOrderExport.test.js src/api/erpArt.test.js"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.0",

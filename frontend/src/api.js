@@ -20,7 +20,7 @@ function storeAccessToken(token, remember) {
   storage.setItem(remember ? ACCESS_TOKEN_KEY : SESSION_TOKEN_KEY, token);
 }
 
-async function requestJson(path, options = {}) {
+export async function requestJson(path, options = {}) {
   const headers = new Headers(options.headers);
   const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
   if (options.body && !isFormData && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
@@ -44,6 +44,8 @@ async function requestJson(path, options = {}) {
   }
 
   if (!response.ok) {
+    // 授权可能已被其他管理员撤销，通知应用刷新当前权限，而非把 403 当作未登录。
+    if (response.status === 403) window.dispatchEvent(new Event("woda-access-denied"));
     const error = new Error(payload?.reply || getApiErrorMessage(response.status, payload));
     error.status = response.status;
     error.payload = payload;
@@ -55,7 +57,7 @@ async function requestJson(path, options = {}) {
 
 function getApiErrorMessage(status, payload) {
   if (status === 401) return "用户名或密码错误，或登录会话已过期。";
-  if (status === 403) return "当前账号已停用。";
+  if (status === 403) return "当前账号没有执行此操作的权限。";
   if (status === 409) return "用户名已被占用，请换一个试试。";
 
   if (Array.isArray(payload?.detail)) {

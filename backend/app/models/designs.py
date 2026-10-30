@@ -3,7 +3,17 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Identity, String, UniqueConstraint, func
+from sqlalchemy import (
+    BigInteger,
+    DateTime,
+    ForeignKey,
+    Identity,
+    Integer,
+    JSON,
+    String,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -14,9 +24,20 @@ class DesignDraft(Base):
     """按用户和模板保存的设计草稿。"""
 
     __tablename__ = "design_drafts"
-    __table_args__ = (UniqueConstraint("user_id", "template_id", "order_id", name="uq_design_drafts_user_template_order"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "template_id",
+            "order_id",
+            name="uq_design_drafts_user_template_order",
+        ),
+    )
 
-    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        Identity(always=True),
+        primary_key=True,
+    )
     user_id: Mapped[int] = mapped_column(
         BigInteger,
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -26,8 +47,15 @@ class DesignDraft(Base):
     template_id: Mapped[str] = mapped_column(String(128), nullable=False)
     order_id: Mapped[str] = mapped_column(String(128), nullable=False)
     template_version: Mapped[int] = mapped_column(nullable=False, default=1)
-    design_data: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    design_data: Mapped[dict[str, Any]] = mapped_column(
+        JSONB().with_variant(JSON, "sqlite"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
     )

@@ -1,0 +1,300 @@
+.permissions-page {
+  max-width: 1440px;
+}
+.permissions-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 24px 0;
+  border-bottom: 1px solid #e4e1da;
+  padding-bottom: 12px;
+}
+.permissions-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 8px;
+  padding: 11px 16px;
+  color: #64645d;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.permissions-tabs button[aria-selected="true"] {
+  background: #e9ecdf;
+  color: #354329;
+}
+.permissions-layout {
+  display: grid;
+  gap: 24px;
+  align-items: start;
+}
+.permissions-layout.has-editor {
+  grid-template-columns: minmax(0, 1fr) 340px;
+}
+.permissions-layout > section {
+  min-width: 0;
+}
+.permissions-toolbar,
+.permissions-pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.permissions-toolbar > p {
+  margin-right: auto;
+  color: #696a62;
+}
+.permissions-toolbar .workspace-search {
+  flex: 1;
+  min-width: 180px;
+}
+.permissions-label {
+  white-space: nowrap;
+  font-size: 12px;
+}
+.permissions-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e4e1da;
+  border-radius: 12px;
+  background: #fffefa;
+}
+.permissions-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+.permissions-table th,
+.permissions-table td {
+  padding: 16px;
+  border-bottom: 1px solid #eeece6;
+  vertical-align: top;
+}
+.permissions-table th {
+  color: #6c6d65;
+  font-weight: 500;
+  white-space: nowrap;
+  background: #f5f4ee;
+}
+.permissions-table td > small {
+  display: block;
+  margin-top: 5px;
+  color: #77776f;
+}
+.permissions-table tr:last-child td {
+  border-bottom: 0;
+}
+.permissions-table pre {
+  max-width: 300px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.permissions-tag {
+  display: inline-block;
+  margin: 2px 6px 2px 0;
+  padding: 4px 8px;
+  border-radius: 5px;
+  background: #efeee7;
+  color: #545a49;
+  font-size: 12px;
+}
+.permissions-muted {
+  color: #77776f;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.permissions-enabled {
+  color: #48643b;
+}
+.permissions-danger {
+  color: #a13f34;
+}
+.permissions-pagination {
+  margin-top: 18px;
+  justify-content: flex-end;
+  font-size: 13px;
+}
+.permissions-role-list {
+  display: grid;
+  gap: 14px;
+}
+.permissions-role {
+  padding: 22px;
+  border: 1px solid #e4e1da;
+  border-radius: 12px;
+  background: #fffefa;
+}
+.permissions-role header,
+.permissions-editor > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.permissions-role h2,
+.permissions-editor h2 {
+  margin: 0 0 8px;
+  font-size: 17px;
+}
+.permissions-role code {
+  margin-right: 10px;
+  color: #75776a;
+  font-size: 12px;
+}
+.permissions-role p {
+  color: #77776f;
+  font-size: 13px;
+}
+.permissions-row-actions {
+  display: flex;
+  gap: 14px;
+}
+.permissions-editor {
+  position: sticky;
+  top: 90px;
+  padding: 22px;
+  border: 1px solid #dcded1;
+  border-radius: 12px;
+  background: #fffefa;
+}
+.permissions-editor label:not(.permissions-choice) {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+  font-size: 13px;
+}
+.permissions-editor input:not([type="checkbox"]),
+.permissions-editor textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #dcded1;
+  border-radius: 7px;
+  background: #fff;
+  font: inherit;
+}
+.permissions-editor small {
+  color: #77776f;
+  font-size: 12px;
+}
+.permissions-editor fieldset {
+  min-width: 0;
+  margin: 16px 0;
+  padding: 0;
+  border: 0;
+}
+.permissions-editor legend {
+  margin: 12px 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.permissions-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 0;
+  font-size: 13px;
+}
+.permissions-choice input {
+  margin-top: 3px;
+  accent-color: #506244;
+}
+.permissions-choice strong,
+.permissions-choice small,
+.permissions-choice code {
+  display: block;
+  line-height: 1.7;
+}
+.permissions-choice code {
+  color: #77776f;
+  font-size: 11px;
+}
+.permissions-page button:focus-visible,
+.permissions-editor input:focus-visible,
+.permissions-editor textarea:focus-visible {
+  outline: 2px solid #536747;
+  outline-offset: 3px;
+}
+.permissions-page button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.read-only-draft .read-only-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+@media (max-width: 1000px) {
+  .permissions-layout.has-editor {
+    grid-template-columns: 1fr;
+  }
+  .permissions-editor {
+    position: static;
+    grid-row: 1;
+  }
+}
+@media (max-width: 600px) {
+  .permissions-table th,
+  .permissions-table td {
+    padding: 12px;
+  }
+  .permissions-role {
+    padding: 16px;
+  }
+  .permissions-tabs button {
+    padding: 10px;
+  }
+}
+/* The additional admin entry needs the compact menu sooner on small laptops. */
+@media (min-width: 901px) and (max-width: 1250px) {
+  .has-permissions-nav .workspace-brand {
+    min-width: 0;
+    margin-right: auto;
+  }
+  .has-permissions-nav .workspace-nav {
+    display: none;
+  }
+  .has-permissions-nav .workspace-mobile-trigger {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border: 1px solid #d9e2e9;
+    border-radius: 8px;
+    color: inherit;
+    background: transparent;
+  }
+  .has-permissions-nav .workspace-mobile-nav {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    display: none;
+    padding: 12px 24px;
+    background: white;
+    border-bottom: 1px solid #d9e2e9;
+  }
+  .has-permissions-nav .workspace-mobile-nav.open {
+    display: grid;
+  }
+  .has-permissions-nav .workspace-mobile-nav button {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 0;
+    color: inherit;
+    background: transparent;
+    text-align: left;
+  }
+  .has-permissions-nav .workspace-mobile-nav button.active {
+    background: #e4f2f1;
+    border-radius: 8px;
+  }
+}

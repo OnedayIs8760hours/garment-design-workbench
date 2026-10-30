@@ -21,4 +21,5 @@ WORKDIR /app
 ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 8957
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8957"]
+# RBAC 表与基础角色初始化成功后才启动 API；迁移失败时容器不能误报服务可用。
+CMD ["sh", "-c", "python -m app.rbac migrate && exec uvicorn app.main:app --host 0.0.0.0 --port 8957"]

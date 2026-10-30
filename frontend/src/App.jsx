@@ -21,6 +21,10 @@ import { TemplateLibrary } from "./pages/TemplateLibrary.jsx";
 import { AssetLibrary } from "./pages/AssetLibrary.jsx";
 import { OrdersWorkspace } from "./pages/OrdersWorkspace.jsx";
 import { FinishedWorkspace } from "./pages/FinishedWorkspace.jsx";
+import { PermissionsWorkspace } from "./pages/PermissionsWorkspace.jsx";
+import { AllContentWorkspace } from "./pages/AllContentWorkspace.jsx";
+import { ReadOnlyDraft } from "./pages/ReadOnlyDraft.jsx";
+import { can, canAccessSection, canEditDesign } from "./permissions.js";
 import { MaterialStudio, MaterialDialog } from "./components/MaterialStudio.jsx";
 import { MaterialSessionProvider } from "./components/MaterialSession.jsx";
 import { materialToDesignAsset, removeMaterialReferences } from "./materialAssets.js";
@@ -50,8 +54,14 @@ export function App() {
   const [workspace, setWorkspace] = React.useState(() => readInitialWorkspace());
   // 工作台内的模块导航与编辑器独立，避免影响现有编辑器 URL 和状态。
   const [activeSection, setActiveSection] = React.useState("home");
+  const [readOnlyDraft, setReadOnlyDraft] = React.useState(null);
 
   const openWorkspace = React.useCallback((draft, options = {}) => {
+    // 只读成员走独立预览，不能进入会修改 store、更新 URL 和自动保存的编辑流程。
+    if (!canEditDesign(auth.user)) {
+      if (draft && can(auth.user, "designs.read")) setReadOnlyDraft(draft);
+      return;
+    }
     const targetTemplateId = resolveTemplateId(options.templateId || draft?.template_id || selectedTemplateIdFromLocation() || activeTemplateId);
     const currentTemplateId = selectedTemplateIdFromLocation();
     const nextWorkspace = {
@@ -78,7 +88,7 @@ export function App() {
     url.searchParams.set("template", targetTemplateId);
     window.history.replaceState(null, "", url.toString());
     setWorkspace(nextWorkspace);
-  }, []);
+  }, [auth.user]);
 
   React.useEffect(() => {
     if (auth.status !== "checking") return undefined;
@@ -97,6 +107,36 @@ export function App() {
       cancelled = true;
     };
   }, [auth.status]);
+
+  const refreshAccess = React.useCallback(async () => {
+    // 用请求发出时的令牌识别所属会话，防止退出或切换账号后旧响应恢复旧身份。
+    const token = getAccessToken();
+    try {
+      const user = await getCurrentUser();
+      if (!token || getAccessToken() !== token) return;
+      setAuth({ status: "authenticated", user });
+    } catch (error) {
+      if (getAccessToken() !== token) return;
+      if (error.status === 401) {
+        clearAccessToken();
+        setAuth({ status: "anonymous", user: null });
+      }
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (auth.status !== "authenticated") return undefined;
+    // 服务端实时校验；这里用轮询、窗口焦点及 403 通知同步界面，减少失效入口。
+    const refresh = () => { void refreshAccess(); };
+    const interval = window.setInterval(refresh, 60000);
+    window.addEventListener("focus", refresh);
+    window.addEventListener("woda-access-denied", refresh);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("woda-access-denied", refresh);
+    };
+  }, [auth.status, refreshAccess]);
 
   if (auth.status === "checking") {
     return <main className="auth-loading">正在验证登录状态...</main>;
@@ -117,10 +157,6 @@ export function App() {
       <LoginPrototype
         initialUsername={pendingUsername}
         initialMessage={pendingUsername ? "账号创建成功，请登录。" : undefined}
-        onRegister={() => {
-          setPendingUsername("");
-          setAuthScreen("register");
-        }}
         onLogin={({ user }) => {
           setAuth({ status: "authenticated", user });
         }}
@@ -135,12 +171,14 @@ export function App() {
       clearAccessToken();
     }
     setWorkspace(null);
+    setReadOnlyDraft(null);
     setActiveSection("home");
     returnToHome();
     setAuth({ status: "anonymous", user: null });
   };
 
-  if (!workspace) {
+  // 同时保护通过 URL 恢复的编辑器入口，不能只依赖导航按钮是否可见。
+  if (!workspace || !canEditDesign(auth.user)) {
     return (
       <MaterialSessionProvider key={auth.user.id}>
         <WorkspaceShell
@@ -149,12 +187,22 @@ export function App() {
           user={auth.user}
           onSignOut={signOut}
         >
-          {activeSection === "home" ? (
+          {!canAccessSection(auth.user, activeSection) || ((readOnlyDraft || workspace) && !can(auth.user, "designs.read")) ? (
+            <main className="workspace-page"><h1>暂无访问权限</h1><p>请联系管理员为当前账号分配角色。</p><button className="workspace-button secondary" type="button" onClick={() => { setActiveSection("home"); setReadOnlyDraft(null); setWorkspace(null); returnToHome(); }}>返回工作台</button></main>
+          ) : readOnlyDraft || workspace ? (
+            <ReadOnlyDraft draft={readOnlyDraft || { template_id: selectedTemplateIdFromLocation() || activeTemplateId, order_id: workspace.orderId }} onBack={() => { setReadOnlyDraft(null); setWorkspace(null); returnToHome(); }} />
+          ) : activeSection === "permissions" ? (
+            <PermissionsWorkspace onAccessChanged={refreshAccess} />
+          ) : activeSection === "all_content" ? (
+            <AllContentWorkspace />
+          ) : activeSection === "home" && !can(auth.user, "designs.read") ? (
+            <main className="workspace-page"><h1>欢迎，{auth.user.username}</h1><p>{can(auth.user, "rbac.manage") ? "请通过权限管理为成员分配角色。" : "当前账号尚未获得业务权限，请联系管理员分配角色。"}</p></main>
+          ) : activeSection === "home" ? (
             <WorkspaceOverview
               user={auth.user}
               onNavigate={setActiveSection}
               onOpenDraft={(draft) => openWorkspace(draft)}
-              onNewDesign={() => openWorkspace(null, { newDesign: true })}
+              onNewDesign={canEditDesign(auth.user) ? () => openWorkspace(null, { newDesign: true }) : undefined}
             />
           ) : activeSection === "products" ? (
             <TemplateLibrary onStartDesign={(templateId) => openWorkspace(null, { newDesign: true, templateId })} />
@@ -163,11 +211,12 @@ export function App() {
               user={auth.user}
               embedded
               onOpenDraft={(draft) => openWorkspace(draft)}
-              onNewDesign={() => openWorkspace(null, { newDesign: true })}
+              onNewDesign={canEditDesign(auth.user) ? () => openWorkspace(null, { newDesign: true }) : undefined}
               onSignOut={signOut}
             />
           ) : activeSection === "assets" ? (
             <AssetLibrary
+              user={auth.user}
               onOpenDraft={(draft) => openWorkspace(draft)}
               onNavigate={setActiveSection}
             />
@@ -581,8 +630,8 @@ function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
         onNewDesign={handleNewDesign}
         onBackHome={onBackHome}
         onExportPackage={() => downloadZip(design, exportJson)}
-        onImportPsd={onImportPsd}
-        onGenerateMaterial={() => setMaterialOpen(true)}
+        onImportPsd={can(user, "psd.upload") ? onImportPsd : undefined}
+        onGenerateMaterial={canAccessSection(user, "generate") ? () => setMaterialOpen(true) : undefined}
         onTemplateChange={switchTemplate}
         onSignOut={onSignOut}
         user={user}
@@ -593,9 +642,9 @@ function EditorApp({ user, draftOrderId, isNewDesign, onBackHome, onSignOut }) {
           design={design}
           addImage={addImage}
           addText={addText}
-          onUpload={onUpload}
-          clearAssets={clearAssets}
-          onGenerateMaterial={() => setMaterialOpen(true)}
+          onUpload={can(user, "assets.write") ? onUpload : undefined}
+          clearAssets={can(user, "assets.write") ? clearAssets : undefined}
+          onGenerateMaterial={canAccessSection(user, "generate") ? () => setMaterialOpen(true) : undefined}
           applyPanelColor={applyPanelColor}
           applyAllPanelColors={applyAllPanelColors}
           collapsed={sidebarCollapsed}

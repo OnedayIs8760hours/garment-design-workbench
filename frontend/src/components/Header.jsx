@@ -44,9 +44,9 @@ export function Header({
         <span className={validation.passed ? "metric-ok" : "metric-error"}>{validation.passed ? "可导出" : "需检查"}</span>
       </div>
       <div className="actions">
-        <button type="button" onClick={onGenerateMaterial}>
+        {onGenerateMaterial && <button type="button" onClick={onGenerateMaterial}>
           <WandSparkles size={16} aria-hidden="true" />素材生成
-        </button>
+        </button>}
         <button type="button" onClick={onBackHome}>
           <ArrowLeft size={16} aria-hidden="true" />
           我的草稿
@@ -71,10 +71,10 @@ export function Header({
           <Download size={16} aria-hidden="true" />
           导出压缩包
         </button>
-        <button type="button" onClick={onImportPsd}>
+        {onImportPsd && <button type="button" onClick={onImportPsd}>
           <Upload size={16} aria-hidden="true" />
           导入 PSD
-        </button>
+        </button>}
         <button type="button" onClick={onSignOut}>
           <LogOut size={16} aria-hidden="true" />
           退出登录

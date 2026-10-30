@@ -83,7 +83,8 @@ def test_batch_deletion_validates_entire_batch_before_mutating(monkeypatch, bad_
 def test_library_and_batch_delete_api_contract(monkeypatch):
     storage = FakeStorage()
     monkeypatch.setattr(object_storage, "get_rustfs_client", lambda: storage)
-    app.dependency_overrides[get_current_user] = lambda: SimpleNamespace(id=7)
+    app.dependency_overrides[get_current_user] = lambda: SimpleNamespace(
+        id=7, permissions=["assets.read", "assets.write"])
     try:
         with TestClient(app) as client:
             response = client.get("/api/assets")

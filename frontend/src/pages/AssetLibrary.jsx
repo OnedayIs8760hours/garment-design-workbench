@@ -2,8 +2,9 @@ import React from "react";
 import { ArrowRight, Image, RefreshCw, Search } from "lucide-react";
 import { templateDefinitions } from "../../templates/index.js";
 import { formatWorkspaceDate, loadSavedDesignAssets } from "../workspaceData.js";
+import { canEditDesign } from "../permissions.js";
 
-export function AssetLibrary({ onOpenDraft, onNavigate }) {
+export function AssetLibrary({ onOpenDraft, onNavigate, user }) {
   const [assets, setAssets] = React.useState([]);
   const [draftCount, setDraftCount] = React.useState(0);
   const [failedDraftReads, setFailedDraftReads] = React.useState(0);
@@ -77,8 +78,8 @@ export function AssetLibrary({ onOpenDraft, onNavigate }) {
         <section className="workspace-empty-state" role="status">
           <div className="workspace-empty-icon"><Image size={21} aria-hidden="true" /></div>
           <h2>{search ? "没有匹配的素材" : "还没有关联的图片素材"}</h2>
-          <p>{search ? "清除搜索条件，查看所有素材。" : draftCount ? "打开一份设计草稿并上传图片，素材会显示在这里。" : "先创建一份设计，再上传要放到裁片上的图片。"}</p>
-          {search ? <button className="workspace-button secondary" type="button" onClick={() => setSearch("")}>清除搜索</button> : <button className="workspace-button primary" type="button" onClick={() => onNavigate(draftCount ? "design" : "products")}>{draftCount ? "查看设计草稿" : "选择产品模板"}<ArrowRight size={15} aria-hidden="true" /></button>}
+          <p>{search ? "清除搜索条件，查看所有素材。" : !canEditDesign(user) ? "当前账号的设计中尚无关联素材。" : draftCount ? "打开一份设计草稿并上传图片，素材会显示在这里。" : "先创建一份设计，再上传要放到裁片上的图片。"}</p>
+          {search ? <button className="workspace-button secondary" type="button" onClick={() => setSearch("")}>清除搜索</button> : (draftCount > 0 || canEditDesign(user)) && <button className="workspace-button primary" type="button" onClick={() => onNavigate(draftCount ? "design" : "products")}>{draftCount ? "查看设计草稿" : "选择产品模板"}<ArrowRight size={15} aria-hidden="true" /></button>}
         </section>
       ) : null}
     </main>

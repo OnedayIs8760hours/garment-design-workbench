@@ -4,8 +4,10 @@ import { createTemplate } from "../model.js";
 import { templateDefinitions } from "../../templates/index.js";
 import { deleteDesignDraft, deleteDesignDrafts, listDesignDrafts } from "../api.js";
 import "../styles/personal-home.css";
+import { can } from "../permissions.js";
 
 export function PersonalHome({ user, onOpenDraft, onNewDesign, onSignOut, embedded = false }) {
+  const writable = can(user, "designs.write");
   const [drafts, setDrafts] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
@@ -101,11 +103,11 @@ export function PersonalHome({ user, onOpenDraft, onNewDesign, onSignOut, embedd
           <h1>你的设计草稿</h1>
           <p className="personal-intro">从最近的设计继续，或创建一个新的服装工作台。</p>
         </div>
-        <button type="button" className="personal-new-button" onClick={onNewDesign}>
+        {onNewDesign && <button type="button" className="personal-new-button" onClick={onNewDesign}>
           <FilePlus2 size={18} aria-hidden="true" />
           新建设计
           <ArrowRight size={16} aria-hidden="true" />
-        </button>
+        </button>}
       </section>
 
       <section className="personal-stats" aria-label="设计统计">
@@ -128,7 +130,7 @@ export function PersonalHome({ user, onOpenDraft, onNewDesign, onSignOut, embedd
         {!loading && !drafts.length && <EmptyDraftState onNewDesign={onNewDesign} />}
         {!loading && drafts.length > 0 && (
           <>
-            <div className="draft-batch-toolbar">
+            {writable && <div className="draft-batch-toolbar">
               <label className="draft-select-all">
                 <input type="checkbox" checked={allSelected} onChange={toggleAllDrafts} />
                 <span>{allSelected ? "取消全选" : "选择全部"}</span>
@@ -138,12 +140,13 @@ export function PersonalHome({ user, onOpenDraft, onNewDesign, onSignOut, embedd
                 <Trash2 size={15} aria-hidden="true" />
                 {batchDeleting ? "删除中…" : `删除所选（${selectedDraftKeys.size}）`}
               </button>
-            </div>
+            </div>}
             <div className="draft-grid">
               {drafts.map((draft, index) => (
                 <DraftCard
                   key={`${draft.template_id}:${draft.order_id}`}
                   draft={draft}
+                  readOnly={!writable}
                   index={index}
                   selected={selectedDraftKeys.has(draftIdentity(draft))}
                   deleting={batchDeleting || deletingDraftKey === draftIdentity(draft)}
@@ -160,16 +163,16 @@ export function PersonalHome({ user, onOpenDraft, onNewDesign, onSignOut, embedd
   );
 }
 
-function DraftCard({ draft, index, selected, deleting, onToggle, onOpen, onDelete }) {
+function DraftCard({ draft, index, selected, deleting, onToggle, onOpen, onDelete, readOnly }) {
   const definition = templateDefinitions[draft.template_id];
   const preview = definition ? createTemplate(definition).panels[definition.defaultPanelId]?.templateImage : null;
   return (
     <article className={`draft-card draft-card-${index % 3}${selected ? " selected" : ""}`}>
-      <label className="draft-card-selector">
+      {!readOnly && <label className="draft-card-selector">
         <input type="checkbox" checked={selected} onChange={onToggle} />
         <span className="draft-card-checkmark" aria-hidden="true" />
         <span className="sr-only">选择草稿 {draft.order_id}</span>
-      </label>
+      </label>}
       <button type="button" className="draft-preview" onClick={onOpen} aria-label={`打开草稿 ${draft.order_id}`}>
         {preview ? <img src={preview} alt="" /> : <span className="draft-preview-placeholder">woda</span>}
         <span className="draft-open-indicator"><ArrowRight size={17} aria-hidden="true" /></span>
@@ -179,8 +182,8 @@ function DraftCard({ draft, index, selected, deleting, onToggle, onOpen, onDelet
         <h3>{draft.order_id}</h3>
         <p>最近保存于 {formatDate(draft.updated_at)}</p>
         <div className="draft-card-actions">
-          <button type="button" className="draft-open-link" onClick={onOpen}>继续编辑 <ArrowRight size={14} aria-hidden="true" /></button>
-          <button
+          <button type="button" className="draft-open-link" onClick={onOpen}>{readOnly ? "查看设计" : "继续编辑"} <ArrowRight size={14} aria-hidden="true" /></button>
+          {!readOnly && <button
             type="button"
             className="draft-delete-button"
             onClick={onDelete}
@@ -189,7 +192,7 @@ function DraftCard({ draft, index, selected, deleting, onToggle, onOpen, onDelet
           >
             <Trash2 size={14} aria-hidden="true" />
             {deleting ? "删除中…" : "删除"}
-          </button>
+          </button>}
         </div>
       </div>
     </article>
@@ -201,8 +204,8 @@ function EmptyDraftState({ onNewDesign }) {
     <div className="draft-empty">
       <div className="draft-empty-mark" aria-hidden="true">＋</div>
       <h3>还没有保存的设计</h3>
-      <p>创建第一份草稿，开始你的下一套球衣设计。</p>
-      <button type="button" className="personal-new-button" onClick={onNewDesign}><FilePlus2 size={17} aria-hidden="true" />新建设计</button>
+      <p>{onNewDesign ? "创建第一份草稿，开始你的下一套球衣设计。" : "当前账号暂无可查看的设计草稿。"}</p>
+      {onNewDesign && <button type="button" className="personal-new-button" onClick={onNewDesign}><FilePlus2 size={17} aria-hidden="true" />新建设计</button>}
     </div>
   );
 }

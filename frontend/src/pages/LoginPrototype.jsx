@@ -112,12 +112,14 @@ export function LoginPrototype({ onLogin, onRegister, initialUsername = "", init
             {isSubmitting ? "登录中..." : "进入设计工作台"}
           </button>
 
-          <div className="login-options">
-            <span>还没有账号？</span>
-            <button type="button" className="text-button" onClick={onRegister}>
-              注册新账号
-            </button>
-          </div>
+          {onRegister && (
+            <div className="login-options">
+              <span>还没有账号？</span>
+              <button type="button" className="text-button" onClick={onRegister}>
+                注册新账号
+              </button>
+            </div>
+          )}
 
           <p className="login-message" role="status">
             {message}
